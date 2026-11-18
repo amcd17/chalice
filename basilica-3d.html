@@ -1,0 +1,242 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Basilica 3D blockout</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  html,body{margin:0;height:100%;background:#0b0705;color:#f6ecd6;font-family:system-ui,sans-serif;overflow:hidden}
+  #c{display:block;width:100%;height:100%}
+  .ui{position:fixed;left:22px;top:18px;pointer-events:none}
+  .kicker{font:600 10px/1 Georgia,serif;letter-spacing:.3em;color:#c9b088}
+  h1{font:700 26px/1.1 Georgia,serif;letter-spacing:.06em;margin:8px 0 4px}
+  .sub{font-size:12px;color:#c9b088;max-width:46ch;line-height:1.45}
+  .bar{position:fixed;left:22px;bottom:18px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .bar button{all:unset;cursor:pointer;font:600 10px Georgia,serif;letter-spacing:.16em;color:#c9b088;border:1px solid rgba(232,184,74,.28);padding:7px 11px;background:rgba(10,6,4,.7)}
+  .bar button.on{color:#ffe9b4;border-color:rgba(232,184,74,.75);background:rgba(232,184,74,.16)}
+  .bar .hint{font-size:10.5px;color:#8a765a;margin-left:10px;letter-spacing:.02em}
+  .note{position:fixed;right:22px;bottom:18px;font-size:10.5px;color:#8a765a;text-align:right;line-height:1.5}
+  .legend{position:fixed;right:22px;top:18px;font-size:11px;color:#c9b088;line-height:1.7;text-align:right}
+  .legend b{color:#e8c78a;font-weight:600}
+</style>
+<div class="ui">
+  <div class="kicker">BASILICA · 3D BLOCKOUT</div>
+  <h1>Two levels, closed centre</h1>
+  <div class="sub">Massing only. Outer wall and dome left off so you can see in. Drag to orbit, wheel to zoom.</div>
+</div>
+<div class="legend">
+  <div><b>Gold</b> new work</div>
+  <div><b>Red</b> banners</div>
+  <div><b>Dark</b> existing shell</div>
+</div>
+<div class="bar">
+  <button data-v="all" class="on">ALL</button>
+  <button data-v="ground">GROUND</button>
+  <button data-v="upper">UPPER</button>
+  <button data-v="labels" class="on">LABELS</button>
+  <span class="hint">drag to orbit · wheel to zoom</span>
+</div>
+<div class="note">Schematic blockout, no map geometry changed.<br>Chalice 0.295</div>
+<canvas id="c"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0705);
+scene.fog = new THREE.Fog(0x0b0705, 210, 420);
+const camera = new THREE.PerspectiveCamera(46, innerWidth/innerHeight, 0.5, 800);
+
+scene.add(new THREE.HemisphereLight(0x9a8770, 0x1a1108, 1.0));
+const sun = new THREE.DirectionalLight(0xffe0b0, 1.0); sun.position.set(70,110,50); scene.add(sun);
+scene.add(new THREE.AmbientLight(0x3a2c1c, 0.7));
+
+const M = {
+  stone: new THREE.MeshStandardMaterial({ color:0x7c6547, roughness:.95 }),
+  dark: new THREE.MeshStandardMaterial({ color:0x3a2e21, roughness:1 }),
+  sand: new THREE.MeshStandardMaterial({ color:0xa08054, roughness:1 }),
+  wood: new THREE.MeshStandardMaterial({ color:0x6a4a2c, roughness:.9 }),
+  gold: new THREE.MeshStandardMaterial({ color:0xe0b050, roughness:.55, metalness:.35, emissive:0x231400, emissiveIntensity:.6 }),
+  banner: new THREE.MeshStandardMaterial({ color:0x8a3028, roughness:.95, side:THREE.DoubleSide }),
+  black: new THREE.MeshStandardMaterial({ color:0x090604, roughness:1 }),
+  top: new THREE.MeshStandardMaterial({ color:0x8a6b48, roughness:.95 }),
+  roof: new THREE.MeshStandardMaterial({ color:0x5a4630, roughness:1 }),
+};
+const upper = new THREE.Group(), labels = new THREE.Group();
+scene.add(upper, labels);
+
+function box(w,h,d,x,y,z,mat,ry=0){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+  m.position.set(x,y,z); m.rotation.y = ry; scene.add(m); return m;
+}
+function ubox(w,h,d,x,y,z,mat,ry=0){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+  m.position.set(x,y,z); m.rotation.y = ry; upper.add(m); return m;
+}
+function ring(rx0,ry0,rx1,ry1,h,y,mat,grp){
+  const sh = new THREE.Shape(); sh.absellipse(0,0,rx1,ry1,0,Math.PI*2,false,0);
+  const hole = new THREE.Path(); hole.absellipse(0,0,rx0,ry0,0,Math.PI*2,true,0);
+  sh.holes.push(hole);
+  const g = new THREE.ExtrudeGeometry(sh,{ depth:h, bevelEnabled:false, curveSegments:56 });
+  g.rotateX(-Math.PI/2);
+  const m = new THREE.Mesh(g, mat); m.position.y = y; (grp||scene).add(m); return m;
+}
+function cyl(r,h,x,y,z,mat){
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,16), mat);
+  m.position.set(x,y,z); scene.add(m); return m;
+}
+function label(text,x,y,z){
+  const c = document.createElement('canvas'); c.width = 512; c.height = 128;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(10,6,4,.72)'; g.fillRect(0,0,512,128);
+  g.strokeStyle = 'rgba(232,184,74,.55)'; g.lineWidth = 4; g.strokeRect(2,2,508,124);
+  g.fillStyle = '#ffe9b4'; g.font = '600 44px Georgia, serif'; g.textAlign='center'; g.textBaseline='middle';
+  g.fillText(text, 256, 66);
+  const tex = new THREE.CanvasTexture(c);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true, depthTest:false }));
+  sp.position.set(x,y,z); sp.scale.set(11,2.75,1); labels.add(sp);
+}
+
+// floor and pit
+const floor = new THREE.Mesh(new THREE.CircleGeometry(1,96), M.sand);
+floor.rotation.x = -Math.PI/2; floor.scale.set(40,26,1); floor.position.y = 0.03; scene.add(floor);
+ring(40,26,41.8,27.8,5,0,M.stone);            // podium wall, the pit edge
+ring(42,28,50,36,5,0,M.dark);                 // first tier walkway
+ring(50,36,54,40,7.5,0,M.dark);
+ring(54,40,58,44,10,0,M.dark);
+ring(58,44,62,48,12.5,0,M.dark);
+ring(62,48,66,52,12.5,0,M.top,upper);         // existing top tier
+// footprint of the omitted shell
+ring(67.4,53.4,67.9,53.9,0.3,0,M.wood);
+
+// centre: dais and arcade
+box(10,2,10,0,1,0,M.stone);
+for(const A of [45,135,225,315]){
+  const r=7.75, x=Math.cos(A*Math.PI/180)*r, z=Math.sin(A*Math.PI/180)*r;
+  box(6.4,3,0.8,x,1.5,z,M.gold,-A*Math.PI/180-Math.PI/2);
+}
+// screens with central arch and rood loft
+for(const sx of [-12,12]){
+  for(const zc of [-11.5,11.5]) box(1.2,8.5,15,sx,4.25,zc,M.stone);
+  box(1.2,3,8,sx,7,0,M.stone);        // lintel over the central gap
+  box(1.2,4.5,38,sx,10.75,0,M.stone); // rood loft
+}
+// colonnade
+for(let k=0;k<8;k++){
+  const A=(22.5+45*k)*Math.PI/180, x=Math.cos(A)*26, z=Math.sin(A)*17;
+  cyl(0.8,8,x,4,z,M.stone);
+  box(2,0.5,2,x,8.2,z,M.stone);
+}
+// pews
+for(const sx of [-24,24]) for(const sz of [-11,11]){
+  box(12,1.1,4.5,sx,0.55,sz,M.wood);
+  box(12,0.15,4.5,sx,1.15,sz,M.dark);
+}
+// chapels: roof beams on the top tier rim, open to the sky
+for(const Adeg of [67.5,112.5,247.5,292.5]){
+  const A=Adeg*Math.PI/180, g=new THREE.Group(); g.rotation.y=-A; scene.add(g);
+  const wall=(w,h,d,x,y,z)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),M.stone); m.position.set(x,y,z); g.add(m); };
+  wall(16,4.5,0.6,58,14.75,8); wall(16,4.5,0.6,58,14.75,-8); wall(0.6,4.5,16,66,14.75,0);
+  wall(0.6,4.5,5.4,50,14.75,5.3); wall(0.6,4.5,5.4,50,14.75,-5.3);
+  for(let i=0;i<7;i++){ const m=new THREE.Mesh(new THREE.BoxGeometry(16,0.25,0.4),M.roof); m.position.set(58,17,-7.5+i*2.5); g.add(m); }
+  for(let i=0;i<5;i++){ const m=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.25,16),M.roof); m.position.set(51+i*3.5,17,0); g.add(m); }
+}
+// top tier parapet, buttresses, banners
+ring(62,48,62.5,48.5,1.2,12.5,M.gold,upper);
+for(const Adeg of [50,80,100,130,230,260,280,310]){
+  const A=Adeg*Math.PI/180, x=Math.cos(A)*62.3, z=Math.sin(A)*48.3;
+  ubox(2.4,2,2.4,x,13.5,z,M.stone,-A-Math.PI/2);
+}
+for(const Adeg of [73.3,106.7,253.3,286.7]){
+  const A=Adeg*Math.PI/180, x=Math.cos(A)*63.4, z=Math.sin(A)*49.4;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(5,4),M.banner);
+  m.position.set(x,15,z); m.rotation.y=-A-Math.PI/2; upper.add(m);
+}
+// apse bridge at +x, broken span, choir box
+const bx=63.6;
+ubox(2.4,0.4,7.25,bx,12.7,-4.875,M.gold);
+ubox(2.4,0.4,7.25,bx,12.7,4.875,M.gold);
+ubox(0.25,1.1,14.5,bx+1.1,13.2,0,M.stone);
+// choir box, north end
+ubox(5,0.35,4.5,bx,12.67,-10.5,M.stone);
+ubox(5,3,0.3,bx,14.2,-12.6,M.stone);
+ubox(0.3,3,4.5,bx-2.4,14.2,-10.5,M.stone);
+ubox(0.3,3,4.5,bx+2.4,14.2,-10.5,M.stone);
+ubox(5,0.3,4.5,bx,15.7,-10.5,M.roof);
+// drop hole at -x
+const dx=-63.6;
+const hole=new THREE.Mesh(new THREE.BoxGeometry(3,0.12,3),M.black); hole.position.set(dx,12.45,0); upper.add(hole);
+const shaft=new THREE.Mesh(new THREE.BoxGeometry(3,7.4,3),M.black); shaft.position.set(dx,8.7,0); upper.add(shaft);
+const rubble=new THREE.Mesh(new THREE.ConeGeometry(2.2,1.6,7),M.stone); rubble.position.set(dx,5.8,0); scene.add(rubble);
+const violet=new THREE.MeshBasicMaterial({color:0xa98cff});
+for(const [w,d,ox,oz] of [[3.2,0.18,0,1.5],[3.2,0.18,0,-1.5],[0.18,3.2,1.5,0],[0.18,3.2,-1.5,0]]){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,0.1,d),violet); m.position.set(dx+ox,12.62,oz); upper.add(m);
+}
+for(const z of [-1.25,1.25]){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(2.4,0.08,0.16),violet); m.position.set(bx,12.93,z); upper.add(m);
+}
+const beam=(x,y,z,h)=>{ const m=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,h,8), new THREE.MeshBasicMaterial({color:0xa98cff})); m.position.set(x,y,z); upper.add(m); };
+beam(dx,16,0,7);
+beam(bx,14.2,-1.25,2.4); beam(bx,14.2,1.25,2.4);
+// labels
+label('DAIS',0,12.5,0); label('SCREEN',14,18,14); label('PEWS',24,5,-11);
+label('CHAPEL',30,20,46); label('TOP TIER',-30,17,-48);
+label('BRIDGE',bx,18.5,0); label('CHOIR',bx,19.5,-10.5); label('DROP',dx,18,0);
+
+// controls
+let theta=0.54, phi=1.08, radius=150, auto=true;
+const target=new THREE.Vector3(4,7,0);
+const VIEWS = {
+  all: { theta:0.54, phi:1.08, radius:150, t:[4,7,0], upper:true },
+  ground: { theta:0.95, phi:0.98, radius:118, t:[0,4,0], upper:false },
+  upper: { theta:0.2, phi:1.04, radius:64, t:[54,12,0], upper:true }
+};
+function setView(v){
+  const c = VIEWS[v]; if(!c) return;
+  theta=c.theta; phi=c.phi; radius=c.radius; target.set(c.t[0],c.t[1],c.t[2]);
+  upper.visible=c.upper; place();
+}
+if(/^#(upper|ground)$/.test(location.hash)) setView(location.hash.slice(1));
+function place(){
+  camera.position.set(target.x+radius*Math.sin(phi)*Math.cos(theta), target.y+radius*Math.cos(phi), target.z+radius*Math.sin(phi)*Math.sin(theta));
+  camera.lookAt(target);
+}
+place();
+let drag=false, px=0, py=0;
+canvas.addEventListener('pointerdown', e=>{ drag=true; px=e.clientX; py=e.clientY; auto=false; });
+addEventListener('pointerup', ()=> drag=false);
+addEventListener('pointermove', e=>{
+  if(!drag) return;
+  theta -= (e.clientX-px)*0.005; phi -= (e.clientY-py)*0.004;
+  phi = Math.max(0.16, Math.min(1.42, phi)); px=e.clientX; py=e.clientY; place();
+});
+canvas.addEventListener('wheel', e=>{
+  e.preventDefault(); radius *= (1 + Math.sign(e.deltaY)*0.08);
+  radius = Math.max(70, Math.min(320, radius)); place();
+}, { passive:false });
+
+let last=performance.now();
+function tick(t){
+  const dt=Math.min(0.05,(t-last)/1000); last=t;
+  if(auto){ theta += dt*0.05; place(); }
+  renderer.render(scene,camera);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+document.querySelectorAll('.bar button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const v=b.dataset.v;
+    if(v==='labels'){ labels.visible=!labels.visible; b.classList.toggle('on',labels.visible); return; }
+    setView(v);
+    document.querySelectorAll('.bar button[data-v="all"],[data-v="ground"],[data-v="upper"]').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
+  });
+});
+addEventListener('resize', ()=>{
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+})();
+</script>

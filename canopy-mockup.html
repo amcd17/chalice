@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canopy · Chalice map mockup</title>
+<style>
+  :root{color-scheme:dark;font-family:system-ui,sans-serif;background:#222b3c;color:#fff3d7}
+  *{box-sizing:border-box}
+  body{margin:0}
+  canvas{display:block;width:100%;height:100dvh;touch-action:none}
+  header,.controls,footer{position:fixed;z-index:1}
+  header{left:24px;top:24px;max-width:min(380px,calc(100vw - 48px));padding:18px 21px;background:#181827eb;border:1px solid #e5c78260}
+  h1{margin:4px 0 8px;font:700 clamp(28px,5vw,47px)/1 Georgia,serif;letter-spacing:.07em}
+  .eyebrow{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#f2ce80}
+  p{font-size:13px;line-height:1.48;margin:0;color:#eee2ce}
+  .controls{left:24px;bottom:24px;display:flex;gap:5px;flex-wrap:wrap;max-width:calc(100vw - 48px)}
+  button{border:1px solid #e7cc9269;background:#201928ee;color:#fff0d1;font:600 13px system-ui;padding:10px 13px;cursor:pointer}
+  button[aria-pressed=true]{background:#eac77d;color:#261721;border-color:#ffe5aa}
+  button:focus-visible{outline:2px solid #fff4bc;outline-offset:2px}
+  footer{right:24px;bottom:25px;background:#181827eb;padding:9px 12px;font-size:11px}
+  body.walk header{pointer-events:none;opacity:.85}
+  #aim{display:none;position:fixed;inset:50% auto auto 50%;width:12px;height:12px;transform:translate(-50%,-50%);border:1px solid #fff3d7b0;border-radius:50%;pointer-events:none}
+  body.walk #aim{display:block}
+  @media(max-width:800px){header{left:12px;top:12px;padding:12px 14px}.controls{left:12px;bottom:38px;max-width:calc(100vw - 24px)}footer{bottom:7px;right:12px}}
+</style>
+<header>
+  <span class="eyebrow">Chalice map mockup</span>
+  <h1>CANOPY</h1>
+  <p id="route">A village of walk-through treehouses above the clouds. Three routes meet at a covered chalice hall, with side doors for escapes and interceptions.</p>
+</header>
+<nav class="controls" aria-label="Canopy views">
+  <button data-view="overview" aria-pressed="true">Overview</button>
+  <button data-view="shrine" aria-pressed="false">Chalice shrine</button>
+  <button data-view="high" aria-pressed="false">High bridge</button>
+  <button data-view="low" aria-pressed="false">Caravan lane</button>
+  <button data-view="walk" aria-pressed="false">Walk the map</button>
+</nav>
+<div id="aim"></div>
+<footer id="help">Drag to orbit · Scroll to zoom</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+if(!window.THREE){
+  document.getElementById('route').textContent = 'The 3D engine could not load. Reload with an internet connection.';
+  return;
+}
+const V = THREE.Vector3;
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.9;
+document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x9fb6d9);
+scene.fog = new THREE.FogExp2(0xa4b8d7,0.0026);
+scene.add(new THREE.HemisphereLight(0xffe8cd,0x47334b,.79));
+const sun = new THREE.DirectionalLight(0xffd4a4,1.35);
+sun.position.set(-36,52,48);
+scene.add(sun);
+const rim = new THREE.DirectionalLight(0x83bbff,0.4);
+rim.position.set(30,20,-50);
+scene.add(rim);
+const camera = new THREE.PerspectiveCamera(56,1,.08,450);
+const surface = [], blockers = [], chimes = [];
+let seed = 4803;
+const rng = () => {seed = (1664525*seed+1013904223)>>>0; return seed/4294967296;};
+const between = (a,b) => a+(b-a)*rng();
+const choose = list => list[Math.floor(rng()*list.length)];
+const wood = [0x71402c,0x855137,0x7d4630,0x99603a,0x673c28].map(color => new THREE.MeshStandardMaterial({color,roughness:.92}));
+const bark = [0x452526,0x583027,0x714036].map(color => new THREE.MeshStandardMaterial({color,roughness:1,flatShading:true}));
+const rail = new THREE.MeshStandardMaterial({color:0x58333a,roughness:.94});
+const gold = new THREE.MeshStandardMaterial({color:0xf0b853,metalness:.45,roughness:.29});
+const cloth = [0x714994,0xa84b42,0x357e80,0xba7435].map(color => new THREE.MeshStandardMaterial({color,roughness:.9,side:THREE.DoubleSide}));
+const gems = [0x00bade,0x0da973,0x7444fa,0xd33082,0xef8f23,0x4266fa].map(color =>
+  new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.09,roughness:.26,metalness:.24,flatShading:true}));
+const cube = new THREE.BoxGeometry(1,1,1), gemShape = new THREE.OctahedronGeometry(1);
+function box(x,y,z,w,h,d,mat,parent=scene){
+  const obj = new THREE.Mesh(cube,mat);
+  obj.position.set(x,y,z);
+  obj.scale.set(w,h,d);
+  parent.add(obj);
+  return obj;
+}
+function tube(a,b,r1,r2,mat,parent=scene){
+  const from = new V(...a), to = new V(...b), delta = to.clone().sub(from);
+  const obj = new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,delta.length(),7),mat);
+  obj.position.copy(from).lerp(to,.5);
+  obj.quaternion.setFromUnitVectors(new V(0,1,0),delta.normalize());
+  parent.add(obj);
+  return obj;
+}
+function crystal(x,y,z,scale,mat,parent=scene){
+  const obj = new THREE.Mesh(gemShape,mat);
+  obj.position.set(x,y,z);
+  obj.scale.set(scale*.55,scale,scale*.65);
+  obj.rotation.set(between(-.7,.7),between(0,6),between(-.8,.8));
+  parent.add(obj);
+  return obj;
+}
+function taperedBranch(points,width,tip,material){
+  const path = new THREE.CatmullRomCurve3(points.map(p=>new V(...p)));
+  const steps = 23, sides = 9, frames = path.computeFrenetFrames(steps,false);
+  const positions = [], indices = [];
+  for(let i=0;i<=steps;i++){
+    const t = i/steps, center = path.getPointAt(t);
+    for(let j=0;j<sides;j++){
+      const angle = j/sides*Math.PI*2;
+      const r = (tip+(width-tip)*Math.pow(1-t,.8))*(1+.14*Math.sin(j*8+i*.46));
+      const p = center.clone().addScaledVector(frames.normals[i],r*Math.cos(angle)).addScaledVector(frames.binormals[i],r*Math.sin(angle));
+      positions.push(p.x,p.y,p.z);
+      if(i<steps){
+        const a=i*sides+j, b=i*sides+(j+1)%sides;
+        indices.push(a,b,a+sides,b,b+sides,a+sides);
+      }
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo,material);
+  scene.add(mesh);
+  return path;
+}
+function hanging(x,y,z,short=false){
+  const length = short ? .54 : between(1.2,3.6);
+  const group = new THREE.Group();
+  group.position.set(x,y,z);
+  scene.add(group);
+  tube([0,0,0],[0,-length,0],.026,.019,rail,group);
+  if(rng()<.55){
+    crystal(0,-length-.27,0,between(.23,.46),choose(gems),group);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.28,.024,6,16),gold);
+    ring.position.y = -length-.26;
+    group.add(ring);
+  }else{
+    for(let i=-1;i<=1;i++){
+      tube([i*.16,-length,0],[i*.16,-length-.66+.15*i,0],.045,.045,gold,group);
+    }
+    tube([-.3,-length,0],[.3,-length,0],.03,.03,gold,group);
+  }
+  chimes.push(group);
+}
+function tree(x,z,h,r){
+  const lean = between(-6,6), material = choose(bark);
+  taperedBranch([[x,-64,z],[x-3,-22,z+4],[x+2,1,z-1],[x-1,h*.48,z-3],[x+lean,h,z]],r,.65,material);
+  taperedBranch([[x-r,-35,z+2],[x-2,1,z+2],[x+1,h*.51,z],[x+lean,h*.9,z-1]],r*.36,.16,choose(bark));
+  const offsets = between(0,7);
+  for(let i=0;i<6;i++){
+    const end = i*Math.PI/3+offsets, reach = between(7,13), y = h+between(-2.8,3.5);
+    const tip = [x+Math.cos(end)*reach+lean*.45,y,z+Math.sin(end)*reach];
+    const path = taperedBranch([[x+lean*.4,h*.5,z-2],[x+Math.cos(end)*4,h*.79,z+Math.sin(end)*4],tip],r*.42,.08,material);
+    for(let n=0;n<17;n++){
+      const at = path.getPointAt(between(.49,1));
+      crystal(at.x+between(-3.8,3.8),at.y+between(-.7,3),at.z+between(-3,3),between(.38,1.45),choose(gems));
+    }
+    if(i%2===0) hanging(tip[0],y-.25,tip[2]);
+  }
+}
+for(const [x,z,h,r] of [
+  [-42,-9,20,4.2],[-44,15,22,3.8],[43,-10,21,4.3],[43,16,22,3.9],
+  [-19,-23,23,3.4],[20,-23,23,3.5],[-20,26,18,3.2],[20,27,21,3.4],
+  [0,-31,21,3.7],[0,33,17,2.9],[-63,-24,25,3.4],[63,-28,21,3.2]
+]) tree(x,z,h,r);
+
+function deck(a,b,width,{rails=false}={}){
+  const dx=b[0]-a[0], dz=b[2]-a[2], len=Math.hypot(dx,dz);
+  const ux=dx/len, uz=dz/len;
+  const steps=Math.max(2,Math.ceil(len/.78)), dy=b[1]-a[1];
+  for(let i=0;i<steps;i++){
+    const t=(i+.5)/steps;
+    const plank=box(a[0]+dx*t,a[1]+dy*t-.19,a[2]+dz*t,len/steps*.987,.38,width,choose(wood));
+    plank.rotation.y=-Math.atan2(dz,dx);
+    plank.rotateZ(Math.atan2(dy,len));
+  }
+  surface.push({a,dx,dz,len,ux,uz,dy,width});
+  for(const side of [-1,1]){
+    const n = width*.46*side;
+    const edge = t => [a[0]+dx*t-uz*n,a[1]+dy*t,a[2]+dz*t+ux*n];
+    const p=edge(0), q=edge(1);
+    tube([p[0],p[1]-.35,p[2]],[q[0],q[1]-.35,q[2]],.19,.19,rail);
+    if(!rails) continue;
+    for(let i=0;i<=Math.ceil(len/4);i++){
+      const pos=edge(i/Math.ceil(len/4));
+      tube(pos,[pos[0],pos[1]+.9,pos[2]],.1,.092,rail);
+    }
+    tube([p[0],p[1]+.89,p[2]],[q[0],q[1]+.89,q[2]],.062,.061,rail);
+  }
+}
+function platform(x,y,z,r){
+  const floor = new THREE.Mesh(new THREE.CylinderGeometry(r,r*.91,.55,14),wood[2]);
+  floor.position.set(x,y-.275,z);
+  scene.add(floor);
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(r+.12,r+.12,.12,14),rail);
+  rim.position.set(x,y-.29,z);
+  scene.add(rim);
+  for(let i=0;i<14;i++){
+    const a=i/14*Math.PI*2;
+    box(x+Math.cos(a)*(r-.55),y+.025,z+Math.sin(a)*(r-.55),.24,.05,.24,gold).rotation.y=a;
+  }
+  surface.push({x,y,z,r:r*.976});
+}
+function cover(x,y,z,w,h,d,material=wood[0]){
+  box(x,y+h*.5,z,w,h,d,material);
+  blockers.push({x,y,z,w,h,d});
+}
+function textile(x,y,z,w,h,index){
+  const g=new THREE.Group();
+  g.position.set(x,y,z);
+  scene.add(g);
+  box(0,-h/2,0,w,h,.045,cloth[index],g);
+  for(const side of [-1,1]){
+    box(side*(w/2-.14),-h/2,.04,.06,h,.045,gold,g);
+    box(0,-h/2+side*(h/2-.14),.04,w,.06,.045,gold,g);
+  }
+  for(let i=-1;i<=1;i++){
+    const diamond=box(i*w*.25,-h*.49,.044,h*.19,h*.19,.03,gold,g);
+    diamond.rotation.z=Math.PI*.25;
+    const inner=box(i*w*.25,-h*.49,.065,h*.10,h*.10,.03,cloth[(index+2)%4],g);
+    inner.rotation.z=Math.PI*.25;
+  }
+  return g;
+}
+function wagon(x,y,z,index){
+  cover(x,y,z,4.1,2.5,2.3,wood[1]);
+  const hood = new THREE.Mesh(new THREE.CylinderGeometry(1.42,1.42,4.48,12,1,false,0,Math.PI),cloth[index]);
+  hood.rotation.z=Math.PI/2;
+  hood.position.set(x,y+2.35,z);
+  scene.add(hood);
+  for(const side of [-1,1]){
+    for(const axle of [-1,1]){
+      const wheel=new THREE.Mesh(new THREE.TorusGeometry(.60,.10,8,14),rail);
+      wheel.position.set(x+axle*1.38,y+.61,z+side*1.24);
+      scene.add(wheel);
+      for(let i=0;i<4;i++) box(wheel.position.x,wheel.position.y,wheel.position.z,.065,1.14,.07,gold).rotation.z=i*Math.PI/4;
+    }
+    const banner=textile(x,y+2.26,z+side*1.17,3.64,1.12,index);
+    if(side<0) banner.rotateY(Math.PI);
+  }
+  for(const i of [-1,1]) crystal(x+i*1.6,y+2.6,z+1.42,.26,gems[index]);
+}
+function lantern(x,y,z,index){
+  tube([x,y,z],[x,y+2.8,z],.14,.085,rail);
+  tube([x,y+2.76,z],[x+.66,y+2.76,z],.07,.05,gold);
+  crystal(x+.65,y+2.38,z,.37,gems[index]);
+
+}
+
+const grainCanvas=document.createElement('canvas');
+grainCanvas.width=240;
+grainCanvas.height=180;
+const grain=grainCanvas.getContext('2d');
+grain.fillStyle='#b78d72';
+grain.fillRect(0,0,240,180);
+for(let x=0;x<240;x+=24){
+  grain.fillStyle=x%48===0?'#c19779':'#a87d65';
+  grain.fillRect(x,0,23,180);
+  grain.fillStyle='#6c4b3f';
+  grain.fillRect(x+23,0,1,180);
+  for(let i=0;i<7;i++){
+    const at=x+2+i*3;
+    grain.strokeStyle=i%2===0?'#855a4355':'#ead0a051';
+    grain.beginPath();
+    grain.moveTo(at,0);
+    grain.bezierCurveTo(at+4,63,at-4,124,at,180);
+    grain.stroke();
+  }
+}
+const wallGrain=new THREE.CanvasTexture(grainCanvas);
+wallGrain.encoding=THREE.sRGBEncoding;
+const plankWall = new THREE.MeshStandardMaterial({color:0xa47a6c,map:wallGrain,roughness:.93});
+const shadowWood = new THREE.MeshStandardMaterial({color:0x482527,roughness:.96});
+function treehouse(x,y,z,w,d,paint,{cross=false,balcony=false}={}){
+  const h=3.35, t=.25, ends=[-1,1];
+  const boards=(xx,yy,zz,ww,hh,dd)=>cover(xx,yy,zz,ww,hh,dd,plankWall);
+  function wall(axis,side,span,opening,offset){
+    const fixed=axis==='x' ? x+side*w/2 : z+side*d/2;
+    const across=axis==='x' ? z : x;
+    function piece(left,right,base,height){
+      const size=right-left;
+      if(size<=.02) return;
+      const pos=across+(left+right)/2;
+      if(axis==='x') boards(fixed,y+base,pos,t,height,size);
+      else boards(pos,y+base,fixed,size,height,t);
+    }
+    const left=offset-opening/2, right=offset+opening/2;
+    if(opening){
+      piece(-span/2,left,0,h);
+      piece(right,span/2,0,h);
+      piece(left,right,2.48,h-2.48);
+      for(const edge of [left,right]){
+        if(axis==='x') box(fixed,y+1.23,across+edge,t+.18,2.46,.16,rail);
+        else box(across+edge,y+1.23,fixed,.16,2.46,t+.18,rail);
+      }
+    }else{
+      piece(-span/2,-.78,0,h);
+      piece(.78,span/2,0,h);
+      piece(-.78,.78,0,1.78);
+      piece(-.78,.78,2.62,h-2.62);
+      for(const offset of [-.78,0,.78]) box(x+offset,y+2.2,fixed,.12,.89,t+.12,gold);
+    }
+  }
+  for(const side of ends){
+    wall('x',side,d,2.7,0);
+    wall('z',side,w,cross ? 3.15 : 0,0);
+    const roof=box(x,y+4.03,z+side*(d/4+.14),w+.85,.22,(d/2+.55)*1.13,cloth[paint]);
+    roof.rotation.x=side*.42;
+    for(let slat=1;slat<6;slat++){
+      const along=(slat/6-.5)*(d/2+.5);
+      const seam=box(x,y+4.17-side*along*Math.sin(.42),z+side*(d/4+.14)+along*Math.cos(.42),
+        w+.87,.054,.095,shadowWood);
+      seam.rotation.x=side*.42;
+    }
+    box(x,y+3.34,z+side*d/2,w+.42,.19,.49,rail);
+    for(const wing of ends){
+      const start=x+wing*(w/2-.32), end=x+wing*(cross ? 1.85 : .96);
+      tube([start,y+.46,z+side*(d/2+.15)],[end,y+2.8,z+side*(d/2+.15)],.095,.095,rail);
+      const sigil=textile((start+end)/2,y+2.58,z+side*(d/2+.24),Math.min(2.35,w*.27),.92,(paint+1)%4);
+      if(side<0) sigil.rotation.y=Math.PI;
+    }
+    for(const end of ends){
+      box(x+end*w/2,y+1.63,z+side*d/2,.33,3.36,.34,rail);
+      tube([x+end*(w/2+.34),y+3.46,z+side*(d/2+.42)],
+        [x+end*(w/2+.34),y+4.78,z],.09,.09,gold);
+      const banner=textile(x+end*(w/2+.18),y+3.26,z+side*(d/2-.52),1.15,1.12,paint);
+      banner.rotation.y=end*Math.PI/2;
+    }
+  }
+  for(const offset of [-.34,0,.34]){
+    const trussX=x+w*offset;
+    tube([trussX,y+3.08,z-d/2],[trussX,y+3.08,z+d/2],.12,.12,rail);
+  }
+  box(x,y+4.76,z,w+1.04,.24,.26,rail);
+  const interiorLight=new THREE.PointLight(0xffb66b,.78,6.4,2);
+  interiorLight.position.set(x,y+2.55,z);
+  scene.add(interiorLight);
+  hanging(x,y+3.65,z-d*.27,true);
+  crystal(x,y+5.12,z,.39,gems[paint]);
+  for(const end of ends){
+    hanging(x+end*(w/2-.54),y+4.2,z-d/2-.3);
+    box(x+end*(w/2-.3),y+2.63,z,.48,.10,2.75,gold);
+    for(const side of ends){
+      const screen=box(x+end*(w/2+.16),y+3.07,z+side*d*.31,.16,.27,d*.22,cloth[(paint+1)%4]);
+      screen.rotation.x=side*.21;
+    }
+  }
+  if(balcony){
+    const outer=z+d/2+1.35, floor=y+3.27;
+    deck([x-w/2,floor,outer],[x+w/2,floor,outer],2.35,{rails:true});
+    for(const end of ends) tube([x+end*(w/2-.45),y+1.02,z+d/2],[x+end*(w/2-.45),floor-.2,outer],.12,.12,rail);
+    box(x,floor+1.3,z+d/2+.05,2.42,2.65,.27,shadowWood);
+  }
+}
+function garland(a,b,index){
+  const points=Array.from({length:7},(_,i)=>{
+    const t=i/6;
+    return a.map((v,j)=>v+(b[j]-v)*t-(j===1?1.5*Math.sin(Math.PI*t):0));
+  });
+  for(let i=1;i<points.length;i++) tube(points[i-1],points[i],.026,.025,rail);
+  for(let i=1;i<points.length-1;i++){
+    const [x,y,z]=points[i];
+    const pennant=textile(x,y,z,.7,1.06,(i+index)%cloth.length);
+    pennant.rotation.y=Math.atan2(a[0]-b[0],a[2]-b[2])+Math.PI/2;
+    if(i%2===0) hanging(x,y-.1,z);
+  }
+}
+platform(0,0,0,12.65);
+treehouse(0,0,0,12.6,10.8,2,{cross:true});
+cover(-2.85,0,1.95,2.5,1.95,.56,shadowWood);
+cover(2.85,0,-1.95,2.5,1.95,.56,shadowWood);
+taperedBranch([[0,-35,-31],[3,-13,-18],[-2,-5,-7],[0,-.58,0]],2.65,.92,bark[1]);
+platform(0,6,-20,6.8);
+treehouse(0,6,-20,8.2,6.05,0);
+deck([-4.6,6,-23.55],[4.6,6,-23.55],2.0,{rails:true});
+cover(-1.65,6,-19.2,.55,2.1,2.35,shadowWood);
+cover(1.65,6,-20.95,.55,2.1,2.35,shadowWood);
+platform(0,-3,19,6.15);
+for(const s of [-1,1]){
+  const color = s < 0 ? 0 : 1;
+  platform(s*37,2,0,10.3);
+  treehouse(s*39,2,0,8.2,7.3,color,{cross:true,balcony:true});
+  deck([s*42.75,2,6.64],[s*34.9,5.27,5.8],2.25,{rails:true});
+  treehouse(s*29,4.2,-14.55,5.5,5.5,color+2,{cross:true});
+  platform(s*29,4.2,-14.55,4.55);
+  garland([s*42,10,-8],[s*30,8,-5],color);
+  taperedBranch([[s*43,-31,12],[s*40,-11,7],[s*38,-3,4],[s*36,1.5,0]],2.65,.95,bark[color]);
+  taperedBranch([[s*20,-28,28],[s*19,-13,24],[s*17,-6,20],[s*14,-3.6,18]],2.15,.74,bark[color]);
+  taperedBranch([[s*17,-24,-20],[s*17,-6,-21],[s*16,1,-20],[s*14,5.45,-21]],2.2,.72,bark[color]);
+  deck([s*37,2,0],[s*25,.7,0],10,{rails:true});
+  deck([s*25,.7,0],[s*10,0,0],9,{rails:true});
+  cover(s*21,.51,-2.52,3.25,2.75,1.6,shadowWood);
+  cover(s*18,.38,2.6,2.4,2.55,1.05,shadowWood);
+  cover(s*15,.24,2.9,2.3,1.25,1.84);
+  deck([s*37,2,-5],[s*32,4.2,-12],6.6,{rails:true});
+  deck([s*32,4.2,-12],[s*29,4.2,-15],6.6);
+  deck([s*29,4.2,-15],[s*26.4,4.2,-15],6);
+  deck([s*26.4,4.2,-15],[s*16,6,-20],6,{rails:true});
+  deck([s*16,6,-20],[s*4,6,-20],6,{rails:true});
+  deck([s*13,6,-19],[s*8,0,-6.5],5.5,{rails:true});
+  cover(s*13.5,6,-21.8,2.35,1.65,1.22);
+  deck([s*37,2,5],[s*28,-1.65,15],8,{rails:true});
+  deck([s*28,-1.65,15],[s*17,-3,19],8,{rails:true});
+  deck([s*17,-3,19],[s*4,-3,19],8,{rails:true});
+  deck([s*16,-3,19],[s*7,-3,19],11);
+  treehouse(s*11.5,-3,19.2,7.3,5.7,color+2);
+  wagon(s*7,-3,22.1,color+2);
+  wagon(s*43,2,-4.6,color);
+  lantern(s*35,2,-4,color);
+  lantern(s*18,-2.82,22,color);
+  lantern(s*7,6,-23,color);
+  textile(s*39,6.5,-3.7,3.8,3.5,color);
+  textile(s*31,5.2,-3.4,2.7,1.6,color);
+  cover(s*8.7,0,2.55,1.2,2.75,2.55,shadowWood);
+  cover(s*8.96,0,-3.8,1.2,2.5,1.95,shadowWood);
+  lantern(s*7.8,0,6.6,2);
+}
+deck([0,-3,17],[0,0,8],6.7,{rails:true});
+cover(-2.5,-3,16.75,1.7,2.1,1.35);
+cover(2.5,-3,16.75,1.7,2.1,1.35);
+
+// The shrine sits in a bowl of broken sightlines, with room to pass on either side of the plinth.
+const plinth = new THREE.Mesh(new THREE.CylinderGeometry(1.22,1.55,1.14,8),rail);
+plinth.position.y=.55;
+scene.add(plinth);
+blockers.push({x:0,y:0,z:0,w:1.95,h:1.14,d:1.95});
+const chalice = new THREE.Mesh(new THREE.LatheGeometry([
+  [0,0],[.45,0],[.52,.07],[.29,.17],[.115,.34],[.12,.51],[.33,.62],[.54,.88],[.59,1.18],[.65,1.25],[.60,1.3],[.55,1.23],[.48,1.04],[.26,.74],[0,.71]
+].map(p=>new THREE.Vector2(...p)),28),gold);
+chalice.position.y=1.15;
+scene.add(chalice);
+const shrineLight = new THREE.PointLight(0xffd58a,1.05,11,2);
+shrineLight.position.set(0,3,0);
+scene.add(shrineLight);
+for(let i=0;i<8;i++){
+  const a=i/8*Math.PI*2;
+  crystal(Math.sin(a)*.56,2.24,Math.cos(a)*.56,.13,gems[i%gems.length]);
+}
+
+const cloudCanvas = document.createElement('canvas');
+cloudCanvas.width=cloudCanvas.height=128;
+const ctx = cloudCanvas.getContext('2d');
+const gradient = ctx.createRadialGradient(64,64,5,64,64,63);
+gradient.addColorStop(0,'rgba(255,244,241,.95)');
+gradient.addColorStop(.46,'rgba(255,239,248,.52)');
+gradient.addColorStop(1,'rgba(226,232,255,0)');
+ctx.fillStyle=gradient;
+ctx.fillRect(0,0,128,128);
+const cloudMap = new THREE.CanvasTexture(cloudCanvas);
+const cloudSea = new THREE.Mesh(new THREE.PlaneGeometry(620,620),new THREE.ShaderMaterial({
+  vertexShader:`varying vec3 worldPos;
+    void main(){
+      worldPos=(modelMatrix*vec4(position,1.)).xyz;
+      gl_Position=projectionMatrix*viewMatrix*vec4(worldPos,1.);
+    }`,
+  fragmentShader:`varying vec3 worldPos;
+    float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+    float noise(vec2 p){
+      vec2 i=floor(p), f=fract(p);
+      f=f*f*(3.-2.*f);
+      return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+1.),f.x),f.y);
+    }
+    void main(){
+      vec2 p=worldPos.xz*.036;
+      float cloud=noise(p)*.53+noise(p*2.07)*.24+noise(p*4.19)*.135+noise(p*8.17)*.06;
+      float edge=noise(p+vec2(.07,.16))-.5;
+      vec3 col=mix(vec3(.47,.56,.73),vec3(.96,.93,.93),smoothstep(.31,.72,cloud+edge*.055));
+      float horizon=smoothstep(100.,270.,distance(cameraPosition.xz,worldPos.xz));
+      gl_FragColor=vec4(mix(col,vec3(.62,.71,.85),horizon),1.);
+    }`
+}));
+cloudSea.rotation.x=-Math.PI/2;
+cloudSea.position.y=-22;
+scene.add(cloudSea);
+for(let i=0;i<125;i++){
+  const haze = new THREE.Sprite(new THREE.SpriteMaterial({map:cloudMap,transparent:true,depthWrite:false,color:0xdfecff,opacity:between(.42,.82)}));
+  haze.position.set(between(-150,150),between(-26,-11),between(-124,126));
+  haze.scale.set(between(23,63),between(8,19),1);
+  scene.add(haze);
+}
+for(let i=0;i<22;i++){
+  const x=between(-7,7), z=between(-7,7);
+  if(Math.hypot(x,z)<2.5) continue;
+  box(x,.016,z,between(.25,.6),.032,.09,gold).rotation.y=between(0,Math.PI);
+}
+
+// Instance the static planks and crystal leaves. Chandeliers and pennants keep their own transforms.
+for(const geometry of [cube,gemShape]){
+  const groups=new Map();
+  for(const obj of [...scene.children]){
+    if(obj.geometry!==geometry) continue;
+    if(!groups.has(obj.material)) groups.set(obj.material,[]);
+    groups.get(obj.material).push(obj);
+  }
+  for(const [material,objects] of groups){
+    const batch=new THREE.InstancedMesh(geometry,material,objects.length);
+    for(const [i,obj] of objects.entries()){
+      obj.updateMatrix();
+      batch.setMatrixAt(i,obj.matrix);
+      scene.remove(obj);
+    }
+    batch.instanceMatrix.needsUpdate=true;
+    batch.frustumCulled=false;
+    scene.add(batch);
+  }
+}
+const routes = {
+  overview:{eye:[48,53,81], at:[0,6,0], text:'A village of walk-through treehouses above the clouds. Three routes meet at a covered chalice hall, with side doors for escapes and interceptions.'},
+  shrine:{eye:[4.65,1.86,3.95], at:[0,1.52,0], text:'Four doors and offset screens break crossfire around the cup. Pursue through the hall or cut around the outside deck.'},
+  high:{eye:[17,9.4,-28], at:[0,6.8,-20], text:'Cross through the lookout or take its outer catwalk. Two ramps connect the high route to the shrine without spending a movement ability.'},
+  low:{eye:[6,3.5,29], at:[-6,-1.3,17], text:'Workshops and painted wagons cover the lower lane. Take the interior for close fights or use the narrow exterior walks to flank.'},
+  walk:{text:'Start on Thistle’s deck. Try a direct run, cross the high bridge, then loop through the wagons. Falling returns you to your starting deck.'}
+};
+const target = new V(), orbit = new THREE.Spherical(), goal = new THREE.Spherical();
+const focus = new V();
+const keys = new Set(), hero = new V(-37,2,-.2);
+let mode = 'overview', yaw = -Math.PI/2, pitch = 0, velocityY = 0, grounded = true, drag = false;
+function select(key){
+  mode=key;
+  const walk = key === 'walk';
+  document.body.classList.toggle('walk',walk);
+  document.getElementById('route').textContent=routes[key].text;
+  document.getElementById('help').textContent=walk?'WASD move · Space jump · Click or drag to look':'Drag to orbit · Scroll to zoom';
+  for(const button of document.querySelectorAll('[data-view]')) button.setAttribute('aria-pressed',String(button.dataset.view===key));
+  keys.clear();
+  if(!walk){
+    focus.set(...routes[key].at);
+    goal.setFromVector3(new V(...routes[key].eye).sub(focus));
+    if(document.pointerLockElement === renderer.domElement) document.exitPointerLock();
+  }
+}
+select('overview');
+target.copy(focus);
+orbit.copy(goal);
+for(const b of document.querySelectorAll('[data-view]')) b.addEventListener('click',()=>select(b.dataset.view));
+renderer.domElement.addEventListener('pointerdown',e=>{
+  drag=true;
+  if(mode==='walk' && !document.pointerLockElement && e.pointerType==='mouse'){
+    try{renderer.domElement.requestPointerLock()?.catch(()=>{});}catch(err){}
+  }
+});
+addEventListener('pointerup',()=>{drag=false;});
+addEventListener('pointermove',e=>{
+  if(!drag && document.pointerLockElement!==renderer.domElement) return;
+  if(mode==='walk'){
+    yaw-=e.movementX*.003;
+    pitch=THREE.MathUtils.clamp(pitch-e.movementY*.003,-1.2,1.2);
+  }else{
+    goal.theta-=e.movementX*.007;
+    goal.phi=THREE.MathUtils.clamp(goal.phi-e.movementY*.006,.22,1.52);
+  }
+});
+renderer.domElement.addEventListener('wheel',e=>{
+  if(mode==='walk') return;
+  e.preventDefault();
+  goal.radius=THREE.MathUtils.clamp(goal.radius*Math.exp(e.deltaY*.001),12,180);
+},{passive:false});
+addEventListener('keydown',e=>{
+  if(mode!=='walk' || !['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) return;
+  e.preventDefault();
+  keys.add(e.code);
+});
+addEventListener('keyup',e=>keys.delete(e.code));
+addEventListener('blur',()=>keys.clear());
+function heightAt(x,z,maxY){
+  let floor=-Infinity;
+  for(const s of surface){
+    let y;
+    if(s.r){
+      if(Math.hypot(x-s.x,z-s.z)>s.r) continue;
+      y=s.y;
+    }else{
+      const rx=x-s.a[0], rz=z-s.a[2], along=rx*s.ux+rz*s.uz;
+      if(along<-.1 || along>s.len+.1 || Math.abs(rx*s.uz-rz*s.ux)>s.width/2) continue;
+      y=s.a[1]+s.dy*THREE.MathUtils.clamp(along/s.len,0,1);
+    }
+    if(y<=maxY) floor=Math.max(floor,y);
+  }
+  return floor;
+}
+function blocked(x,z){
+  return blockers.some(b=>hero.y+.45<b.y+b.h && hero.y+1.4>b.y &&
+    Math.abs(x-b.x)<b.w*.5+.3 && Math.abs(z-b.z)<b.d*.5+.3);
+}
+function walk(dt){
+  let forward=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));
+  let strafe=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
+  const speed=6.4*dt/(Math.hypot(forward,strafe)||1);
+  forward*=speed; strafe*=speed;
+  const dx=-Math.sin(yaw)*forward+Math.cos(yaw)*strafe;
+  const dz=-Math.cos(yaw)*forward-Math.sin(yaw)*strafe;
+  if(!blocked(hero.x+dx,hero.z)) hero.x+=dx;
+  if(!blocked(hero.x,hero.z+dz)) hero.z+=dz;
+  const floor=heightAt(hero.x,hero.z,hero.y+.35);
+  if(grounded && keys.has('Space')){velocityY=4.6; grounded=false;}
+  if(grounded && floor>hero.y-.45) hero.y=floor;
+  else{
+    velocityY-=12*dt;
+    hero.y+=velocityY*dt;
+    grounded=velocityY<0 && hero.y<=floor;
+    if(grounded){hero.y=floor; velocityY=0;}
+  }
+  if(hero.y<-22){hero.set(-37,2,0);velocityY=0;grounded=true;}
+  camera.position.set(hero.x,hero.y+1.66,hero.z);
+  camera.rotation.set(pitch,yaw,0,'YXZ');
+}
+function resize(){
+  renderer.setSize(innerWidth,innerHeight,false);
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize);
+resize();
+let previous=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-previous)/1000);
+  previous=now;
+  for(let i=0;i<chimes.length;i++) chimes[i].rotation.z=Math.sin(now*.0016+i*1.12)*.085;
+  if(mode==='walk') walk(dt);
+  else{
+    const ease=1-Math.exp(-dt*6);
+    target.lerp(focus,ease);
+    orbit.radius+=(goal.radius-orbit.radius)*ease;
+    orbit.theta+=(goal.theta-orbit.theta)*ease;
+    orbit.phi+=(goal.phi-orbit.phi)*ease;
+    camera.position.setFromSpherical(orbit).add(target);
+    camera.lookAt(target);
+  }
+  renderer.render(scene,camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</html>
