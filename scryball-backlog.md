@@ -742,3 +742,6 @@ Alex wants tiered seating around every map that players can't reach, full of cla
 
 ## v0.324 (18 Nov)
 - The friendly HUD uses ruby for NEXT KILL +5. Sapphire appears when the chalice is full.
+
+## v0.325 (18 Nov)
+- Classes show teammate names beside the same class crests used in the HUD. Removed class squad numbers from name tags, armor, and setup. Champions keep their squad numbers.
