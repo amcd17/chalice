@@ -707,3 +707,32 @@ Alex wants tiered seating around every map that players can't reach, full of cla
 
 ## v0.314 (18 Nov)
 - The studded flail swings out in a wider right-to-left arc. The chain straightens at full extension and bends again as the head drops.
+
+## v0.315 (18 Nov)
+- The flail chain starts uncoiling during the windup. The wrist eases into the cut so the head travels continuously into the sweep.
+
+## v0.316 (18 Nov)
+- The Seeker holds the Diamond Spear with both hands in first and third person. The left hand releases the shaft for abilities and returns to the grip afterward.
+- Diamond Spear is a 2H weapon. Picking up the Chalice stows it and brings out the Crystal Staff.
+- Restored the boxed 1H and 2H labels in the weapon HUD and class loadouts. A gold Chalice icon still marks locked weapons.
+
+## v0.317 (18 Nov)
+- The Diamond Spear sits straighter in both hands and extends to the centre of the reticle during a jab.
+- Deployed Bulwark uses the Low Parapet design with five crenellations and glowing stone joints. Enemy shots can go through the gaps. Allied shots still pass through the wall.
+- A tapped Warhammer attack plays its full 0.32-second wind-up. Releasing a held charge still goes straight into the swing.
+
+## v0.318 (18 Nov)
+- Rascal casts Shroud with a quick sweep of his empty left hand. Removed the wooden horse totem.
+- Shroud makes first-person hands and weapons translucent and trails blue-green wisps around the edges of the view. This applies to the Rascal and any affected teammate.
+- Shrouded fighters stay faintly visible to enemies at range. Shroud still limits the distance at which enemy bots detect a fighter.
+
+## v0.319 (18 Nov)
+- Mausoleum's rotunda uses weathered stone, and the broken burial niches contain rubble. Softened the waterfalls, foam, and oculus glare.
+- Grounded the mushrooms on the terrace, fallen rubble, or the curved surfaces of the column drums.
+
+## v0.320 (18 Nov)
+- The Chalice rests on a low stone plinth in the centre of Mausoleum's rotunda. Its light fades when claimed and returns when the cup reforms at the shrine.
+
+## v0.321 (18 Nov)
+- Six tutorial slides teach the Chalice objective, shrine, gem scoring, drinking, carrying, and dropped state using new screenshots from Mausoleum.
+- Mausoleum is the selectable match map. Basilica and Scrollwork stay available in the map editor.
