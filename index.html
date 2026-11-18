@@ -1004,7 +1004,7 @@ details.box[open] summary{margin-bottom:10px}
 </div>
 
 <div id="menu" class="screen">
-<div id="ver">Chalice 0.321</div>
+<div id="ver">Chalice 0.324</div>
   <div class="wrap">
     <div class="brand">
       <h1 class="logo">CHALICE</h1>
@@ -8360,13 +8360,12 @@ function chalHudDraw(p, n, m){
   value.textContent = big;
   value.className = next ? 'big next' : full && !dropped ? 'big word plat' : 'big word';
   if(next){
-    const willFill = n + 1 >= CH_CUP;
-    const tierLevel = willFill ? 4 : m >= 5 ? 3 : m >= 3 ? 2 : m >= 2 ? 1 : 0;
-    el.style.setProperty('--next-kill-ink', theirs ? col : willFill ? CH_PLAT : chTierCol(m));
+    const tierLevel = m >= 5 ? 3 : m >= 3 ? 2 : m >= 2 ? 1 : 0;
+    el.style.setProperty('--next-kill-ink', theirs ? col : chTierCol(m));
     el.style.setProperty('--next-kill-peak', (1.02 + .025*tierLevel).toFixed(3));
     el.style.setProperty('--next-kill-glow', (4 + 3*tierLevel) + 'px');
     el.style.setProperty('--next-kill-animation', tierLevel === 0 ? 'none' : 'chaliceNextKillBeat');
-    el.style.setProperty('--next-kill-period', [2.5,2.05,1.6,1.1,.65][tierLevel] + 's');
+    el.style.setProperty('--next-kill-period', [2.5,2.05,1.6,1.1][tierLevel] + 's');
   }
   $('chDrain').hidden = !dropped;
   if(dropped) $('chDbar').firstChild.style.width = clamp(CH.drain, 0, 1)*100 + '%';
@@ -9836,14 +9835,20 @@ const CHALICE_LESSONS = [
   },
   {
     label:'Fill', title:'Fill it',
-    copy:`<p>Seven kills fill the chalice. Your team’s kills are worth more as the cup fills. The rightmost glowing gem shows what your next kill is worth.</p>
-      <table class="lessonScores" aria-label="Default points per kill">
-        <thead><tr><th scope="col">Kills</th><th scope="col">Points each</th></tr></thead>
+    copy:'<p>Seven kills fill the chalice. Your team’s kills are worth more as the cup fills. The rightmost glowing gem shows what your next kill is worth.</p>',
+    shot:'carry', alt:'A partly filled Chalice with 7 points and +3 for the next kill on the HUD.',
+    caption:'With five kills in the cup, the next kill adds 3 points.'
+  },
+  {
+    label:'Points', title:'Points',
+    copy:`<table class="lessonScores" aria-label="Default points per kill and running totals">
+        <thead><tr><th scope="col">Kills</th><th scope="col">Points each</th><th scope="col">Points total</th></tr></thead>
         <tbody>
-          <tr style="color:${CH_TIER_COL[1]}"><td>1st to 3rd</td><td>1</td></tr>
-          <tr style="color:${CH_TIER_COL[2]}"><td>4th and 5th</td><td>2</td></tr>
-          <tr style="color:${CH_TIER_COL[3]}"><td>6th</td><td>3</td></tr>
-          <tr style="color:${CH_TIER_COL[5]}"><td>7th</td><td>5</td></tr>
+          <tr style="color:${CH_TIER_COL[1]}"><th scope="row">1st to 3rd</th><td>1</td><td>1, 2, 3</td></tr>
+          <tr style="color:${CH_TIER_COL[2]}"><th scope="row">4th and 5th</th><td>2</td><td>5, 7</td></tr>
+          <tr style="color:${CH_TIER_COL[3]}"><th scope="row">6th</th><td>3</td><td>10</td></tr>
+          <tr style="color:${CH_TIER_COL[5]}"><th scope="row">7th</th><td>5</td><td>15</td></tr>
+          <tr style="color:${CH_PLAT}"><th scope="row">FULL</th><td>–</td><td>15</td></tr>
         </tbody>
       </table>`,
     shot:'full', alt:'A full Chalice glowing sapphire, with 15 points in the HUD.',

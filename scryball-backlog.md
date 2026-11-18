@@ -736,3 +736,9 @@ Alex wants tiered seating around every map that players can't reach, full of cla
 ## v0.321 (18 Nov)
 - Six tutorial slides teach the Chalice objective, shrine, gem scoring, drinking, carrying, and dropped state using new screenshots from Mausoleum.
 - Mausoleum is the selectable match map. Basilica and Scrollwork stay available in the map editor.
+
+## v0.322 (18 Nov)
+- The tutorial has a Points tab with per-kill values, running totals, and a sapphire FULL row for the 15-point cup.
+
+## v0.324 (18 Nov)
+- The friendly HUD uses ruby for NEXT KILL +5. Sapphire appears when the chalice is full.
