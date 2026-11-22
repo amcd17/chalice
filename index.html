@@ -2716,10 +2716,13 @@ function botParry(b, target, d){
   return !!b.parryGo && d < 3.8 && left <= PARRY.start + 0.12 && left > 0;
 }
 const SWQ = new THREE.Quaternion(), SWQ2 = new THREE.Quaternion(), SWE = new THREE.Euler(), SWX = new V(1, 0, 0), SWY = new V(0, 1, 0), SWZ = new V(0, 0, 1);
+// 22 Nov: the cuts swing from the shoulder, not the wrist. The hand travels a long arc across the view (h: cocked, landing, end of the
+// follow-through, m: the arc's control point), the blade trails the hand and whips through at the end (a: blade angles), and the
+// follow-through carries the blade out of view before it comes back up into the guard.
 const SWCUTS = [
-  { a:[52, 170, 206],  h:[[0.07, 0.10], [-0.04, 0.20], [-0.08, 0.15]],  roll: 0.9, rs: 1 },    // down and left, over the top
-  { a:[125, 12, -22],  h:[[-0.05, 0.10], [-0.08, 0.20], [-0.03, 0.15]],    roll:-0.9, rs:-1 },    // the mirror: down and right
-  { a:[188, 80, 40],   h:[[-0.05, 0.05], [0.05, 0.16], [0.08, 0.18]],   roll: 0.5, rs:-0.6 }    // rising from low left
+  { a:[40, 165, 218],  h:[[0.06, 0.30], [-0.36, -0.02], [-0.46, -0.15]], m:[-0.14, 0.32], roll: 0.9, rs: 1 },    // down and left, over the top
+  { a:[138, 14, -28],  h:[[-0.30, 0.26], [0.10, -0.03], [0.19, -0.11]],  m:[-0.06, 0.30], roll:-0.9, rs:-1 },    // the backhand: down and right
+  { a:[202, 70, 34],   h:[[-0.26, -0.05], [0.02, 0.17], [0.13, 0.27]],   m:[-0.20, 0.08], roll: 0.5, rs:-0.6 }   // rising from low left
 ];
 const swEaseOut3 = q => 1 - Math.pow(1 - q, 3);
 function swordViewPose(f){
@@ -2758,26 +2761,26 @@ function swordViewPose(f){
         out.pitch = -1.58*(1 - k); out.dz = -0.47*(1 - k); out.fov = 7*(1 - k);
       }
     } else {
-      const c = SWCUTS[(sw.cut || 0) % SWCUTS.length], a = c.a;
-      const T0 = 0.4*I, T1 = I - T0, d1 = a[1] - a[0], d2 = a[2] - a[1];
-      const T2 = Math.min(0.09, 1.5*Math.abs(d2)*T1/Math.max(1, Math.abs(d1))), hang = 0.03, rec0 = I + T2 + hang;
+      const c = SWCUTS[(sw.cut || 0) % SWCUTS.length], a = c.a, h = c.h;
+      const T0 = 0.5*I, T1 = I - T0, T2 = 0.13, hang = 0.02, rec0 = I + T2 + hang;   // the hit still lands at I, so the timing of the fight is unchanged
       const rest = SW_REST_ANG;
-      let th, hx, hy, roll = 0, cut = 0;
-      if(t < T0){   // the draw: eased out of the guard to the cocked blade
-        const k = smooth(t/T0);
-        th = rest + (a[0] - rest)*k; hx = c.h[0][0]*k; hy = c.h[0][1]*k;
-      } else if(t < I){   // the strike: the hand leads and the blade lags, both accelerating into the landing
-        const q = (t - T0)/T1, kb = Math.pow(q, 2), kh = Math.pow(q, 1.6);
-        th = a[0] + d1*kb; hx = c.h[0][0] + (c.h[1][0] - c.h[0][0])*kh; hy = c.h[0][1] + (c.h[1][1] - c.h[0][1])*kh; cut = q; roll = c.roll*smooth(q);
-      } else if(t < I + T2){   // the follow-through: the weight carries on past the landing, slowing to a stop
+      const arc = (q, i) => (1 - q)*(1 - q)*h[0][i] + 2*(1 - q)*q*c.m[i] + q*q*h[1][i];   // the hand's path through the strike
+      let th, hx, hy, roll = 0, cut = 0, reach = 0;
+      if(t < T0){   // the wind-up: the hand lifts and draws back to the cocked blade, slowing into the top
+        const k = swEaseOut3(t/T0);
+        th = rest + (a[0] - rest)*k; hx = h[0][0]*k; hy = h[0][1]*k; reach = -0.04*k;
+      } else if(t < I){   // the strike: the hand sweeps the arc, the blade lags it and then whips through into the landing
+        const q = (t - T0)/T1, kh = Math.pow(q, 1.4), kb = Math.pow(q, 2.2);
+        th = a[0] + (a[1] - a[0])*kb; hx = arc(kh, 0); hy = arc(kh, 1); cut = q; roll = c.roll*smooth(q); reach = -0.04 + 0.16*Math.sin(Math.PI*0.5*q);
+      } else if(t < I + T2){   // the follow-through: the weight carries the blade on and out of the view, slowing to a stop
         const q = swEaseOut3((t - I)/T2);
-        th = a[1] + d2*q; hx = c.h[1][0] + (c.h[2][0] - c.h[1][0])*q; hy = c.h[1][1] + (c.h[2][1] - c.h[1][1])*q; cut = 1 - q*0.5; roll = c.roll*(1 - 0.4*q);
-      } else if(t < rec0){ th = a[2]; hx = c.h[2][0]; hy = c.h[2][1]; roll = c.roll*0.6; }
-      else {   // the recovery: the blade hangs a beat, then drags home
-        const k = smooth(clamp((t - rec0)/Math.max(0.01, sw.dur - rec0), 0, 1));
-        th = a[2] + (rest - a[2])*k; hx = c.h[2][0]*(1 - k); hy = c.h[2][1]*(1 - k); roll = c.roll*0.6*(1 - k);
+        th = a[1] + (a[2] - a[1])*q; hx = h[1][0] + (h[2][0] - h[1][0])*q; hy = h[1][1] + (h[2][1] - h[1][1])*q; cut = 1 - q*0.5; roll = c.roll*(1 - 0.4*q); reach = 0.12 - 0.06*q;
+      } else if(t < rec0){ th = a[2]; hx = h[2][0]; hy = h[2][1]; roll = c.roll*0.6; reach = 0.06; }
+      else {   // the recovery: the arm comes back up into the guard
+        const k = swEaseOut3(clamp((t - rec0)/Math.max(0.01, sw.dur - rec0), 0, 1));   // quick to start back, settling gently into the guard
+        th = a[2] + (rest - a[2])*k; hx = h[2][0]*(1 - k); hy = h[2][1]*(1 - k); roll = c.roll*0.6*(1 - k); reach = 0.06*(1 - k);
       }
-      out.dth = (th - rest)*R; out.dx = hx; out.dy = hy; out.roll = roll; out.dz = -0.05*cut;
+      out.dth = (th - rest)*R; out.dx = hx; out.dy = hy; out.roll = roll; out.dz = -reach - 0.03*cut;
     }
   }
   out.dz += 0.04*jolt; out.pitch += 0.07*jolt;   // the blade's weight kicking back into the hand on a hit
@@ -12306,7 +12309,7 @@ function padUiScreen(){
 function menuPadActive(){ return padUiScreen() === 'menu'; }
 function padMenuItems(ui){
   const root = ui === 'death' ? '#deathPicks' : '#' + ui;
-  const sel = ui === 'death' ? '.dpk, .dpchg' : 'button, [data-act], .card, input[type=range], input[type=checkbox], select';
+  const sel = ui === 'death' ? '.dpk, .dpchg' : 'button, [data-act], .card, summary, input[type=range], input[type=checkbox], select';
   const seen = new Set(), out = [];
   for(const el of document.querySelectorAll(sel.split(', ').map(x => root + ' ' + x).join(', '))){
     if(seen.has(el) || el.disabled || el.getClientRects().length === 0) continue;
@@ -12328,11 +12331,11 @@ function padUiTick(ui, edge, down){
   if(down(12) || sy < -0.6) dir = 'u'; else if(down(13) || sy > 0.6) dir = 'd'; else if(down(14) || sx < -0.6) dir = 'l'; else if(down(15) || sx > 0.6) dir = 'r';
   const now = performance.now();
   let step = null;
-  if(dir !== padNav.dir){ padNav.dir = dir; padNav.next = now + 380; step = dir; }
-  else if(dir && now >= padNav.next){ padNav.next = now + 140; step = dir; }
+  if(dir !== padNav.dir){ padNav.dir = dir; padNav.next = now + 380; padNav.reps = 0; step = dir; }
+  else if(dir && now >= padNav.next){ padNav.next = now + 110; padNav.reps++; step = dir; }
   if(step){
     const f = padFocus;
-    if(f && f.type === 'range' && (step === 'l' || step === 'r')){ const st = parseFloat(f.step) || 1; f.value = clamp(parseFloat(f.value) + (step === 'r' ? st : -st), parseFloat(f.min), parseFloat(f.max)); f.dispatchEvent(new Event('input', { bubbles:true })); f.dispatchEvent(new Event('change', { bubbles:true })); }
+    if(f && f.type === 'range' && (step === 'l' || step === 'r')){ const st = (parseFloat(f.step) || 1)*(padNav.reps > 20 ? 10 : padNav.reps > 6 ? 3 : 1); f.value = clamp(parseFloat(f.value) + (step === 'r' ? st : -st), parseFloat(f.min), parseFloat(f.max)); f.dispatchEvent(new Event('input', { bubbles:true })); f.dispatchEvent(new Event('change', { bubbles:true })); }
     else if(f && f.tagName === 'SELECT' && (step === 'l' || step === 'r')){ f.selectedIndex = clamp(f.selectedIndex + (step === 'r' ? 1 : -1), 0, f.options.length - 1); f.dispatchEvent(new Event('change', { bubbles:true })); }
     else padMove(items, { u:[0,-1], d:[0,1], l:[-1,0], r:[1,0] }[step]);
   }
@@ -15795,6 +15798,6 @@ if(/[?&]edit=1/.test(location.search)) setTimeout(() => edEnter(), 0);
 if(TEST){ window.__odd = { get state(){ return state; }, get paused(){ return paused; }, get padMode(){ return padMode; }, setPadFocus, get FIGHTERS_(){ return FIGHTERS; }, startGame, trialWeapon, chTake, chDrop, tryDamage:damage,
   get map(){return MAP_ID;}, get mode(){return GAME_TYPE;}, setClass:k=>{selectedClass=k;},
   get camera(){return camera;}, get VM(){return VM;}, get fallback(){return fallback;},
-  stopFrames(){trialManual = true;}, get elapsed(){return clock;}, setPaused, setMode, setTeam, showPage, set kickoff(v){ KICKOFF_T = v; }, get PLAYER(){ return PLAYER; }, get FIGHTERS(){ return FIGHTERS; }, BALL, get SCORE(){ return SCORE; }, get state(){ return state; }, keys, mouse, pressed, mpressed, WARDS, PROJ, castWard, get CH(){ return CH; }, setT:v => { matchT = v; }, sim:(sec)=>{ const n=Math.round(sec*60); for(let i=0;i<n && state==='play';i++){ step(1/60); updateFX(1/60); } } }; }
+  stopFrames(){trialManual = true;}, resumeFrames(){trialManual = false;}, get elapsed(){return clock;}, setPaused, setMode, setTeam, showPage, set kickoff(v){ KICKOFF_T = v; }, get PLAYER(){ return PLAYER; }, get FIGHTERS(){ return FIGHTERS; }, BALL, get SCORE(){ return SCORE; }, get state(){ return state; }, keys, mouse, pressed, mpressed, WARDS, PROJ, castWard, get CH(){ return CH; }, setT:v => { matchT = v; }, sim:(sec)=>{ const n=Math.round(sec*60); for(let i=0;i<n && state==='play';i++){ step(1/60); updateFX(1/60); } } }; }
 })();
 </script>
