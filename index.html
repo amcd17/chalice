@@ -703,6 +703,11 @@ details.box[open] summary{margin-bottom:10px}
 @keyframes titleBlink{0%,100%{opacity:.35}50%{opacity:1}}
 body:not(.padMode) .padOnly{display:none}
 body.padMode .kbOnly{display:none}
+
+#localMenu .play.padFocus,#localMenu .setupBtn.padFocus{outline:none !important;box-shadow:none !important;filter:brightness(1.16) saturate(1.1)}
+#localMenu :has(> .play.padFocus),#localMenu :has(> .setupBtn.padFocus),#localMenu :has(> .play:hover),#localMenu :has(> .setupBtn:hover){filter:drop-shadow(0 0 10px rgba(255,214,120,.75)) drop-shadow(0 0 26px rgba(232,184,74,.45))}
+#localMenu .play.padFocus,#localMenu .setupBtn.padFocus{animation:goldPulse 1.6s ease-in-out infinite}
+@keyframes goldPulse{0%,100%{filter:brightness(1.08)}50%{filter:brightness(1.24) saturate(1.15)}}
 </style>
 
 <style id="localMenuStyle">
@@ -12233,13 +12238,14 @@ function pollGamepad(p, dt){
   const ui = padUiScreen();
   if(pad && ui){ padUiTick(ui, edge, down); padFire = false; padScoreboard = false; padLookX = padLookY = padMoveX = padMoveY = 0; if(ui !== 'death') return; }
   padFire = down(7);
+  if(edge.has(7) && state === 'play' && !paused) mpressed.add(0);   // the trigger's press is a click: weapons that fire on the press (blunderbuss, daggers, repeater) need it
   padScoreboard = down(8);
   if(pad){
     if(p && p.alive){
       // a curved response: fine aim near the centre, a fast turn at full tilt
       const m = Math.hypot(padLookX, padLookY), c = m > 0 ? Math.pow(m, 1.8)/m : 0;
       p.yaw -= padLookX * c * dt * 3.6 * padSens;
-      p.pitch = clamp(p.pitch + (padInvert ? -1 : 1) * padLookY * c * dt * 2.4 * padSens, -1.5, 1.5);
+      p.pitch = clamp(p.pitch - (padInvert ? -1 : 1) * padLookY * c * dt * 2.4 * padSens, -1.5, 1.5);
     }
     for(const [i,code] of [[0,'Space'],[4,'ShiftLeft'],[6,'KeyQ'],[2,'KeyR'],[5,'KeyF'],[1,'KeyE'],[10,'KeyE'],[14,'KeyG']]){ if(down(i)) padHeld.add(code); if(edge.has(i)) padPressed.add(code); }
     if(edge.has(9) && state === 'play') setPaused(!paused);
