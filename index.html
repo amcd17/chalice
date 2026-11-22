@@ -1159,7 +1159,7 @@ body.padMode .kbOnly{display:none}
     <div id="trialDeathHeading"><span id="trialKillerIcon" aria-hidden="true"></span><span id="trialKillerName"></span></div>
     <div id="trialDeathDetails"></div>
     <div id="trialCupDropped" hidden>CUP DROPPED</div>
-    <div id="trialDeathSkip" hidden><span class="kbOnly">SPACE</span><span class="padOnly">A</span> TO SKIP</div>
+    <div id="trialDeathSkip" hidden><span class="kbOnly">SPACE</span><span class="padOnly">LB</span> TO SKIP</div>
   </section>
   <div id="topbar">
     <div class="tscore blue mine" id="tsBlue"><span class="tlabel">THISTLE</span><span id="sBlue">0</span><span class="cpot" id="cpotB"></span></div>
@@ -12195,14 +12195,13 @@ function padMenuReset(){ if(padFocus) padFocus.classList.remove('padFocus'); pad
 // ---------------- Input ----------------
 const keys = {}; const pressed = new Set(); const mouse = { 0:false, 2:false }; const mpressed = new Set();
 // ---------------- Gamepad (Standard mapping, Xbox names) ----------------
-// In a match: left stick moves, right stick looks, A jumps, RT fires, LT is Q (throw, or aim a Chalice throw),
-// LB is Shift (movement ability), RB is right click / F (class action; drinks while carrying the cup),
-// X reloads (and parries with the sword), B passes / interacts (E), Y taps primary/secondary and holds for the sword,
-// D-pad up/right/down picks a slot, D-pad left calls for a pass (G), L3 is E too, R3 draws the sword,
-// View shows the scores, Start pauses.
+// In a match, Bumper Jumper (Halo Reach / Halo 5): LB jumps, RB is melee (draws the sword, then swings it; hold for the heavy blow),
+// RT fires, LT is Q (throwable, or aim a Chalice throw), X is Shift (movement ability), A is right click / F (class action; drinks while carrying the cup),
+// B reloads and passes (R and E, Halo's action/reload), Y taps primary/secondary and holds for the sword,
+// D-pad up/right/down picks a slot, D-pad left calls for a pass (G), L3 is E too, R3 draws the sword, View shows the scores, Start pauses.
 // On every screen (title, menus, pause, full time, the respawn picker): the D-pad or left stick moves a focus ring,
 // A selects, B goes back, left/right nudges a slider.
-const PAD_GLYPH = { RMB:'RB', 'RIGHT CLICK':'RB', F:'RB', Q:'LT', SHIFT:'LB', E:'B', R:'X', G:'◀', SPACE:'A', ESC:'START', TAB:'VIEW', 'LEFT CLICK':'RT' };
+const PAD_GLYPH = { RMB:'A', 'RIGHT CLICK':'A', F:'A', Q:'LT', SHIFT:'X', E:'B', R:'B', G:'◀', SPACE:'LB', ESC:'START', TAB:'VIEW', 'LEFT CLICK':'RT' };
 let padMode = false;   // the last input came from a pad: prompts show pad buttons
 let padSens = 1, padInvert = false;
 try{ const v = parseFloat(localStorage.getItem('dc-pad-sens')); if(v > 0) padSens = v; padInvert = localStorage.getItem('dc-pad-invert') === '1'; }catch(e){}
@@ -12257,7 +12256,7 @@ function pollGamepad(p, dt){
       p.yaw -= padLookX * c * dt * 3.6 * padSens;
       p.pitch = clamp(p.pitch - (padInvert ? -1 : 1) * padLookY * c * dt * 2.4 * padSens, -1.5, 1.5);
     }
-    for(const [i,code] of [[0,'Space'],[4,'ShiftLeft'],[6,'KeyQ'],[2,'KeyR'],[5,'KeyF'],[1,'KeyE'],[10,'KeyE'],[14,'KeyG']]){ if(down(i)) padHeld.add(code); if(edge.has(i)) padPressed.add(code); }
+    for(const [i,code] of [[4,'Space'],[2,'ShiftLeft'],[6,'KeyQ'],[1,'KeyR'],[0,'KeyF'],[1,'KeyE'],[10,'KeyE'],[14,'KeyG']]){ if(down(i)) padHeld.add(code); if(edge.has(i)) padPressed.add(code); }
     if(edge.has(9) && state === 'play') setPaused(!paused);
     if(edge.has(3)){ padYStarted = performance.now(); padYHandled = false; }
     if(down(3) && !padYHandled && performance.now() - padYStarted >= 280){ padYRequest = 'melee'; padYHandled = true; }
@@ -12265,6 +12264,12 @@ function pollGamepad(p, dt){
     if(edge.has(12)) padWeaponRequest = TRIAL_SLOT.primary;
     if(edge.has(15)) padWeaponRequest = TRIAL_SLOT.repeater;
     if(edge.has(13) || edge.has(11)) padWeaponRequest = TRIAL_SLOT.melee;
+    // RB is melee: the first press draws the sword, with it out RB swings like the trigger (tap to slash, hold for the heavy lunge)
+    if(p && p.alive){
+      const swordOut = trialWeapon(p).slot === TRIAL_SLOT.melee;
+      if(edge.has(5) && !swordOut) padWeaponRequest = TRIAL_SLOT.melee;
+      else if(swordOut){ if(down(5)) padFire = true; if(edge.has(5) && state === 'play' && !paused) mpressed.add(0); }
+    }
   } else { padLookX = padLookY = padMoveX = padMoveY = 0; padFire = false; padScoreboard = false; padHeld.clear(); padPressed.clear(); padYStarted = 0; padYHandled = false; }
 }
 // which screen the pad is driving, if any
