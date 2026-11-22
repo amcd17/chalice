@@ -12431,9 +12431,9 @@ function playerControl(dt){
   I.ward = false;    // Q aims the ward only when the Arcanist is not carrying the Chalice
   I.block = rmb && !p.hasBall && (p.weapon === 'melee' || knKit(p)) && !gobKit(p) && !sorcKit(p) && !lampKit(p) && !brigKit(p);
   I.lamp = rmb && lampKit(p);   // lampist: hold to raise the lantern (with the flintlock out)   // the left hand works with the primary out; the crusader's shield is strapped on, so it works with either
-  I.throwL = pressed.has('KeyQ') && !p.hasBall && (gobKit(p) || knKit(p) || lampKit(p) || brigKit(p) || sorcKit(p));
+  I.throwL = just('KeyQ') && !p.hasBall && (gobKit(p) || knKit(p) || lampKit(p) || brigKit(p) || sorcKit(p));
   I.throwHeld = held('KeyQ');
-  if(CLASS_KIT && p.hasChalice){ if(rmbPress) nhNope('f'); if(pressed.has('ShiftLeft') || pressed.has('ShiftRight')) nhNope('s');
+  if(CLASS_KIT && p.hasChalice){ if(rmbPress) nhNope('f'); if(just('ShiftLeft') || pressed.has('ShiftRight')) nhNope('s');
     const first = pressed.has('Digit1'), second = pressed.has('Digit2'), wheelHeavy = wheelSwap && heavyW(p, otherW(p.weapon));
     if((first && heavyW(p, primW(p))) || (second && heavyW(p, otherW(primW(p)))) || wheelHeavy) nhNope('w'); }   // the HUD flashes a locked heavy weapon when it is selected
   const current = trialWeapon(p).slot;
