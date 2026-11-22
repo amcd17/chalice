@@ -690,6 +690,19 @@ details.box[open] summary{margin-bottom:10px}
   #nhSym:has(.classCrest){width:60px;height:60px}
   #localMenu .pgHeroTitle{flex-wrap:wrap;gap:4px}
 }
+.padFocus{outline:2px solid #e8c78a !important;outline-offset:3px;border-radius:4px;box-shadow:0 0 18px rgba(232,184,74,.35)}
+
+#menu.titling .wrap{display:none}
+#menu:not(.titling) #titleScr{display:none}
+#titleScr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(115deg,#05040a 0%,#0b1020 22%,#120a22 38%,#05040a 52%,#0a0f1e 68%,#160c26 82%,#05040a 100%);background-size:260% 260%;animation:titleShimmer 14s ease-in-out infinite;z-index:5;cursor:pointer}
+@keyframes titleShimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+#titleCv{width:min(44vh,360px);height:min(44vh,360px)}
+#titleScr .titleWord{margin:2vh 0 0;font-family:Georgia,serif;font-weight:400;font-size:clamp(44px,7vw,96px);letter-spacing:.32em;text-indent:.32em;color:#f1e2b8;text-shadow:0 0 28px rgba(232,184,74,.35)}
+#titleScr .titleSub{margin:2vh 0 0;font-family:Georgia,serif;font-size:13px;letter-spacing:.42em;text-indent:.42em;color:#b9a47a}
+#titleScr .titlePrompt{position:absolute;bottom:12vh;margin:0;font-family:Georgia,serif;font-size:15px;letter-spacing:.3em;text-indent:.3em;color:#e8c78a;animation:titleBlink 1.6s ease-in-out infinite}
+@keyframes titleBlink{0%,100%{opacity:.35}50%{opacity:1}}
+body:not(.padMode) .padOnly{display:none}
+body.padMode .kbOnly{display:none}
 </style>
 
 <style id="localMenuStyle">
@@ -1071,8 +1084,7 @@ details.box[open] summary{margin-bottom:10px}
 }
 
 #menu > .wrap{width:min(1180px,100%);min-width:0}
-#menu:has(#pgMain:not([hidden]) #localMenu[data-page="local"]:not(.in-match)) #ver{visibility:hidden}
-@media(max-width:980px){#menu:has(#pgMain:not([hidden]) #localMenu[data-page="local"]:not(.in-match)) #ver{visibility:visible}}
+#menu #ver{visibility:visible;z-index:6}
 #menu:has(#localMenu.in-match){background:rgba(9,6,4,.58);z-index:4}
 #menu:not(:has(#pgSettings:not([hidden]))) > .wrap > .brand{display:none}
 #localMenu #cupView{position:relative;width:min(360px,100%);height:auto;aspect-ratio:1;margin:0 auto}
@@ -1134,7 +1146,7 @@ details.box[open] summary{margin-bottom:10px}
     <div id="trialDeathHeading"><span id="trialKillerIcon" aria-hidden="true"></span><span id="trialKillerName"></span></div>
     <div id="trialDeathDetails"></div>
     <div id="trialCupDropped" hidden>CUP DROPPED</div>
-    <div id="trialDeathSkip" hidden>SPACE TO SKIP</div>
+    <div id="trialDeathSkip" hidden><span class="kbOnly">SPACE</span><span class="padOnly">A</span> TO SKIP</div>
   </section>
   <div id="topbar">
     <div class="tscore blue mine" id="tsBlue"><span class="tlabel">THISTLE</span><span id="sBlue">0</span><span class="cpot" id="cpotB"></span></div>
@@ -1194,8 +1206,13 @@ details.box[open] summary{margin-bottom:10px}
   <div id="note" hidden></div>
 </div>
 
-<div id="menu" class="screen">
-<div id="ver">Chalice 0.368</div>
+<div id="menu" class="screen titling">
+<div id="ver">Chalice 0.369</div>
+  <div id="titleScr" aria-label="Chalice title">
+    <canvas id="titleCv" width="520" height="520"></canvas>
+    <h1 class="titleWord">CHALICE</h1>
+    <p class="titlePrompt">PRESS ANY BUTTON</p>
+  </div>
   <div class="wrap">
     <div class="brand">
       <h1 class="logo">CHALICE</h1>
@@ -1224,6 +1241,8 @@ details.box[open] summary{margin-bottom:10px}
         <label class="sens"><input type="checkbox" id="menuReadyGate"> Require Ready Up before kick-off</label>
         <label class="sens"><input type="checkbox" id="menuStatusNames"> Show status names briefly (off: symbols only)</label>
         <label class="sens" for="sens">Mouse sensitivity <input id="sens" type="range" min="0.4" max="2.5" step="0.05" value="1"> <span id="sensV">1.00</span></label>
+        <label class="sens" for="padSens">Controller look speed <input id="padSens" type="range" min="0.4" max="2.5" step="0.05" value="1"> <span id="padSensV">1.00</span></label>
+        <label class="sens"><input type="checkbox" id="padInvert"> Controller: invert look up and down</label>
         <div class="sens">Divination: pass to score <span class="seg" id="rulesSeg"><button data-r="hotpotato">Off</button><button data-r="fuse">On</button></span></div>
       </div>
       <div class="box"><h4>TUNING</h4><div class="tune" data-tune="menu"></div><div class="tunebar"><button class="small" data-tune-reset>RESET ALL</button><button class="small" data-tune-copy>COPY SETTINGS</button><span class="fine" data-tune-msg></span></div></div>
@@ -5506,7 +5525,7 @@ function buildCathedral(){
   for(const sx of [1, -1]){ for(const z of [-12, 12]){ torch(sx*18, 4, z*0.92); torch(sx*27, 4, z*0.92); } torch(sx*44.5, 3.2, -1.2); }
   // dressing for the four landmarks (the shapes match, only the dressing differs)
   { const dress = (sx, sz, kind) => { const x = sx*29, z = sz*33;
-      if(kind === 0){ const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 1.3, 1.9, 14), new THREE.MeshStandardMaterial({ color:0x9a7a3a, metalness:0.7, roughness:0.4 })); bell.rotation.z = Math.PI/2; bell.position.set(x, 2.3, z); scene.add(bell); }
+      if(kind === 0){ const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 1.3, 1.9, 14), new THREE.MeshStandardMaterial({ color:0x9a7a3a, metalness:0.7, roughness:0.4 })); bell.rotation.z = Math.PI/2; bell.position.set(x, 2.77, z); scene.add(bell); }   // the bell lies ON the landmark block, its rim on the stone, not half-buried in it
       if(kind === 1){ for(let i = 0; i < 7; i++){ const h = 3.2 - Math.abs(i - 3)*0.4; const p = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, h, 8), new THREE.MeshStandardMaterial({ color:0xa09070, metalness:0.5, roughness:0.5 })); p.position.set(x - 2.4 + i*0.8, 1.5 + h/2, z); scene.add(p); } }
       if(kind === 2){ const bx = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 1.2), new THREE.MeshStandardMaterial({ color:0xc8a84a, metalness:0.6, roughness:0.4 })); bx.position.set(x, 1.95, z); scene.add(bx); const rf2 = new THREE.Mesh(new THREE.ConeGeometry(0.9, 0.9, 4), new THREE.MeshStandardMaterial({ color:0xc8a84a, metalness:0.6, roughness:0.4 })); rf2.rotation.y = Math.PI/4; rf2.scale.set(1.4, 1, 0.8); rf2.position.set(x, 2.85, z); scene.add(rf2); }
       if(kind === 3){ const lid = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.5, 2.2), M.pale); lid.rotation.y = 0.18; lid.position.set(x, 1.75, z); scene.add(lid); }
@@ -9450,7 +9469,7 @@ function damage(t, amt, a, w, head, volley, melee = false){
     }
     if(source) t.hitDirection = {position:source.clone(), at:performance.now()};
     finalHit = {source, damage:damageShown};
-    hurtFlash();
+    hurtFlash(); padBuzz(140 + Math.min(220, amt*3), Math.min(1, 0.25 + amt/90), 0.35);
     if(t.hp > 0) sfx('hurt');
   }
   if(melee) trialMeleeImpact(a, t, t.hp <= 0 ? 'kill' : 'hit');
@@ -9534,7 +9553,7 @@ function kill(t, a, w, hit){
     if(t.isPlayer) toast('BETRAYED BY ' + a.name.toUpperCase(), '#ff4d6d');
   }
   if(a && a !== t && a.team !== t.team){
-    a.kills++; if(wasHolder) a.st.holderKills++;
+    a.kills++; if(wasHolder) a.st.holderKills++; if(a === PLAYER) padBuzz(90, 0.15, 0.7);
     if(isDM()) addScore(a.team, 1, a, 'kill');   // deathmatch: a point a kill
     if(w === 'ball'){ a.st.ballKills++; if(BALLKILL_PTS > 0){ addScore(a.team, BALLKILL_PTS, a, 'kill'); teamToast(a.team, `BALL KILL +${BALLKILL_PTS}`); } }
     if(wasCarrier){ a.st.carrierKills++; if(CARRIER_PTS > 0){ addScore(a.team, CARRIER_PTS, a, 'kill'); teamToast(a.team, `CARRIER DOWN +${CARRIER_PTS}`); } }
@@ -12123,13 +12142,74 @@ function updateVM(dt){
   SHROUD_SCREEN.visible = p.alive && mist.value > 0.01;
 }
 
+// ---------------- Title screen: the chalice turns above the wordmark; any key, click or pad button goes on to the menu ----------------
+function dismissTitle(){ const m = document.getElementById('menu'); if(!m || !m.classList.contains('titling')) return; m.classList.remove('titling'); padMenuReset(); }
+function padMenuReset(){ if(padFocus) padFocus.classList.remove('padFocus'); padFocus = null; }
+(function titleLoop(){
+  const cv = document.getElementById('titleCv'); if(!cv) return;
+  let r; try{ r = new THREE.WebGLRenderer({ canvas:cv, antialias:true, alpha:true }); }catch(e){ return; }
+  r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); r.setSize(520, 520, false);
+  const sc = new THREE.Scene();
+  sc.add(new THREE.HemisphereLight(0x8a8fd0, 0x05040a, 0.35));
+  const key = new THREE.PointLight(0xffd9a0, 0.9, 8); key.position.set(1.4, 1.0, 2.2); sc.add(key);
+  const rim = new THREE.PointLight(0x7a5cff, 1.6, 8); rim.position.set(-1.6, 0.6, -1.4); sc.add(rim);
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 20); cam.position.set(0, 1.25, 5.2); cam.lookAt(0, 1.08, 0);
+  const cup = makeChalice();
+  cup.scale.setScalar(5.2); sc.add(cup);
+  const m = document.getElementById('menu');
+  (function frame(now){
+    requestAnimationFrame(frame);
+    if(!m.classList.contains('titling')) return;   // stop drawing once the menu is up
+    const t = now/1000;
+    cup.rotation.y = t*0.45; cup.position.y = 0.02*Math.sin(t*1.1);
+    animChalice(cup, 0.72, -1, t, 1/60, 2);   // the ichor, the same liquid as in play
+    // gems blink like the wing lights of an aircraft: each on a short strobe, out of step with its neighbours, in blue, ruby, jade and sapphire
+    const pal = [GEM_STATES[2], GEM_STATES[3], GEM_STATES[1], GEM_STATES[4]];
+    cup.userData.progressGems.forEach((gem, i) => {
+      const ph = (t/1.7 + i*0.173) % 1, on = ph < 0.08 || (ph > 0.14 && ph < 0.2), st = pal[i % pal.length];
+      gem.material.color.setHex(on ? st.color : 0x201922);
+      gem.material.emissive.setHex(on ? st.glow : 0x000000);
+      gem.material.emissiveIntensity = on ? 1.8 : 0;
+      gem.halo.material.color.setHex(on ? (st.haloColor || st.glow) : 0x000000);
+      gem.halo.material.opacity = on ? 0.9 : 0;
+    });
+    r.render(sc, cam);
+  })(0);
+})();
 // ---------------- Input ----------------
 const keys = {}; const pressed = new Set(); const mouse = { 0:false, 2:false }; const mpressed = new Set();
-// Standard Gamepad mapping: left stick moves, right stick looks, A jumps, X/RT fires,
-// LB uses the movement ability, LT throws, B reloads, RB uses the class action,
-// and Y selects primary/secondary or melee. Left-stick click interacts or passes;
-// D-pad up/right/down selects primary/secondary/melee and left cycles slots.
+// ---------------- Gamepad (Standard mapping, Xbox names) ----------------
+// In a match: left stick moves, right stick looks, A jumps, RT fires, LT is Q (throw, or aim a Chalice throw),
+// LB is Shift (movement ability), RB is right click / F (class action; drinks while carrying the cup),
+// X reloads (and parries with the sword), B passes / interacts (E), Y taps primary/secondary and holds for the sword,
+// D-pad up/right/down picks a slot, D-pad left calls for a pass (G), L3 is E too, R3 draws the sword,
+// View shows the scores, Start pauses.
+// On every screen (title, menus, pause, full time, the respawn picker): the D-pad or left stick moves a focus ring,
+// A selects, B goes back, left/right nudges a slider.
+const PAD_GLYPH = { RMB:'RB', 'RIGHT CLICK':'RB', F:'RB', Q:'LT', SHIFT:'LB', E:'B', R:'X', G:'◀', SPACE:'A', ESC:'START', TAB:'VIEW', 'LEFT CLICK':'RT' };
+let padMode = false;   // the last input came from a pad: prompts show pad buttons
+let padSens = 1, padInvert = false;
+try{ const v = parseFloat(localStorage.getItem('dc-pad-sens')); if(v > 0) padSens = v; padInvert = localStorage.getItem('dc-pad-invert') === '1'; }catch(e){}
+function K(k){ return padMode ? (PAD_GLYPH[k] || k) : k; }
+function setPadMode(on){
+  if(padMode === on) return; padMode = on;
+  document.body.classList.toggle('padMode', on);
+  if(typeof NH !== 'undefined' && NH.tiles){ ['RMB', 'Q', 'SHIFT'].forEach((k, i) => { const el = NH.tiles[i] && NH.tiles[i].querySelector('.key'); if(el) el.textContent = K(k); }); }
+  if(!on && padFocus){ padFocus.classList.remove('padFocus'); }
+  else if(on && padFocus) padFocus.classList.add('padFocus');
+}
+addEventListener('keydown', () => setPadMode(false), true);
+addEventListener('mousemove', e => { if(Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0) > 2) setPadMode(false); }, true);
+addEventListener('mousedown', () => setPadMode(false), true);
+function padRumble(pad, ms, strong, weak){
+  try{ const a = pad && pad.vibrationActuator; if(a && a.playEffect) a.playEffect('dual-rumble', { duration:ms, strongMagnitude:strong, weakMagnitude:weak }); }catch(e){}
+}
+let padRumbleQ = null;   // set by the game (a hit taken, a kill), played on the next poll
+function padBuzz(ms, strong, weak){ if(padMode) padRumbleQ = [ms, strong, weak]; }
+
 let activePad = null, padButtons = [], padHeld = new Set(), padPressed = new Set(), padLookX = 0, padLookY = 0, padMoveX = 0, padMoveY = 0, padFire = false, padScoreboard = false, padYStarted = 0, padYHandled = false, padYRequest = null, padWeaponRequest = null;
+let padFocus = null;
+const padNav = { dir:null, next:0 };   // held-direction repeat for the focus ring
 function pollGamepad(p, dt){
   let pads = [];
   try { pads = navigator.getGamepads ? navigator.getGamepads() : []; }   // blocked inside an iframe without allow="gamepad": play on keyboard and mouse
@@ -12141,29 +12221,115 @@ function pollGamepad(p, dt){
   const edge = new Set(), wasDown = padButtons; padHeld = new Set(); padYRequest = null; padWeaponRequest = null;
   for(let i=0;i<b.length;i++){ if(down(i) && !padButtons[i]) edge.add(i); }
   padButtons = b.map((_,i)=>down(i));
-  const axis = i => { const v = pad ? (pad.axes[i] || 0) : 0; return Math.abs(v) < 0.16 ? 0 : v; };
-  padMoveX = axis(0); padMoveY = axis(1);
-  padLookX = axis(2); padLookY = axis(3);
-  padFire = down(7) || down(2); // right trigger or X
+  const raw = i => pad ? (pad.axes[i] || 0) : 0;
+  const dz = (x, y, d) => { const m = Math.hypot(x, y); if(m < d) return [0, 0]; const k = Math.min(1, (m - d)/(1 - d))/m; return [x*k, y*k]; };   // radial dead zone, rescaled so the edge is still full tilt
+  [padMoveX, padMoveY] = dz(raw(0), raw(1), 0.18);
+  [padLookX, padLookY] = dz(raw(2), raw(3), 0.14);
+  if(pad && (edge.size || Math.hypot(raw(0), raw(1)) > 0.5 || Math.hypot(raw(2), raw(3)) > 0.5)) setPadMode(true);
+  if(pad && padRumbleQ){ padRumble(pad, ...padRumbleQ); } padRumbleQ = null;
+  const menu = document.getElementById('menu');
+  if(pad && edge.size && menu && !menu.hidden && menu.classList.contains('titling')){ dismissTitle(); padNav.dir = null; padFire = false; return; }
+  const ui = padUiScreen();
+  if(pad && ui){ padUiTick(ui, edge, down); padFire = false; padScoreboard = false; padLookX = padLookY = padMoveX = padMoveY = 0; if(ui !== 'death') return; }
+  padFire = down(7);
   padScoreboard = down(8);
   if(pad){
-    if(p && p.alive){ p.yaw -= padLookX * dt * 2.5; p.pitch = clamp(p.pitch + padLookY * dt * 2.0, -1.5, 1.5); }
-    for(const [i,code] of [[0,'Space'],[4,'ShiftLeft'],[6,'KeyQ'],[1,'KeyR'],[5,'KeyF'],[10,'KeyE']]){ if(down(i)) padHeld.add(code); if(edge.has(i)) padPressed.add(code); }
+    if(p && p.alive){
+      // a curved response: fine aim near the centre, a fast turn at full tilt
+      const m = Math.hypot(padLookX, padLookY), c = m > 0 ? Math.pow(m, 1.8)/m : 0;
+      p.yaw -= padLookX * c * dt * 3.6 * padSens;
+      p.pitch = clamp(p.pitch + (padInvert ? -1 : 1) * padLookY * c * dt * 2.4 * padSens, -1.5, 1.5);
+    }
+    for(const [i,code] of [[0,'Space'],[4,'ShiftLeft'],[6,'KeyQ'],[2,'KeyR'],[5,'KeyF'],[1,'KeyE'],[10,'KeyE'],[14,'KeyG']]){ if(down(i)) padHeld.add(code); if(edge.has(i)) padPressed.add(code); }
     if(edge.has(9) && state === 'play') setPaused(!paused);
     if(edge.has(3)){ padYStarted = performance.now(); padYHandled = false; }
     if(down(3) && !padYHandled && performance.now() - padYStarted >= 280){ padYRequest = 'melee'; padYHandled = true; }
     if(wasDown[3] && !down(3) && !padYHandled) padYRequest = 'toggle';
     if(edge.has(12)) padWeaponRequest = TRIAL_SLOT.primary;
     if(edge.has(15)) padWeaponRequest = TRIAL_SLOT.repeater;
-    if(edge.has(13)) padWeaponRequest = TRIAL_SLOT.melee;
-    if(edge.has(14)) padWeaponRequest = 'cycle';
+    if(edge.has(13) || edge.has(11)) padWeaponRequest = TRIAL_SLOT.melee;
   } else { padLookX = padLookY = padMoveX = padMoveY = 0; padFire = false; padScoreboard = false; padHeld.clear(); padPressed.clear(); padYStarted = 0; padYHandled = false; }
+}
+// which screen the pad is driving, if any
+function padUiScreen(){
+  const vis = id => { const e = document.getElementById(id); return e && !e.hidden; };
+  if(vis('pause') && state === 'play' && paused) return 'pause';
+  if(vis('end')) return 'end';
+  if(vis('menu') && !(state === 'play' && !paused && !(PLAYER && !PLAYER.alive))) return 'menu';
+  if(state === 'play' && PLAYER && !PLAYER.alive && vis('death') && document.querySelector('#deathPicks .dpk, #deathPicks .dpchg')) return 'death';
+  return null;
+}
+function menuPadActive(){ return padUiScreen() === 'menu'; }
+function padMenuItems(ui){
+  const root = ui === 'death' ? '#deathPicks' : '#' + ui;
+  const sel = ui === 'death' ? '.dpk, .dpchg' : 'button, [data-act], .card, input[type=range], input[type=checkbox], select';
+  const seen = new Set(), out = [];
+  for(const el of document.querySelectorAll(sel.split(', ').map(x => root + ' ' + x).join(', '))){
+    if(seen.has(el) || el.disabled || el.getClientRects().length === 0) continue;
+    const cs = getComputedStyle(el); if(cs.visibility === 'hidden' || cs.display === 'none') continue;
+    seen.add(el); out.push(el);
+  }
+  return out;
+}
+let padUiLast = null;
+function padUiTick(ui, edge, down){
+  if(ui !== padUiLast){ padUiLast = ui; if(padFocus) padFocus.classList.remove('padFocus'); padFocus = null; }   // a new screen starts at its first item
+  const items = padMenuItems(ui);
+  if(!items.length) return;
+  if(!items.includes(padFocus)) setPadFocus(items.find(e => e.classList.contains('on') && ui === 'death') || items[0]);
+  // direction: D-pad or left stick, repeating while held
+  let dir = null;
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [], pd = activePad != null ? pads[activePad] : null;
+  const sx = pd ? pd.axes[0] || 0 : 0, sy = pd ? pd.axes[1] || 0 : 0;
+  if(down(12) || sy < -0.6) dir = 'u'; else if(down(13) || sy > 0.6) dir = 'd'; else if(down(14) || sx < -0.6) dir = 'l'; else if(down(15) || sx > 0.6) dir = 'r';
+  const now = performance.now();
+  let step = null;
+  if(dir !== padNav.dir){ padNav.dir = dir; padNav.next = now + 380; step = dir; }
+  else if(dir && now >= padNav.next){ padNav.next = now + 140; step = dir; }
+  if(step){
+    const f = padFocus;
+    if(f && f.type === 'range' && (step === 'l' || step === 'r')){ const st = parseFloat(f.step) || 1; f.value = clamp(parseFloat(f.value) + (step === 'r' ? st : -st), parseFloat(f.min), parseFloat(f.max)); f.dispatchEvent(new Event('input', { bubbles:true })); f.dispatchEvent(new Event('change', { bubbles:true })); }
+    else if(f && f.tagName === 'SELECT' && (step === 'l' || step === 'r')){ f.selectedIndex = clamp(f.selectedIndex + (step === 'r' ? 1 : -1), 0, f.options.length - 1); f.dispatchEvent(new Event('change', { bubbles:true })); }
+    else padMove(items, { u:[0,-1], d:[0,1], l:[-1,0], r:[1,0] }[step]);
+  }
+  if(edge.has(0) && padFocus){
+    if(ui === 'death'){ pickAct(padFocus.dataset.k || (padFocus.classList.contains('dpchg') ? 'chg' : null)); }
+    else if(padFocus.type === 'checkbox'){ padFocus.click(); }
+    else padFocus.click();
+    if(typeof initAudio === 'function') initAudio();
+  }
+  if(edge.has(1)){
+    if(ui === 'pause'){ setPaused(false); }
+    else if(ui === 'menu'){ const back = [...document.querySelectorAll('#menu [data-back], #menu [data-act="backLocal"], #menu [data-act="lessonBack"]')].find(e => e.getClientRects().length); if(back) back.click(); }
+  }
+  if(edge.has(9) && ui === 'pause') setPaused(false);
+}
+function padMove(items, d){
+  const c = el => { const b = el.getBoundingClientRect(); return [b.left + b.width/2, b.top + b.height/2]; };
+  const [cx, cy] = c(padFocus);
+  let best = null, bs = Infinity;
+  for(const el of items){
+    if(el === padFocus) continue;
+    const [x, y] = c(el), dx = x - cx, dy = y - cy;
+    const along = dx*d[0] + dy*d[1]; if(along <= 4) continue;   // behind the direction pressed
+    const across = Math.abs(dx*d[1] - dy*d[0]);
+    const sc = along + across*2.5;
+    if(sc < bs){ bs = sc; best = el; }
+  }
+  if(best) setPadFocus(best);
+}
+function setPadFocus(el){
+  if(padFocus) padFocus.classList.remove('padFocus');
+  padFocus = el; if(padMode) el.classList.add('padFocus');
+  el.scrollIntoView({ block:'nearest', inline:'nearest' });
+  if(el.closest('#deathPicks') && el.dataset.k){ PK.hov = el.dataset.k; }
 }
 let locked = false, fallback = false, sens = 1;
 try{ const s = parseFloat(localStorage.getItem('oddball-sens')); if(s > 0) sens = s; }catch(e){}
 $('sens').value = sens; $('sensV').textContent = sens.toFixed(2);
 $('sens').addEventListener('input', e => { sens = parseFloat(e.target.value); $('sensV').textContent = sens.toFixed(2); try{ localStorage.setItem('oddball-sens', String(sens)); }catch(err){} });
 addEventListener('keydown', e => {
+  if(document.getElementById('menu') && document.getElementById('menu').classList.contains('titling')){ dismissTitle(); return; }
   if(state === 'play' && !(managedMatch && PLAYER && !PLAYER.alive) && ['Space','Tab','KeyQ','KeyG','KeyF','ArrowUp','ArrowDown'].includes(e.code)) e.preventDefault();
   if(e.code === 'Space' && !e.repeat && state === 'play' && PLAYER && trialInDeathView(PLAYER) &&
      trialDeathSeconds(PLAYER) >= 0.5){
@@ -12178,6 +12344,7 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for(const k in keys) keys[k] = false; mouse[0] = mouse[2] = false; });
+document.getElementById('titleScr').addEventListener('pointerdown', () => dismissTitle());
 canvas.addEventListener('mousedown', e => {
   if(state === 'play' && !paused && !locked && !fallback){ lock(); return; }
   if(e.button === 0 || e.button === 2){ mouse[e.button] = true; mpressed.add(e.button); }
@@ -12205,6 +12372,7 @@ function lock(){
 function enableFallback(){
   if(fallback) return; fallback = true;
   canvas.style.cursor = 'none';
+  if(padMode){ setPaused(false); return; }   // on a pad the mouse never matters, so say nothing
   const n = $('note'); n.hidden = false;
   n.textContent = 'Mouse capture is blocked in this view, so turning stops at the window edge. Open the game in its own tab for full mouse look. Press P to pause.';
   setTimeout(() => { n.hidden = true; }, 9000);
@@ -12533,9 +12701,9 @@ function chalHudDraw(p, n, m){
     if(sub.dataset.promptState !== promptState){
       sub.dataset.promptState = promptState;
       sub.innerHTML = `<div class="actions">
-        <div class="action throw"><kbd>Q</kbd>${p.chAim ? 'RELEASE TO THROW' : 'THROW'}</div>
-        <div class="action drink ${tone}"><kbd>F</kbd>${drinking ? 'DRINKING' : 'DRINK'}${skull}${drinking ? '<span class="dk"><i></i></span>' : ''}</div>
-        <div class="action pass"><kbd>E</kbd>PASS</div>
+        <div class="action throw"><kbd>${K('Q')}</kbd>${p.chAim ? 'RELEASE TO THROW' : 'THROW'}</div>
+        <div class="action drink ${tone}"><kbd>${K('F')}</kbd>${drinking ? 'DRINKING' : 'DRINK'}${skull}${drinking ? '<span class="dk"><i></i></span>' : ''}</div>
+        <div class="action pass"><kbd>${K('E')}</kbd>PASS</div>
       </div>`;
     }
     if(drinking) sub.querySelector('.dk i').style.width = (CH.drink/CH_DRINK*100) + '%';
@@ -12579,7 +12747,7 @@ function nhEl(){
   const weaponLock = `<span class="nhWeaponLock" role="img" aria-label="Unavailable while carrying the Chalice">${NH_IC.cup}</span>`;
   const d = document.createElement('div'); d.id = 'nh'; d.hidden = true;
   d.innerHTML = `<div id="nhL"><div id="nhSt"></div><div id="nhHp"><div class="body"><div class="row"><span id="nhCur">100</span><span id="nhMax">/ 100</span></div><div class="barw"><div class="bar"><b></b><i></i><div class="ticks"></div></div><svg id="nhArm" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><clipPath id="nhArmClip"><rect id="nhArmCr" x="-20" y="-20" width="140" height="140"/></clipPath></defs><path class="tr" d="M0 0H100L96.4 100H3.6Z"/><g clip-path="url(#nhArmClip)"><path id="nhArmP" d="M0 0H100L96.4 100H3.6Z"/></g></svg></div></div></div>
-    <div id="nhAbl"><span id="nhSym" aria-hidden="true"></span>${tile(0, 'RMB')}${tile(1, 'Q')}${tile(2, 'SHIFT')}</div></div>
+    <div id="nhAbl"><span id="nhSym" aria-hidden="true"></span>${tile(0, K('RMB'))}${tile(1, K('Q'))}${tile(2, K('SHIFT'))}</div></div>
     <div id="nhWp"></div>`;
   $('hud').appendChild(d); NH.root = d;
   NH.st = NH_ST.map(([key,,,good,icon]) => {
@@ -14420,7 +14588,7 @@ const localMenu = (() => {
               ${icon}<span>${label}</span>${disabled ? '<span class="soon">SOON</span>' : ''}</button>`;
           }).join('')}
         </nav>
-        <div class="railFoot"><span class="v">${$('ver').textContent}</span></div>
+        <div class="railFoot"></div>
       </aside><div class="railMain">${main}</div>
     </div>`;
     find('.chaliceArt')?.append(cupCanvas);
@@ -14823,6 +14991,9 @@ const localMenu = (() => {
 
   return {go, matchFrame};
 })();
+$('padSens').value = padSens; $('padSensV').textContent = padSens.toFixed(2);
+$('padSens').addEventListener('input', e => { padSens = parseFloat(e.target.value); $('padSensV').textContent = padSens.toFixed(2); try{ localStorage.setItem('dc-pad-sens', String(padSens)); }catch(err){} });
+$('padInvert').checked = padInvert; $('padInvert').addEventListener('change', e => { padInvert = e.target.checked; try{ localStorage.setItem('dc-pad-invert', padInvert ? '1' : '0'); }catch(err){} });
 $('menuStatusNames').checked = STATUS_NAMES; $('menuStatusNames').addEventListener('change', e => { STATUS_NAMES = e.target.checked; try{ localStorage.setItem('dc-status-names', STATUS_NAMES ? '1' : '0'); }catch(err){} });
 $('menuReadyGate').checked = menuPrefs.readyGate;
 $('menuReadyGate').addEventListener('change',e => {
@@ -15576,7 +15747,7 @@ requestAnimationFrame(frame);
 if(/[?&]edit=1/.test(location.search)) setTimeout(() => edEnter(), 0);
 
 // test hook for automated checks
-if(TEST){ window.__odd = { startGame, trialWeapon, chTake, chDrop, tryDamage:damage,
+if(TEST){ window.__odd = { get state(){ return state; }, get paused(){ return paused; }, get padMode(){ return padMode; }, setPadFocus, get FIGHTERS_(){ return FIGHTERS; }, startGame, trialWeapon, chTake, chDrop, tryDamage:damage,
   get map(){return MAP_ID;}, get mode(){return GAME_TYPE;}, setClass:k=>{selectedClass=k;},
   get camera(){return camera;}, get VM(){return VM;}, get fallback(){return fallback;},
   stopFrames(){trialManual = true;}, get elapsed(){return clock;}, setPaused, setMode, setTeam, showPage, set kickoff(v){ KICKOFF_T = v; }, get PLAYER(){ return PLAYER; }, get FIGHTERS(){ return FIGHTERS; }, BALL, get SCORE(){ return SCORE; }, get state(){ return state; }, keys, mouse, pressed, mpressed, WARDS, PROJ, castWard, get CH(){ return CH; }, setT:v => { matchT = v; }, sim:(sec)=>{ const n=Math.round(sec*60); for(let i=0;i<n && state==='play';i++){ step(1/60); updateFX(1/60); } } }; }
