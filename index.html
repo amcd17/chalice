@@ -643,6 +643,10 @@ details.box[open] summary{margin-bottom:10px}
 #trialDeathSkip{opacity:.65;font-size:10px;margin-top:9px}
 #wounded[hidden],#trialHitDirection[hidden],#trialDeathCard[hidden]{display:none}
 @media(prefers-reduced-motion:reduce){#wounded{animation:none;opacity:.45}}
+/* the menus sit on the title's dark shimmer (black, navy, purple), not the 3D map; in a match the game stays visible behind */
+#menu:not(:has(#localMenu.in-match)){background:linear-gradient(115deg,#05040a 0%,#0b1020 22%,#120a22 38%,#05040a 52%,#0a0f1e 68%,#160c26 82%,#05040a 100%);background-size:260% 260%;animation:titleShimmer 14s ease-in-out infinite}
+#localMenu:not(.in-match) .railLayout{background:rgba(6,5,12,.22)}
+#localMenu:not(.in-match) .rail{background:linear-gradient(180deg,rgba(14,10,22,.55),rgba(6,5,12,.7))}
 /* Keep menus within the safe area while giving desktop layouts the full window. */
 @media (min-width: 981px){
   #menu:not(:has(#localMenu.in-match)){
@@ -705,7 +709,10 @@ body:not(.padMode) .padOnly{display:none}
 body.padMode .kbOnly{display:none}
 
 #localMenu .play.padFocus,#localMenu .setupBtn.padFocus{outline:none !important;box-shadow:none !important;filter:brightness(1.16) saturate(1.1)}
-#localMenu :has(> .play.padFocus),#localMenu :has(> .setupBtn.padFocus),#localMenu :has(> .play:hover),#localMenu :has(> .setupBtn:hover){filter:drop-shadow(0 0 10px rgba(255,214,120,.75)) drop-shadow(0 0 26px rgba(232,184,74,.45))}
+#localMenu .goldWrap{display:inline-flex}
+#localMenu .goldWrap.block{display:flex;flex-direction:column}
+#localMenu .goldWrap.block > .setupBtn{flex:1}
+#localMenu .goldWrap:has(> .padFocus),#localMenu .goldWrap:has(> :hover){filter:drop-shadow(0 0 10px rgba(255,214,120,.75)) drop-shadow(0 0 26px rgba(232,184,74,.45))}
 #localMenu .play.padFocus,#localMenu .setupBtn.padFocus{animation:goldPulse 1.6s ease-in-out infinite}
 @keyframes goldPulse{0%,100%{filter:brightness(1.08)}50%{filter:brightness(1.24) saturate(1.15)}}
 </style>
@@ -1067,6 +1074,7 @@ body.padMode .kbOnly{display:none}
   #localMenu .rules{font-size:12px}
   #localMenu .panelhead .side{text-align:left}
   #localMenu .play{width:100%;text-align:center;clip-path:none;padding:15px 26px}
+  #localMenu .goldWrap{display:flex;width:100%}
   #localMenu .ctaRight, #localMenu .ctaRight .play{width:100%}
   #localMenu .ctaRight{flex-direction:column;align-items:stretch}
   #localMenu .pgMid, #localMenu .pgTeams, #localMenu .pgClasses{padding:11px}
@@ -14571,7 +14579,7 @@ const localMenu = (() => {
   }
 
   function playBtn(label, act){
-    return `<button type="button" class="play" data-act="${act || 'play'}">${label || 'PLAY'}</button>`;
+    return `<span class="goldWrap"><button type="button" class="play" data-act="${act || 'play'}">${label || 'PLAY'}</button></span>`;
   }
   function renderA(){
     const nav = [
@@ -14581,7 +14589,7 @@ const localMenu = (() => {
     const main = S.page === 'classes' ? renderClasses() : S.page === 'local' ? `
       <div class="panelhead"><div><span class="kicker">LOCAL GAME</span><h2>Select Game Type</h2></div></div>
       <div class="playSplit"><div class="playCol">${modeRows()}
-        <button type="button" class="setupBtn" data-act="setup">GAME SETUP</button>
+        <span class="goldWrap block"><button type="button" class="setupBtn" data-act="setup">GAME SETUP</button></span>
       </div><div class="chaliceArt" aria-hidden="true"><span class="halo"></span></div></div>` : `
       <div class="panelhead"><div><span class="kicker">TUTORIAL</span><h2>How to Play</h2></div></div>
       <section class="tutorial" aria-label="How to play Chalice">${renderLesson()}</section>`;
