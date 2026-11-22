@@ -2724,6 +2724,7 @@ const SWCUTS = [
   { a:[138, 14, -28],  h:[[-0.30, 0.26], [0.10, -0.03], [0.19, -0.11]],  m:[-0.06, 0.30], roll:-0.9, rs:-1 },    // the backhand: down and right
   { a:[202, 70, 34],   h:[[-0.26, -0.05], [0.02, 0.17], [0.13, 0.27]],   m:[-0.20, 0.08], roll: 0.5, rs:-0.6 }   // rising from low left
 ];
+const THRUST = { coil:[0.07, 0.0, 0.15], coilPitch:-1.3, ext:[0.0, -0.03, -0.08], extPitch:-1.52 };   // hand offsets from the sword rest (x right, y up, z towards the camera); pitch lowers the blade to point forward
 const swEaseOut3 = q => 1 - Math.pow(1 - q, 3);
 function swordViewPose(f){
   const out = { dx:0, dy:0, dz:0, dth:0, roll:0, pitch:0, fov:0 };
@@ -2740,25 +2741,30 @@ function swordViewPose(f){
   const R = Math.PI/180;
   if(!sw){
     const d = f.swordDraw || 0;
-    if(d > 0){   // the held draw: the blade loads back and up, the hand starting to tremble as the charge builds
+    if(d > 0){   // the held draw (23 Nov): the hand coils back towards the shoulder, the blade lowering to point at the crosshair, trembling as the charge builds
       const k = clamp(d/0.5, 0, 1), e = k*k*(3 - 2*k);
-      out.dth = (62 - SW_REST_ANG)*R*e; out.dy = 0.09*e; out.dx = 0.02*e;
+      out.dx = THRUST.coil[0]*e; out.dy = THRUST.coil[1]*e; out.dz = THRUST.coil[2]*e; out.pitch = THRUST.coilPitch*e; out.roll = 0.25*e;
       out.dx += Math.sin(clock*55)*0.005*k*k; out.dy += Math.cos(clock*47)*0.004*k*k;
     }
   } else {
     const I = Math.max(0.05, swingStat(f, sw.w).windup);
     const t = Math.max(0, clock < (kit.hitstopUntil || 0) ? I : sw.t);
     if(sw.heavy){
-      const hold = 0.1, rec0 = I + hold;
+      // 23 Nov: a straight drive from the coiled draw. The hand travels a short way forward and in, so the blade's length stays in view,
+      // running from the hand to the crosshair; it holds extended for a beat, then the arm pulls back to the guard. The hit still lands at I.
+      const hold = 0.12, rec0 = I + hold, C = THRUST.coil, X = THRUST.ext;
+      const lerp3 = (q, i) => C[i] + (X[i] - C[i])*q;
       if(t < I){
-        const q = t/I, e = q*q, e0 = 0.8*(1 - q);   // thrust, easing in: the draw is already loaded
-        out.dth = (62 - SW_REST_ANG)*R*(e0 + (1 - e)*0.2*0); out.dy = 0.09*e0; out.pitch = -1.5*e; out.dz = -0.42*e; out.fov = 7*e;
-      } else if(t < rec0){
+        const q = t/I, e = q*q*q*0.35 + q*q*0.65;   // slow off the coil, fast into the hit
+        out.dx = lerp3(e, 0); out.dy = lerp3(e, 1); out.dz = lerp3(e, 2);
+        out.pitch = THRUST.coilPitch + (THRUST.extPitch - THRUST.coilPitch)*e; out.roll = 0.25 - 0.45*e; out.fov = 7*e;
+      } else if(t < rec0){   // the arm at full stretch, the last few centimetres of the drive easing out
         const q = swEaseOut3((t - I)/hold);
-        out.dth = 0; out.pitch = -1.5 - 0.08*q; out.dz = -0.42 - 0.05*q; out.fov = 7;
-      } else {
+        out.dx = X[0] - 0.01*q; out.dy = X[1]; out.dz = X[2] - 0.04*q; out.pitch = THRUST.extPitch; out.roll = -0.2; out.fov = 7;
+      } else {   // the recovery: the blade comes back up and the hand returns to the guard
         const k = smooth(clamp((t - rec0)/Math.max(0.01, sw.dur - rec0), 0, 1));
-        out.pitch = -1.58*(1 - k); out.dz = -0.47*(1 - k); out.fov = 7*(1 - k);
+        out.dx = (X[0] - 0.01)*(1 - k); out.dy = X[1]*(1 - k) - 0.04*Math.sin(Math.PI*k); out.dz = (X[2] - 0.04)*(1 - k);
+        out.pitch = THRUST.extPitch*(1 - k); out.roll = -0.2*(1 - k); out.fov = 7*(1 - k);
       }
     } else {
       const c = SWCUTS[(sw.cut || 0) % SWCUTS.length], a = c.a, h = c.h;
