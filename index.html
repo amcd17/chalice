@@ -12163,15 +12163,16 @@ function padMenuReset(){ if(padFocus) padFocus.classList.remove('padFocus'); pad
     const t = now/1000;
     cup.rotation.y = t*0.45; cup.position.y = 0.02*Math.sin(t*1.1);
     animChalice(cup, 0.72, -1, t, 1/60, 2);   // the ichor, the same liquid as in play
-    // gems blink like the wing lights of an aircraft: each on a short strobe, out of step with its neighbours, in blue, ruby, jade and sapphire
+    // gems blink slowly, each fading up and back down on its own long cycle, out of step with its neighbours, in blue, ruby, jade and sapphire
     const pal = [GEM_STATES[2], GEM_STATES[3], GEM_STATES[1], GEM_STATES[4]];
     cup.userData.progressGems.forEach((gem, i) => {
-      const ph = (t/1.7 + i*0.173) % 1, on = ph < 0.08 || (ph > 0.14 && ph < 0.2), st = pal[i % pal.length];
-      gem.material.color.setHex(on ? st.color : 0x201922);
-      gem.material.emissive.setHex(on ? st.glow : 0x000000);
-      gem.material.emissiveIntensity = on ? 1.8 : 0;
-      gem.halo.material.color.setHex(on ? (st.haloColor || st.glow) : 0x000000);
-      gem.halo.material.opacity = on ? 0.9 : 0;
+      const st = pal[i % pal.length], ph = t/3.2 + i*0.37;
+      const k = Math.pow(Math.max(0, Math.sin(ph*Math.PI*2)), 2);   // a soft rise and fall, then a dark rest
+      gem.material.color.setHex(st.color);
+      gem.material.emissive.setHex(st.glow);
+      gem.material.emissiveIntensity = 1.6*k;
+      gem.halo.material.color.setHex(st.haloColor || st.glow);
+      gem.halo.material.opacity = 0.8*k;
     });
     r.render(sc, cam);
   })(0);
