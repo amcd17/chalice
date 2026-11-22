@@ -1352,7 +1352,7 @@ const TRIAL_LOADOUT = {
 const TRIAL_SLOT = {primary:1, repeater:2, melee:3};   // v0.348: the sword moved to key 3, the Repeater to key 2
 const REP_GRIP = new V(0.29, 1.09, -0.34), REP_GRIP_AT = { goblin:new V(0.29, 0.62, -0.3) };   // where the sidearm's grip sits in the right hand
 const REPEATER_SCALE = 0.5;   // the plate at its size from the mockup: 0.85 m, scaled to fit the hand
-const TRIAL_REPEATER = { capacity:6, damage:22.5, interval:0.25, gemRecharge:5 };   // each spent gem comes back gemRecharge seconds after it was spent
+const TRIAL_REPEATER = { capacity:6, damage:22.5, interval:0.25, gemRecharge:3 };   // 22 Nov: 3 s a gem (was 5)   // each spent gem comes back gemRecharge seconds after it was spent
 const TRIAL_FURNACE = {capacity:6, interval:0.65, reload:3, direct:34, splash:16, radius:1.8, patchDamage:8, orbDiameter:0.58, impactScale:1.75};
 const FURNACE_PRESS_BUFFER = 0.14, FURNACE_MODEL_SCALE = 1.20;
 const TRIAL_RIFLE = { capacity:24, damage:14, windup:0.10, gap:0.055, recharge:2, burstInterval:0.55 };
@@ -3137,6 +3137,8 @@ function blessGlow(model, u){   // a bead of light runs from the cross into the 
   fx.bell.scale.setScalar(.22 + .3*bk);
 }
 function blessFade(model){   // after the reload, the gathered fire settles out
+  const l = model.userData.fpLeft, base = model.userData.fpLeftBase;
+  if(l && base) l.position.lerp(base, 0.25);   // the hand comes back down onto the barrel
   const fx = model.userData.bless;
   if(!fx) return;
   fx.orb.visible = false;
@@ -3368,7 +3370,7 @@ const facesMe = (t, b) => { const dx = b.pos.x - t.pos.x, dz = b.pos.z - t.pos.z
 const busyElse = (t, b) => !!((t.target && t.target !== b && t.target.alive) || t.hasChalice || t.hasBall);
 const badTrade = (t, b) => t.clsKey !== 'goblin' && facesMe(t, b) && !busyElse(t, b) && t.hp > 0.35*maxHp(t);   // a fair fight from the front: he loses those
 // the lampist: a flintlock (1), a blunderbuss (2), a lantern that marks enemies for her team (right click), a leap (Shift), and she climbs twice as high
-let BB_SHOTS = 2, BB_WINDUP = 0.45;
+let BB_SHOTS = 3, BB_WINDUP = 0.45;   // 22 Nov: three shots before the blessing reload (was 2)
 let FL_RELOAD = 2.2, BB_PELLETS = 8, BB_RELOAD = 3, BB_SPREAD = 0.11, BB_FULL = 4, BB_ZERO = 10.5;
 // the lampist's flamethrower: hold to spray; it burns only what the stream touches (and sets them burning); fuel runs down and refills
 let FLAME_DPS = 42, FLAME_RANGE = 8, FLAME_CONE = 0.2, FLAME_FUEL = 4, FLAME_REFILL = 3, FLAME_DELAY = 0.5;
@@ -13672,7 +13674,7 @@ const TUNES = [
   { k:'tosst', label:'Throwables: time from Q to letting go', unit:'s', min:0, max:1, step:0.05, get:() => TOSS_REL, set:v => { TOSS_REL = v; TOSS_T = Math.max(TOSS_T, v + 0.1); } },
 ];
 const TUNE_DEFAULTS = {}; for(const t of TUNES) TUNE_DEFAULTS[t.k] = t.get();
-const TUNE_OLD_DEFAULTS = { furnacecapacity:4, furnaceinterval:0.75, furnacepatchradius:1.25, furnacespeed:18, bbdamage:110, bbmiddamage:95, hamtap2:0.05, smkmark:2.5, fragcd:14, flaskcd:14, flmdps:40, flmrng:7, gwardcd:8, dmgham:60, dmgbb:12, bstab:1.5, flrl:1.5, chwin:60, chcup:[10, 6], chs2:0.5, chs3:0.8, dagcd:[0.4, 0.3], sheat:[0.065, 0.06], sramp:2, bfull:40, bcd:0.3, hpg:[80, 90, 100, 110, 107, 115], hps:[100, 110, 118, 126], hpk:[180, 150, 130, 139, 147], hpl:[110, 118, 126], hpbr:[115, 123, 131], shslow:0.85, lightw:2.75, lightrec:6, chdmg:[15, 40], dmgdag:25, dmgknf:[50, 40, 25], dblgap:0.13, dmgbolt:[12.5, 10, 10.5], dmgjav:[60, 75, 65], javcd:3.8, chspd:10, cht:0.6, chwind2:1, match:5, lunge:4.6, scramble:3, team:4, speed:[9.2, 8.2, 7.544], jumph:4.77, clsspd:[6.8, 6.256], clsjmp:1.8, ability:8, htkh:1, htkball:1, spk:0.88 };   // a saved value that is just an old default gives way to the new default
+const TUNE_OLD_DEFAULTS = { bbshots:2, furnacecapacity:4, furnaceinterval:0.75, furnacepatchradius:1.25, furnacespeed:18, bbdamage:110, bbmiddamage:95, hamtap2:0.05, smkmark:2.5, fragcd:14, flaskcd:14, flmdps:40, flmrng:7, gwardcd:8, dmgham:60, dmgbb:12, bstab:1.5, flrl:1.5, chwin:60, chcup:[10, 6], chs2:0.5, chs3:0.8, dagcd:[0.4, 0.3], sheat:[0.065, 0.06], sramp:2, bfull:40, bcd:0.3, hpg:[80, 90, 100, 110, 107, 115], hps:[100, 110, 118, 126], hpk:[180, 150, 130, 139, 147], hpl:[110, 118, 126], hpbr:[115, 123, 131], shslow:0.85, lightw:2.75, lightrec:6, chdmg:[15, 40], dmgdag:25, dmgknf:[50, 40, 25], dblgap:0.13, dmgbolt:[12.5, 10, 10.5], dmgjav:[60, 75, 65], javcd:3.8, chspd:10, cht:0.6, chwind2:1, match:5, lunge:4.6, scramble:3, team:4, speed:[9.2, 8.2, 7.544], jumph:4.77, clsspd:[6.8, 6.256], clsjmp:1.8, ability:8, htkh:1, htkball:1, spk:0.88 };   // a saved value that is just an old default gives way to the new default
 try{ const saved = JSON.parse(localStorage.getItem('chalice-class-tuning-v1') || '{}'); for(const k in TUNE_OLD_DEFAULTS) if([].concat(TUNE_OLD_DEFAULTS[k]).includes(saved[k])) delete saved[k]; for(const t of TUNES) if(typeof saved[t.k] === (t.type === 'bool' ? 'boolean' : 'number') && (t.type === 'bool' || (saved[t.k] >= t.min && saved[t.k] <= t.max))) t.set(saved[t.k]); }catch(e){}   // a saved value outside its slider's range is stale (or from an old clash of names): ignore it
 function fmtTune(t, v){
   if(t.fmt) return t.fmt(Math.round(v));
