@@ -1159,7 +1159,7 @@ body.padMode .kbOnly{display:none}
     <div id="trialDeathHeading"><span id="trialKillerIcon" aria-hidden="true"></span><span id="trialKillerName"></span></div>
     <div id="trialDeathDetails"></div>
     <div id="trialCupDropped" hidden>CUP DROPPED</div>
-    <div id="trialDeathSkip" hidden><span class="kbOnly">SPACE</span><span class="padOnly">LB</span> TO SKIP</div>
+    <div id="trialDeathSkip" hidden><span class="kbOnly">SPACE</span><span class="padOnly">A</span> TO SKIP</div>
   </section>
   <div id="topbar">
     <div class="tscore blue mine" id="tsBlue"><span class="tlabel">THISTLE</span><span id="sBlue">0</span><span class="cpot" id="cpotB"></span></div>
@@ -1256,6 +1256,7 @@ body.padMode .kbOnly{display:none}
         <label class="sens" for="sens">Mouse sensitivity <input id="sens" type="range" min="0.4" max="2.5" step="0.05" value="1"> <span id="sensV">1.00</span></label>
         <label class="sens" for="padSens">Controller look speed <input id="padSens" type="range" min="0.4" max="2.5" step="0.05" value="1"> <span id="padSensV">1.00</span></label>
         <label class="sens"><input type="checkbox" id="padInvert"> Controller: invert look up and down</label>
+        <label class="sens"><input type="checkbox" id="padAssist"> Controller: aim assist</label>
         <div class="sens">Divination: pass to score <span class="seg" id="rulesSeg"><button data-r="hotpotato">Off</button><button data-r="fuse">On</button></span></div>
       </div>
       <div class="box"><h4>TUNING</h4><div class="tune" data-tune="menu"></div><div class="tunebar"><button class="small" data-tune-reset>RESET ALL</button><button class="small" data-tune-copy>COPY SETTINGS</button><span class="fine" data-tune-msg></span></div></div>
@@ -12195,13 +12196,13 @@ function padMenuReset(){ if(padFocus) padFocus.classList.remove('padFocus'); pad
 // ---------------- Input ----------------
 const keys = {}; const pressed = new Set(); const mouse = { 0:false, 2:false }; const mpressed = new Set();
 // ---------------- Gamepad (Standard mapping, Xbox names) ----------------
-// In a match, Bumper Jumper (Halo Reach / Halo 5): LB jumps, RB is melee (draws the sword, then swings it; hold for the heavy blow),
-// RT fires, LT is Q (throwable, or aim a Chalice throw), X is Shift (movement ability), A is right click / F (class action; drinks while carrying the cup),
-// B reloads and passes (R and E, Halo's action/reload), Y taps primary/secondary and holds for the sword,
-// D-pad up/right/down picks a slot, D-pad left calls for a pass (G), L3 is E too, R3 draws the sword, View shows the scores, Start pauses.
+// In a match (Alex's layout, 22 Nov): A jumps, LB is Shift (movement ability), RB is right click / F (class action; drinks while carrying the cup),
+// RT fires, LT is Q (throwable, or aim a Chalice throw), X reloads, or parries with the sword out (R), B passes (E),
+// Y taps primary/secondary and holds for the sword, R3 draws the sword, D-pad up/right/down picks a slot, D-pad left calls for a pass (G),
+// L3 is E too, View shows the scores, Start pauses.
 // On every screen (title, menus, pause, full time, the respawn picker): the D-pad or left stick moves a focus ring,
 // A selects, B goes back, left/right nudges a slider.
-const PAD_GLYPH = { RMB:'A', 'RIGHT CLICK':'A', F:'A', Q:'LT', SHIFT:'X', E:'B', R:'B', G:'◀', SPACE:'LB', ESC:'START', TAB:'VIEW', 'LEFT CLICK':'RT' };
+const PAD_GLYPH = { RMB:'RB', 'RIGHT CLICK':'RB', F:'RB', Q:'LT', SHIFT:'LB', E:'B', R:'X', G:'◀', SPACE:'A', ESC:'START', TAB:'VIEW', 'LEFT CLICK':'RT' };
 let padMode = false;   // the last input came from a pad: prompts show pad buttons
 let padSens = 1, padInvert = false;
 try{ const v = parseFloat(localStorage.getItem('dc-pad-sens')); if(v > 0) padSens = v; padInvert = localStorage.getItem('dc-pad-invert') === '1'; }catch(e){}
@@ -12222,6 +12223,32 @@ function padRumble(pad, ms, strong, weak){
 let padRumbleQ = null;   // set by the game (a hit taken, a kill), played on the next poll
 function padBuzz(ms, strong, weak){ if(padMode) padRumbleQ = [ms, strong, weak]; }
 
+// controller aim assist, Halo-style and slight, never for the mouse: friction slows the stick while the reticle is over a visible enemy,
+// and magnetism carries the reticle part of the way with that enemy while you are steering (moving or aiming)
+const AA = { friction:0.55, follow:0.35, range:45, cone:2.2, id:null, yaw:0, pitch:0 };
+let padAssist = true; try{ padAssist = localStorage.getItem('dc-pad-aa') !== '0'; }catch(e){}
+const AA_E = new V(), AA_C = new V();
+function aimAssist(p, steering){
+  if(!padMode || !padAssist){ AA.id = null; return 1; }
+  p.eye(AA_E);
+  let best = null, bs = Infinity, by = 0, bp = 0;
+  for(const t of FIGHTERS){
+    if(t === p || !t.alive || t.team === p.team) continue;
+    t.center(AA_C);
+    const dx = AA_C.x - AA_E.x, dy = AA_C.y - AA_E.y, dz = AA_C.z - AA_E.z, hz = Math.hypot(dx, dz), d = Math.hypot(hz, dy);
+    if(d > AA.range || d < 0.5) continue;
+    const ty = Math.atan2(-dx, -dz), tp = Math.atan2(dy, hz);
+    let ey = ty - p.yaw; ey = Math.atan2(Math.sin(ey), Math.cos(ey));
+    const err = Math.hypot(ey, tp - p.pitch), cone = clamp(Math.atan((t.r || 0.4)*AA.cone/d), 0.025, 0.14);   // a little wider than the body, tighter with range
+    if(err > cone || err >= bs) continue;
+    if(!los(AA_E, AA_C) || smokeBlocks(AA_E, AA_C, p.team)) continue;
+    best = t; bs = err; by = ty; bp = tp;
+  }
+  if(!best){ AA.id = null; return 1; }
+  if(steering && AA.id === best.id){ let dyaw = by - AA.yaw; dyaw = Math.atan2(Math.sin(dyaw), Math.cos(dyaw)); p.yaw += dyaw*AA.follow; p.pitch = clamp(p.pitch + (bp - AA.pitch)*AA.follow, -1.5, 1.5); }
+  AA.id = best.id; AA.yaw = by; AA.pitch = bp;
+  return AA.friction;
+}
 let activePad = null, padButtons = [], padHeld = new Set(), padPressed = new Set(), padLookX = 0, padLookY = 0, padMoveX = 0, padMoveY = 0, padFire = false, padScoreboard = false, padYStarted = 0, padYHandled = false, padYRequest = null, padWeaponRequest = null;
 let padFocus = null;
 const padNav = { dir:null, next:0 };   // held-direction repeat for the focus ring
@@ -12253,10 +12280,11 @@ function pollGamepad(p, dt){
     if(p && p.alive){
       // a curved response: fine aim near the centre, a fast turn at full tilt
       const m = Math.hypot(padLookX, padLookY), c = m > 0 ? Math.pow(m, 1.8)/m : 0;
-      p.yaw -= padLookX * c * dt * 3.6 * padSens;
-      p.pitch = clamp(p.pitch - (padInvert ? -1 : 1) * padLookY * c * dt * 2.4 * padSens, -1.5, 1.5);
+      const aa = state === 'play' && !paused ? aimAssist(p, m > 0.05 || Math.hypot(padMoveX, padMoveY) > 0.1) : 1;
+      p.yaw -= padLookX * c * dt * 3.6 * padSens * aa;
+      p.pitch = clamp(p.pitch - (padInvert ? -1 : 1) * padLookY * c * dt * 2.4 * padSens * aa, -1.5, 1.5);
     }
-    for(const [i,code] of [[4,'Space'],[2,'ShiftLeft'],[6,'KeyQ'],[1,'KeyR'],[0,'KeyF'],[1,'KeyE'],[10,'KeyE'],[14,'KeyG']]){ if(down(i)) padHeld.add(code); if(edge.has(i)) padPressed.add(code); }
+    for(const [i,code] of [[0,'Space'],[4,'ShiftLeft'],[6,'KeyQ'],[2,'KeyR'],[5,'KeyF'],[1,'KeyE'],[10,'KeyE'],[14,'KeyG']]){ if(down(i)) padHeld.add(code); if(edge.has(i)) padPressed.add(code); }
     if(edge.has(9) && state === 'play') setPaused(!paused);
     if(edge.has(3)){ padYStarted = performance.now(); padYHandled = false; }
     if(down(3) && !padYHandled && performance.now() - padYStarted >= 280){ padYRequest = 'melee'; padYHandled = true; }
@@ -12264,12 +12292,6 @@ function pollGamepad(p, dt){
     if(edge.has(12)) padWeaponRequest = TRIAL_SLOT.primary;
     if(edge.has(15)) padWeaponRequest = TRIAL_SLOT.repeater;
     if(edge.has(13) || edge.has(11)) padWeaponRequest = TRIAL_SLOT.melee;
-    // RB is melee: the first press draws the sword, with it out RB swings like the trigger (tap to slash, hold for the heavy lunge)
-    if(p && p.alive){
-      const swordOut = trialWeapon(p).slot === TRIAL_SLOT.melee;
-      if(edge.has(5) && !swordOut) padWeaponRequest = TRIAL_SLOT.melee;
-      else if(swordOut){ if(down(5)) padFire = true; if(edge.has(5) && state === 'play' && !paused) mpressed.add(0); }
-    }
   } else { padLookX = padLookY = padMoveX = padMoveY = 0; padFire = false; padScoreboard = false; padHeld.clear(); padPressed.clear(); padYStarted = 0; padYHandled = false; }
 }
 // which screen the pad is driving, if any
@@ -15015,6 +15037,7 @@ const localMenu = (() => {
 })();
 $('padSens').value = padSens; $('padSensV').textContent = padSens.toFixed(2);
 $('padSens').addEventListener('input', e => { padSens = parseFloat(e.target.value); $('padSensV').textContent = padSens.toFixed(2); try{ localStorage.setItem('dc-pad-sens', String(padSens)); }catch(err){} });
+$('padAssist').checked = padAssist; $('padAssist').addEventListener('change', e => { padAssist = e.target.checked; try{ localStorage.setItem('dc-pad-aa', padAssist ? '1' : '0'); }catch(err){} });
 $('padInvert').checked = padInvert; $('padInvert').addEventListener('change', e => { padInvert = e.target.checked; try{ localStorage.setItem('dc-pad-invert', padInvert ? '1' : '0'); }catch(err){} });
 $('menuStatusNames').checked = STATUS_NAMES; $('menuStatusNames').addEventListener('change', e => { STATUS_NAMES = e.target.checked; try{ localStorage.setItem('dc-status-names', STATUS_NAMES ? '1' : '0'); }catch(err){} });
 $('menuReadyGate').checked = menuPrefs.readyGate;
