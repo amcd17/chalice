@@ -947,7 +947,7 @@ body.padMode .kbOnly{display:none}
 #localMenu .tmWho .nm{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #localMenu .tmRow.you .nm{color:#ffe9b4}
 #localMenu .tmWho .nm small{font-weight:500;color:var(--dim);font-size:10px}
-#localMenu .tmWho .cl{font-family:var(--display);font-size:9px;letter-spacing:.05em;color:#e8c78a;white-space:nowrap}
+#localMenu .tmWho .cl{display:block;font-family:var(--display);font-size:9px;letter-spacing:.05em;color:#e8c78a;white-space:nowrap;margin-top:1px}
 #localMenu .tmFlag{font-family:var(--display);font-size:7.5px;letter-spacing:.1em;color:var(--dim);border:1px solid rgba(232,184,74,.18);padding:2px 4px;white-space:nowrap}
 #localMenu .tmFlag.bot{opacity:.55}
 #localMenu .tmFlag.ready{color:#a8e6b8;border-color:rgba(168,230,184,.3)}
@@ -1358,6 +1358,209 @@ body.paused #hud{visibility:hidden}
 }
 
 </style>
+<style id="menuSimplify">
+/* ---------- shared shell ---------- */
+#menu:has(#localMenu[data-page="setup"]) > .wrap,
+#menu:has(#localMenu[data-page="map"]) > .wrap,
+#menu:has(#localMenu[data-page="options"]) > .wrap,
+#menu:has(#localMenu[data-page="lobby"]:not(.in-match)) > .wrap{width:min(1700px,100%);padding-top:0}
+#menu.home:not(.titling) > .wrap{width:min(780px,100%) !important}
+#menu:not(.titling) > .wrap{position:relative;z-index:2}
+#menuCupWrap{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .35s ease}
+#menuCupCv{width:100%;height:100%;display:block}
+
+/* ---------- match setup ---------- */
+#localMenu .msGrid{display:grid;grid-template-columns:minmax(0,540px) minmax(210px,1fr) minmax(340px,430px);gap:20px;align-items:start;min-height:calc(100dvh - 84px);padding:4px 0 12px}
+#localMenu .msGrid{position:relative}
+#localMenu .msLeft{display:flex;flex-direction:column;min-width:0;padding-top:34px}
+#localMenu .msBack{position:absolute;left:0;top:0;z-index:3;color:#c9b893;border:1px solid rgba(232,184,74,.16);background:rgba(5,4,10,.5);padding:9px 16px;font-family:var(--display);font-size:10px;letter-spacing:.18em}
+#localMenu .msBack:hover{color:#ffe9b4;border-color:rgba(232,184,74,.48)}
+#localMenu .msKick{font-family:var(--display);font-size:9.5px;font-weight:600;letter-spacing:.34em;color:var(--gold);text-transform:uppercase}
+#localMenu .msTitle{margin:7px 0 0;font-family:var(--display);font-weight:500;font-size:clamp(40px,3.7vw,62px);letter-spacing:.1em;color:#f3e6c9;line-height:1.02}
+#localMenu .msMeta{margin:20px 0 24px;display:flex;flex-direction:column;gap:8px}
+#localMenu .msMeta div{display:flex;align-items:baseline;gap:16px;font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+#localMenu .msMeta span{min-width:64px;color:#7d7363}
+#localMenu .msMeta b{font-weight:600;letter-spacing:.12em;color:#d8c9a8}
+#localMenu .msRows{display:flex;flex-direction:column;width:100%}
+#localMenu .msRow{all:unset;box-sizing:border-box;position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:64px;padding:0 20px 0 18px;cursor:pointer;border-bottom:1px solid rgba(232,184,74,.09);font-family:var(--display);font-size:18px;font-weight:500;letter-spacing:.18em;color:#b9a97f;transition:color .12s}
+#localMenu .msRow:first-child{border-top:1px solid rgba(232,184,74,.09)}
+#localMenu .msRow::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;background:transparent}
+#localMenu .msRow:hover,#localMenu .msRow:focus-visible{color:#e3d3ae;outline:none}
+#localMenu .msRow:focus-visible::before,#localMenu .msRow.padFocus::before{background:var(--gold);box-shadow:0 0 14px rgba(232,184,74,.6)}
+#localMenu .msRow .val{font-family:var(--ui);font-size:12px;font-weight:600;letter-spacing:.2em;color:#c9a96a}
+#localMenu .msRow .chev{display:inline-block;width:6px;height:6px;border-right:1.5px solid currentColor;border-top:1.5px solid currentColor;transform:rotate(45deg);opacity:.5;margin-left:8px}
+#localMenu .msPlate{position:relative;width:100%;height:210px;margin-top:22px;overflow:hidden;border:1px solid rgba(232,184,74,.18);background:#0b0912}
+#localMenu .msPlate img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.9) brightness(.78)}
+#localMenu .msPlate::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(5,4,10,.9) 0%,rgba(5,4,10,.12) 42%,transparent 70%),linear-gradient(90deg,rgba(5,4,10,.5),transparent 40%)}
+#localMenu .msPlate .nm{position:absolute;left:18px;bottom:14px;z-index:2;font-family:var(--display);font-size:24px;letter-spacing:.24em;color:#f3e6c9;text-shadow:0 2px 10px #000}
+#localMenu .msPlate .tag{position:absolute;right:12px;top:11px;z-index:2;font-family:var(--ui);font-size:8.5px;font-weight:800;letter-spacing:.2em;color:#241606;background:var(--gold);padding:3px 6px}
+#localMenu .msCap{margin-top:11px;width:100%;font-family:var(--ui);font-size:10.5px;font-weight:700;letter-spacing:.2em;color:#a99a7c;text-transform:uppercase}
+#localMenu .msCap b{color:#e8c78a;font-weight:700}
+#localMenu .msLoad{width:100%;height:4px;margin-top:14px;background:rgba(232,184,74,.11);overflow:hidden;position:relative}
+#localMenu .msLoad::after{content:"";position:absolute;top:0;bottom:0;width:34%;left:-38%;background:linear-gradient(90deg,transparent,#e8b84a 40%,#ffe6a8 60%,transparent);animation:msLoadSweep 1.9s cubic-bezier(.5,0,.5,1) infinite}
+@keyframes msLoadSweep{to{left:104%}}
+#localMenu .msStart{all:unset;box-sizing:border-box;position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;min-height:76px;margin-top:18px;padding:0 22px;cursor:pointer;
+  color:#241606;background:linear-gradient(90deg,#f6d98a,#e8b84a 55%,#c99532);font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:.18em;
+  clip-path:polygon(0 0,100% 0,98.5% 100%,0 100%);transition:filter .15s,box-shadow .15s}
+#localMenu .msStart:hover,#localMenu .msStart:focus-visible{filter:brightness(1.08);box-shadow:0 0 26px rgba(232,184,74,.22);outline:none}
+#localMenu .msStart .chev{display:inline-block;width:7px;height:7px;border-right:1.5px solid currentColor;border-top:1.5px solid currentColor;transform:rotate(45deg);opacity:.8}
+#localMenu .msRight{display:flex;flex-direction:column;gap:16px;min-width:0;padding-top:4px}
+#localMenu .msCount{font-family:var(--ui);font-size:10.5px;font-weight:800;letter-spacing:.2em;color:#8d8371;text-transform:uppercase;text-align:right}
+#localMenu .msCount span{color:#5c5548}
+#localMenu .msRight .tmPanHead{padding:11px 14px;gap:9px}
+#localMenu .msRight .tmPanHead .n{font-size:13px}
+#localMenu .msRight .tmPanHead .tag{font-size:8.5px}
+#localMenu .msRight .tmPanHead .sc{font-size:16px}
+#localMenu .msRight .tmRow{padding:9px 13px;gap:11px}
+#localMenu .msRight .tmWho .nm{font-size:14px}
+#localMenu .msRight .tmWho .cl{font-size:10.5px}
+#localMenu .msRight .tmWho .em:has(img){width:30px;height:30px}
+#localMenu .msRight .tmFlag{font-size:8.5px;padding:3px 6px}
+
+/* map page */
+#localMenu .msMapGrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);gap:44px;max-width:1420px;margin:0 auto;align-items:start}
+#localMenu .msMapList{display:flex;flex-direction:column}
+#localMenu .msMapRow{all:unset;box-sizing:border-box;position:relative;display:grid;grid-template-columns:180px minmax(0,1fr) auto;gap:18px;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(232,184,74,.09);cursor:pointer}
+#localMenu .msMapRow:first-child{border-top:1px solid rgba(232,184,74,.09)}
+#localMenu .msMapRow .art{width:180px;height:96px;display:block;position:relative;overflow:hidden;border:1px solid rgba(232,184,74,.14);background:#0b0912}
+#localMenu .msMapRow .art img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.85) brightness(.72)}
+#localMenu .msMapRow .nm{font-family:var(--display);font-size:18px;letter-spacing:.14em;color:#d8c9a8}
+#localMenu .msMapRow .ln{display:block;margin-top:4px;font-family:var(--ui);font-size:10.5px;font-weight:600;letter-spacing:.05em;color:#7d7363}
+#localMenu .msMapRow .tick{font-family:var(--ui);font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--gold)}
+#localMenu .msMapRow:focus-visible,#localMenu .msMapRow.on{border-color:var(--gold)}
+#localMenu .msMapRow:focus-visible{outline:none}
+#localMenu .msMapRow.on .nm{color:#ffe9b4}
+#localMenu .msMapRow:disabled{opacity:.38;cursor:default}
+#localMenu .msMapPrev{border:1px solid rgba(232,184,74,.16);background:rgba(8,6,14,.5);padding:12px}
+#localMenu .msMapPrev .big{height:390px;position:relative;overflow:hidden;background:#0b0912}
+#localMenu .msMapPrev .big img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.9) brightness(.85)}
+#localMenu .msMapPrev .big::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(5,4,10,.7),transparent 55%)}
+#localMenu .msMapPrev .nm{font-family:var(--display);font-size:22px;letter-spacing:.16em;color:#f3e6c9;margin-top:12px}
+#localMenu .msMapPrev .ln{font-family:var(--ui);font-size:11.5px;font-weight:600;color:#8d8371;margin-top:5px;line-height:1.5}
+
+/* options */
+#localMenu .msOptWrap{width:min(1040px,100%);margin:0 auto}
+#localMenu .msOptGroup{font-family:var(--ui);font-size:9px;font-weight:800;letter-spacing:.3em;color:#8d7a4e;text-transform:uppercase;margin:18px 0 4px;padding-left:3px}
+#localMenu .msOptRows{display:flex;flex-direction:column}
+#localMenu .msOptRow{all:unset;box-sizing:border-box;position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:62px;padding:0 18px;border-bottom:1px solid rgba(232,184,74,.09);cursor:pointer;font-family:var(--display);font-size:17px;letter-spacing:.14em;color:#b9a97f}
+#localMenu .msOptRows > .msOptRow:first-child{border-top:1px solid rgba(232,184,74,.09)}
+#localMenu .msOptRow::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;background:transparent}
+#localMenu .msOptRow .val{display:flex;align-items:center;gap:10px;font-family:var(--ui);font-size:14.5px;font-weight:700;letter-spacing:.12em;color:#c9a96a}
+#localMenu .msOptRow .val i{font-style:normal;opacity:.4;font-size:16px;letter-spacing:0}
+#localMenu .msOptRow:focus-visible{outline:none;color:#f6e9cf}
+#localMenu .msOptRow:focus-visible::before{background:var(--gold);box-shadow:0 0 13px rgba(232,184,74,.6)}
+#localMenu .msOptRow:focus-visible .val i{opacity:1;color:var(--gold)}
+#localMenu .msBotSub{margin-left:16px;border-left:1px solid rgba(232,184,74,.16);padding-left:8px}
+#localMenu .msBotSub .msOptRow{min-height:54px;font-size:14.5px;color:#a99a7c}
+#localMenu .msBotSub .msOptRow:first-child{border-top:0}
+#localMenu .msDone{margin-top:20px;min-height:64px;color:#c99b4a;border-top:1px solid rgba(232,184,74,.09)}
+
+/* ---------- class select ---------- */
+#localMenu .csWrap{position:relative;display:grid;grid-template-columns:minmax(300px,430px) minmax(0,1fr) minmax(340px,440px);gap:24px;align-items:start;min-height:calc(100dvh - 84px);padding:40px 0 150px}
+#localMenu .csLeft{min-width:0;padding-top:6px}
+#localMenu .csName{margin:0;font-family:var(--display);font-weight:500;font-size:clamp(36px,3.6vw,50px);letter-spacing:.1em;color:#f3e6c9;line-height:1.02}
+#localMenu .csRole{margin-top:7px;font-family:var(--display);font-size:9.5px;font-weight:600;letter-spacing:.22em;color:var(--gold);text-transform:uppercase}
+#localMenu .csRole span{color:#8d8371;font-weight:600;margin-left:8px}
+#localMenu .csLine{margin:16px 0 0;font-family:var(--ui);font-size:14.5px;font-weight:500;line-height:1.5;letter-spacing:.02em;color:#c9bda6;max-width:35ch}
+#localMenu .csAbHead{margin:24px 0 0;font-family:var(--display);font-size:8.5px;font-weight:700;letter-spacing:.28em;color:#8d7a4e;text-transform:uppercase;border-top:1px solid rgba(232,184,74,.18);padding-top:12px}
+#localMenu .csA{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+#localMenu .csA .abRow{grid-template-columns:40px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid rgba(232,184,74,.08)}
+#localMenu .csA .abRow .ic{width:36px;height:36px}
+#localMenu .csA .abRow .nm{font-size:13.5px}
+#localMenu .csA .abRow .ds{font-size:11.5px;line-height:1.45;color:#9d9179}
+#localMenu .csHero{display:flex;align-items:flex-end;justify-content:center;min-height:0;padding-top:2px;position:relative}
+#localMenu .csHero .glow{position:absolute;left:50%;bottom:4%;width:540px;height:540px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,var(--csColour,#e0b45a),transparent 64%);opacity:.18;filter:blur(10px);pointer-events:none}
+#localMenu .csHero .floor{position:absolute;left:50%;bottom:0;width:380px;height:52px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,var(--csColour,#e0b45a),transparent 70%);opacity:.16;filter:blur(10px);pointer-events:none}
+#localMenu .csHero canvas{position:relative;z-index:2;display:block;width:min(430px,30vw);height:auto;aspect-ratio:208/272;filter:drop-shadow(0 22px 34px rgba(0,0,0,.75))}
+#localMenu .csRoster{display:flex;flex-direction:column;min-width:0}
+#localMenu .csRoster .head{display:flex;align-items:center;justify-content:space-between;font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.24em;color:var(--tmCol,var(--blue))}
+#localMenu .csRoster .head .tg{font-family:var(--ui);font-size:8.5px;font-weight:700;letter-spacing:.16em;color:#7d7363}
+#localMenu .csRoster .rule{height:2px;background:linear-gradient(90deg,var(--tmCol,var(--blue)),transparent 78%);margin:9px 0 10px}
+#localMenu .csRow{display:grid;grid-template-columns:50px minmax(0,1fr) auto;gap:15px;align-items:center;padding:11px 12px;border:1px solid transparent;border-bottom:1px solid rgba(232,184,74,.08);background:rgba(8,6,14,.4)}
+#localMenu .csRow.you{border-color:color-mix(in srgb,var(--tmCol,#a98cff) 35%,transparent);background:linear-gradient(90deg,color-mix(in srgb,var(--tmCol,#a98cff) 16%,transparent),rgba(8,6,14,.4))}
+#localMenu .csRow .ic{width:44px;height:48px;display:flex;align-items:center;justify-content:center}
+#localMenu .csRow .ic img{width:100%;height:100%;object-fit:contain}
+#localMenu .csRow .nm{font-family:var(--display);font-size:16px;font-weight:600;letter-spacing:.14em;color:#d8c9a8}
+#localMenu .csRow.you .nm{color:#ffe9b4}
+#localMenu .csRow .st{font-family:var(--ui);font-size:9.5px;font-weight:800;letter-spacing:.14em;color:#7d7363}
+#localMenu .csRow.you .st{color:var(--gold)}
+#localMenu .csFoot{margin-top:14px;padding-top:10px;border-top:1px solid rgba(232,184,74,.1);font-family:var(--ui);font-size:8.5px;font-weight:700;letter-spacing:.16em;color:#5c5548}
+#localMenu .csCrests{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:9px}
+#localMenu .csCrests .cap{font-family:var(--ui);font-size:10px;font-weight:700;letter-spacing:.32em;color:#8d7a4e;text-transform:uppercase}
+#localMenu .csCrestRow{display:flex;gap:12px;padding:10px 12px;background:rgba(8,6,14,.62);border:1px solid rgba(232,184,74,.18)}
+#localMenu .csCrestBtn{all:unset;box-sizing:border-box;cursor:pointer;position:relative;width:88px;height:98px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(232,184,74,.12);background:rgba(5,4,10,.35);opacity:.62;color:var(--csColour,#e0b45a)}
+#localMenu .csCrestBtn .cr{width:44px;height:44px;display:block}
+#localMenu .csCrestBtn .cr img{width:100%;height:100%;object-fit:contain;display:block}
+#localMenu .csCrestBtn .cn{font-family:var(--ui);font-size:8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#a99a7c}
+#localMenu .csCrestBtn.focus{border-color:var(--gold);opacity:1;background:linear-gradient(180deg,rgba(232,184,74,.09),rgba(5,4,10,.4));box-shadow:0 0 16px rgba(232,184,74,.15)}
+#localMenu .csCrestBtn.focus .cn{color:#f6e9cf}
+#localMenu .csCrestBtn.locked{opacity:.28;cursor:default}
+#localMenu .csCrestBtn .lock{position:absolute;top:4px;right:5px;font-family:var(--ui);font-size:6px;font-weight:800;letter-spacing:.1em;color:#c9a96a}
+#localMenu .csCrestBtn .tick{position:absolute;left:5px;top:4px;font-family:var(--ui);font-size:6.5px;font-weight:800;letter-spacing:.08em;color:#241606;background:var(--gold);padding:2px 3px}
+#localMenu .csReady{all:unset;box-sizing:border-box;position:absolute;right:0;bottom:12px;width:min(380px,28vw);min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 22px;cursor:pointer;
+  background:linear-gradient(90deg,#f6d98a,#e8b84a 55%,#c99532);color:#241606;font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:.16em;
+  clip-path:polygon(0 0,100% 0,98% 100%,0 100%);transition:filter .15s,opacity .2s}
+#localMenu .csReady:hover,#localMenu .csReady:focus-visible{filter:brightness(1.07);outline:none}
+#localMenu .csReady[disabled]{opacity:.4;cursor:default;filter:none}
+#localMenu .csReady .sub{font-family:var(--ui);font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+#localMenu .csBack{position:absolute;left:0;top:0;z-index:4;color:#c9b893;border:1px solid rgba(232,184,74,.16);background:rgba(5,4,10,.5);padding:9px 16px;font-family:var(--display);font-size:10px;letter-spacing:.18em}
+#localMenu .vBack{color:#c9b893;border:1px solid rgba(232,184,74,.16);background:rgba(5,4,10,.5);padding:9px 16px;font-family:var(--display);font-size:10px;letter-spacing:.18em}
+#localMenu .vBack:hover{color:#ffe9b4;border-color:rgba(232,184,74,.48)}
+#localMenu .csBack:hover{color:#ffe9b4;border-color:rgba(232,184,74,.48)}
+
+@media (max-width:1500px){
+  #localMenu .msGrid{grid-template-columns:minmax(0,500px) minmax(200px,1fr) 390px;gap:18px}
+  #localMenu .msTitle{font-size:clamp(36px,3.4vw,54px)}
+  #localMenu .msPlate{height:190px}
+  #localMenu .csWrap{grid-template-columns:minmax(280px,400px) minmax(0,1fr) 420px}
+  #localMenu .csHero canvas{width:min(400px,28vw)}
+  #localMenu .csReady{width:min(360px,27vw)}
+}
+@media (max-width:1340px){
+  #localMenu .msGrid{grid-template-columns:minmax(0,430px) minmax(190px,1fr) 350px;gap:16px}
+  #localMenu .msPlate{height:170px}
+  #localMenu .msRight .tmRow{padding:7px 10px}
+  #localMenu .msRight .tmWho .nm{font-size:13px}
+  #localMenu .csWrap{grid-template-columns:minmax(250px,310px) minmax(0,1fr) 360px;gap:16px}
+  #localMenu .csName{font-size:clamp(30px,3.2vw,42px)}
+  #localMenu .csHero canvas{width:min(340px,27vw)}
+  #localMenu .csRow{grid-template-columns:44px minmax(0,1fr) auto;gap:12px;padding:9px 10px}
+  #localMenu .csRow .ic{width:38px;height:42px}
+  #localMenu .csRow .nm{font-size:14px}
+  #localMenu .csCrestBtn{width:78px;height:88px}
+  #localMenu .csCrestBtn .cr{width:38px;height:38px}
+  #localMenu .csReady{width:300px;min-height:64px;font-size:17px}
+}
+@media (max-height:800px){
+  #localMenu .msGrid{min-height:calc(100dvh - 70px)}
+  #localMenu .msMeta{margin:12px 0 16px;gap:5px}
+  #localMenu .msRow{min-height:56px}
+  #localMenu .msPlate{height:156px;margin-top:16px}
+  #localMenu .msCap{margin-top:8px}
+  #localMenu .msLoad{margin-top:10px}
+  #localMenu .msStart{min-height:64px;margin-top:12px}
+  #localMenu .msRight .tmRow{padding:6px 10px}
+  #localMenu .csWrap{padding-bottom:130px}
+  #localMenu .csCrests{bottom:4px}
+  #localMenu .csReady{bottom:4px;min-height:64px}
+  #localMenu .csHero canvas{width:min(370px,27vw)}
+  #localMenu .csCrestBtn{height:84px}
+}
+@media (max-width:1150px){
+  #localMenu .msGrid{grid-template-columns:1fr;gap:24px}
+  #localMenu .msRight{flex-direction:row;flex-wrap:wrap}
+  #localMenu .msCount{width:100%;text-align:left}
+  #localMenu .msRight .tmPanel{flex:1;min-width:260px}
+  #localMenu .msMapGrid{grid-template-columns:1fr}
+  #localMenu .msMapPrev{display:none}
+  #localMenu .csWrap{grid-template-columns:1fr;gap:18px;padding-bottom:220px}
+  #localMenu .csRoster{display:none}
+  #localMenu .csHero canvas{width:min(340px,60vw)}
+  #localMenu .csCrests{width:100%}
+  #localMenu .csReady{right:auto;left:50%;transform:translateX(-50%);bottom:12px;width:min(340px,80vw)}
+}
+</style>
+
 <canvas id="c" tabindex="-1"></canvas>
 <svg width="0" height="0" aria-hidden="true" style="position:absolute">
   <defs>
@@ -1441,13 +1644,14 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.372</div>
+<div id="ver">Chalice 0.373</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
     <h1 class="titleWord">CHALICE</h1>
     <p class="titlePrompt">PRESS ANY BUTTON</p>
   </div>
+  <div id="menuCupWrap" aria-hidden="true"><canvas id="menuCupCv"></canvas></div>
   <div class="wrap">
     <div class="brand">
       <h1 class="logo">CHALICE</h1>
@@ -14735,7 +14939,7 @@ const localMenu = (() => {
   const root = $('localMenu');
   const cupCanvas = $('cupView');
   const find = selector => root.querySelector(selector);
-  const S = {page:'local', phase:'kick', focusClass:false};
+  const S = {page:'home', phase:'kick', focusClass:false};
   const clsOf = () => clsByKey(S.cls);
   const clsByKey = key => MENU_CLASSES.find(c => c.key === key);
   const mapOf = () => MENU_MAPS.find(m => m.key === MAP_ID);
@@ -14882,7 +15086,7 @@ const localMenu = (() => {
   }
   function renderHome(){
     root.innerHTML = `<div class="homeWrap"><nav class="homeMenu" aria-label="Main menu">
-      ${hmRow('nav','local','LOCAL','local',{chev:true})}
+      ${hmRow('setup','','LOCAL','local',{chev:true})}
       ${hmRow('nav','online','ONLINE','globe',{off:true,meta:'SOON'})}
       ${hmRow('nav','extras','EXTRAS','book',{chev:true})}
       ${hmRow('nav','settings','SETTINGS','sliders',{chev:true})}
@@ -15006,9 +15210,8 @@ const localMenu = (() => {
     const ready = flag === 'READY';
     return `<div class="tmRow ${f.you ? 'you' : ''}">
       <span class="tmWho">
-        <span class="nm">${f.name}</span>
-        <span class="cl">${c ? c.name : ''}</span>
         <span class="em">${c ? classCrest(c.key, f.team) : ''}</span>
+        <span class="nm">${f.name}<span class="cl">${c ? c.name : ''}</span></span>
       </span>
       <span class="tmFlag ${ready ? 'ready' : ''} ${flag === 'BOT' ? 'bot' : ''}">${flag}</span>
     </div>`;
@@ -15041,7 +15244,66 @@ const localMenu = (() => {
         ${locked ? `<span class="lock">LOCKED · ${owner ? owner.name : 'TAKEN'}</span>` : ''}
       </span></button>`;
   }
+  const CS_COLOUR = { sorcerer:'#9a7bff', knight:'#e0b45a', lampist:'#ffc06a', goblin:'#6fd08a', brigand:'#d9744a' };
   function renderS(){
+    if(!inMatch()){ renderClassSelect(); return; }
+    renderMatchS();
+  }
+  function renderClassSelect(){
+    const c = clsOf();
+    const colour = CS_COLOUR[c.key] || '#e0b45a';
+    const teamLabel = S.teamIndex === 0 ? 'THISTLE' : 'MARIGOLD';
+    const teamCol = S.teamIndex === 0 ? 'var(--blue)' : 'var(--t1)';
+    const mates = visibleRoster().filter(f => f.team === S.teamIndex && !f.you).slice(0, Math.max(0, S.size - 1));
+    const rows = [`<div class="csRow you">
+      <span class="ic">${classCrest(c.key, S.teamIndex)}</span>
+      <span class="nm">${c.name.toUpperCase()}</span>
+      <span class="st">${S.ready ? 'READY' : 'YOU'}</span>
+    </div>`];
+    for(const f of mates){
+      const mc = clsByKey(f.cls);
+      if(!mc) continue;
+      rows.push(`<div class="csRow">
+        <span class="ic">${classCrest(mc.key, S.teamIndex)}</span>
+        <span class="nm">${mc.name.toUpperCase()}</span>
+        <span class="st">BOT</span>
+      </div>`);
+    }
+    const crests = CLASS_PICK.map(x => {
+      const locked = !S.dupes && countOf(x.key) > 0 && x.key !== c.key;
+      const focus = x.key === c.key;
+      return `<button type="button" class="csCrestBtn${locked ? ' locked' : ''}${focus ? ' focus' : ''}" ${locked ? 'disabled' : `data-act="cls" data-v="${x.key}"`} style="--csColour:${CS_COLOUR[x.key] || '#e0b45a'}">
+        <span class="cr">${classCrest(x.key)}</span><span class="cn">${x.name}</span>
+        ${locked ? '<span class="lock">LOCKED</span>' : ''}${focus ? '<span class="tick">YOURS</span>' : ''}
+      </button>`;
+    }).join('');
+    root.innerHTML = `<div class="csWrap" style="--csColour:${colour}">
+      <button type="button" class="vBack csBack" data-act="backSetup">‹ BACK</button>
+      <div class="csLeft">
+        <h1 class="csName">${c.name.toUpperCase()}</h1>
+        <div class="csRole">${c.role}<span>${CLASS_HP[c.key]} HP</span></div>
+        <p class="csLine">${c.line}</p>
+        <div class="csAbHead">ABILITIES</div>
+        <div class="csA">${abilityRows(c)}</div>
+      </div>
+      <div class="csHero">
+        <span class="glow"></span><span class="floor"></span>
+        <canvas data-live-portrait="${c.key}" width="520" height="680" aria-label="${c.name} portrait"></canvas>
+      </div>
+      <div class="csRoster" style="--tmCol:${teamCol}">
+        <div class="head"><span>${teamLabel}</span><span class="tg">YOUR TEAM</span></div>
+        <div class="rule"></div>
+        ${rows.join('')}
+        <div class="csFoot">${S.size} OF ${S.size} SLOTS</div>
+      </div>
+      <div class="csCrests">
+        <div class="cap">Select your class</div>
+        <div class="csCrestRow">${crests}</div>
+      </div>
+      <button type="button" class="csReady" data-act="launch"><span>READY</span><span class="sub">${c.name.toUpperCase()}</span></button>
+    </div>`;
+  }
+  function renderMatchS(){
     if(S.phase === 'dead'){ root.innerHTML = deathScreen(); return; }
     const kick = S.phase === 'kick';
     const m = mapOf();
@@ -15096,51 +15358,78 @@ const localMenu = (() => {
     <g clip-path="url(#playCupClip)"><rect class="cupSheen" x="-70" y="0" width="70" height="134" fill="url(#playSheen)"/></g>
     <ellipse class="cupLine" cx="60" cy="16.5" rx="28" ry="4.6"/>
   </svg></span>`;
+  function renderMapPage(){
+    const m = mapOf();
+    const rows = MENU_MAPS.filter(x => x.key !== 'church').map(x => {
+      const on = x.key === S.map, available = PLAYABLE_MAPS.has(x.key);
+      return `<button type="button" class="msMapRow${on ? ' on' : ''}" data-act="map" data-v="${x.key}" ${available ? '' : 'disabled'}>
+        <span class="art"><img src="${MENU_MAP_ART[x.key]}" alt=""></span>
+        <span><span class="nm">${x.name.toUpperCase()}</span><span class="ln">${x.line}</span></span>
+        <span class="tick">${on ? 'PICKED' : ''}</span></button>`;
+    }).join('');
+    root.innerHTML = `<div class="vWrap">
+      <button type="button" class="vBack" data-act="backSetup">‹ BACK</button>
+      <div class="vHead"><span class="kick">MATCH SETUP</span><h1>MAP</h1><div class="sub">Choose the field</div></div>
+      <div class="msMapGrid">
+        <div class="msMapList">${rows}</div>
+        <div class="msMapPrev"><div class="big"><img src="${MENU_MAP_ART[m.key]}" alt=""></div><div class="nm">${m.name.toUpperCase()}</div><div class="ln">${m.line}</div></div>
+      </div>
+    </div>`;
+  }
   function renderG(){
     const m = mapOf();
-    const maps = MENU_MAPS.filter(x => x.key !== 'church').map(x => {
-      const on = x.key === S.map, available = PLAYABLE_MAPS.has(x.key);
-      return `<button type="button" class="mapRow${on ? ' on' : ''}" data-act="map" data-v="${x.key}" ${available ? '' : 'disabled'}>
-        <span class="mapArt"><img src="${MENU_MAP_ART[x.key]}" alt=""></span><span class="mn">${x.name}</span><span class="tick">${on ? 'PICKED' : ''}</span></button>`;
-    }).join('');
-    root.innerHTML = `<div class="vWrap setupWrap">
-      <button type="button" class="vBack" data-act="backLocal">‹ BACK</button>
-      <div class="vHead"><span class="kick">GAME SETUP</span><h1>Match Settings</h1><div class="sub">${m.name} · ${modeOf().name} · ${S.size}v${S.size} · FIRST TO ${S.firstTo} · ${S.len} MIN</div></div>
-      <div class="setup4">
-        <div class="gbox"><h4>MAP</h4><div class="mapList">${maps}</div></div>
-        <button type="button" class="gbox gboxBtn" data-act="options"><h4>OPTIONS</h4><div class="srows">
-          ${srow('MODE', modeOf().name)}${srow('FIRST TO', S.firstTo)}${srow('GAME LENGTH', S.len + ' MIN')}
-          ${srow('BOTS', S.botsOn ? 'ON' : 'OFF')}${srow('DIFFICULTY', S.botsOn ? botName() : '—')}
-          ${srow('TEAM SIZE', S.size + 'v' + S.size)}${srow('DUPLICATES', S.dupes ? 'ON' : 'OFF')}${srow('CUSTOM CLASSES', S.customCls ? 'ON' : 'OFF')}
-        </div><div class="gchange">CHANGE OPTIONS <span class="chev"></span></div></button>
-        <button type="button" class="gbox playBox gboxBtn" data-act="lobby"><h4>PLAY</h4>${PLAY_CUP}<div class="cta">ENTER LOBBY <span class="chev"></span></div></button>
-        <div class="gbox teamsBox"><h4>TEAMS</h4><div class="teamWrap">${teamMini(S.teamIndex)}${teamMini(1 - S.teamIndex)}</div>
-          <div class="teamFoot">BOTS ${S.botsOn ? botName() : 'OFF'} · ${S.dupes ? 'DUPLICATES ON' : 'NO DUPLICATES'}</div></div>
+    const art = MENU_MAP_ART[m.key] || MENU_MAP_ART.basilica;
+    root.innerHTML = `<div class="msGrid">
+      <button type="button" class="vBack msBack" data-act="backHome">‹ BACK</button>
+      <div class="msLeft">
+        <span class="msKick">LOCAL GAME</span>
+        <h1 class="msTitle">MATCH SETUP</h1>
+        <div class="msMeta">
+          <div><span>MODE</span><b>${modeOf().name.toUpperCase()}</b></div>
+          <div><span>MATCH</span><b>${S.size}v${S.size} · FIRST TO ${S.firstTo} · ${S.len} MIN</b></div>
+          <div><span>BOTS</span><b>${S.botsOn ? botName().toUpperCase() : 'OFF'}</b></div>
+        </div>
+        <div class="msRows">
+          <button type="button" class="msRow" data-act="mapPage"><span>MAP</span><span class="val">${m.name.toUpperCase()}</span></button>
+          <button type="button" class="msRow" data-act="options"><span>EDIT GAME OPTIONS</span><span class="chev"></span></button>
+        </div>
+        <div class="msPlate"><img src="${art}" alt=""><span class="nm">${m.name.toUpperCase()}</span><span class="tag">${modeOf().name.toUpperCase()}</span></div>
+        <div class="msCap">${modeOf().name.toUpperCase()} ON <b>${m.name.toUpperCase()}</b> · FIRST TO ${S.firstTo} · ${S.len} MIN</div>
+        <div class="msLoad"></div>
+        <button type="button" class="msStart" data-act="startGame"><span>START GAME</span><span class="chev"></span></button>
+      </div>
+      <div></div>
+      <div class="msRight">
+        <div class="msCount">1 PLAYER + ${Math.max(0, S.size*2 - 1)} BOTS <span>[${S.size*2} MAX]</span></div>
+        ${teamPanel(true)}${teamPanel(false)}
       </div>
     </div>`;
   }
   function optRow(k, v){ return `<div class="optRow"><span class="k">${k}</span>${v}</div>`; }
   function renderOptions(){
-    root.innerHTML = `<div class="vWrap setupWrap">
-      <div class="vHead"><span class="kick">GAME SETUP</span><h1>Options</h1><div class="sub">Changes apply to the next match.</div></div>
-      <div class="opt3">
-        <div class="gbox"><h4>MATCH</h4><div class="optRows">
-          ${optRow('FIRST TO', seg('firstTo',[['20','20'],['25','25'],['30','30'],['40','40']],S.firstTo))}
-          ${optRow('GAME LENGTH', seg('len',[['5','5 min'],['10','10 min'],['15','15 min']],S.len))}
-        </div></div>
-        <div class="gbox"><h4>BOTS</h4><div class="optRows">
-          ${optRow('ENABLED', seg('botsOn',[['on','On'],['off','Off']],S.botsOn?'on':'off'))}
-          ${S.botsOn ? optRow('DIFFICULTY', seg('bots',[['easy','Easy'],['normal','Normal'],['hard','Hard']],diffKey))
-            + optRow('TEAM SIZE', seg('size',[[1,'1v1'],[2,'2v2'],[3,'3v3'],[4,'4v4'],[5,'5v5'],[6,'6v6']],S.size)) : ''}
-        </div></div>
-        <div class="gbox"><h4>CLASSES</h4><div class="optRows">
-          ${optRow('ALLOW DUPLICATES', seg('dupes',[['off','Off'],['on','On']],S.dupes?'on':'off'))}
-          ${optRow('CUSTOM CLASSES', seg('customCls',[['off','Off'],['on','On']],S.customCls?'on':'off'))}
-          ${S.customCls ? botClassRow() : ''}
-        </div></div>
-      </div>
-      <div class="vAction">
-        <button type="button" class="hmRow gold" data-act="backSetup"><span class="ic"></span><span class="lbl">DONE</span><span class="chev"></span></button>
+    root.innerHTML = `<div class="vWrap">
+      <div class="vHead"><span class="kick">MATCH SETUP</span><h1>OPTIONS</h1><div class="sub">Changes apply to the next match</div></div>
+      <div class="msOptWrap">
+        <div class="msOptGroup">MATCH</div>
+        <div class="msOptRows">
+          <div class="msOptRow"><span>FIRST TO</span><span class="val">${seg('firstTo',[['20','20'],['25','25'],['30','30'],['40','40']],S.firstTo)}</span></div>
+          <div class="msOptRow"><span>GAME LENGTH</span><span class="val">${seg('len',[['5','5 min'],['10','10 min'],['15','15 min']],S.len)}</span></div>
+        </div>
+        <div class="msOptGroup">BOTS</div>
+        <div class="msOptRows">
+          <div class="msOptRow"><span>ENABLED</span><span class="val">${seg('botsOn',[['on','On'],['off','Off']],S.botsOn?'on':'off')}</span></div>
+          ${S.botsOn ? `<div class="msBotSub">
+            <div class="msOptRow"><span>DIFFICULTY</span><span class="val">${seg('bots',[['easy','Easy'],['normal','Normal'],['hard','Hard']],diffKey)}</span></div>
+            <div class="msOptRow"><span>TEAM SIZE</span><span class="val">${seg('size',[[1,'1v1'],[2,'2v2'],[3,'3v3'],[4,'4v4'],[5,'5v5'],[6,'6v6']],S.size)}</span></div>
+          </div>` : ''}
+        </div>
+        <div class="msOptGroup">CLASSES</div>
+        <div class="msOptRows">
+          <div class="msOptRow"><span>ALLOW DUPLICATES</span><span class="val">${seg('dupes',[['off','Off'],['on','On']],S.dupes?'on':'off')}</span></div>
+          <div class="msOptRow"><span>CUSTOM CLASSES</span><span class="val">${seg('customCls',[['off','Off'],['on','On']],S.customCls?'on':'off')}</span></div>
+          ${S.customCls ? `<div class="msBotSub">${botClassRow()}</div>` : ''}
+        </div>
+        <button type="button" class="msOptRow msDone" data-act="backSetup"><span>DONE</span><span class="chev"></span></button>
       </div>
     </div>`;
   }
@@ -15151,9 +15440,10 @@ const localMenu = (() => {
     root.classList.toggle('in-match', inMatch());
     const menuEl = $('menu');
     menuEl.classList.toggle('home', ['home','local','extras'].includes(S.page));
-    menuEl.classList.toggle('submenu', ['setup','options','lobby','classes','tutorial'].includes(S.page));
+    menuEl.classList.toggle('submenu', ['setup','options','map','lobby','classes','tutorial'].includes(S.page));
     if(S.page === 'setup') renderG();
     else if(S.page === 'options') renderOptions();
+    else if(S.page === 'map') renderMapPage();
     else if(S.page === 'lobby') renderS();
     else renderA();
     updateTimer();
@@ -15161,7 +15451,7 @@ const localMenu = (() => {
   function go(page){
     S.page = page;
     S.phase = 'kick';
-    if((page === 'setup' || page === 'options') && !inMatch() && !lobbyRoster) lobbyRoster = makeLobbyRoster();
+    if((page === 'setup' || page === 'options' || page === 'map') && !inMatch() && !lobbyRoster) lobbyRoster = makeLobbyRoster();
     $('menu').scrollTop = 0;
     render();
   }
@@ -15229,6 +15519,8 @@ const localMenu = (() => {
       case 'mode': setGameType(v); break;
       case 'setup': go('setup'); return;
       case 'options': go('options'); return;
+      case 'mapPage': go('map'); return;
+      case 'startGame': lobbyRoster = makeLobbyRoster(); go('lobby'); return;
       case 'backSetup': go('setup'); return;
       case 'backHome': go('home'); return;
       case 'backLocal': go('local'); return;
@@ -15344,6 +15636,95 @@ const localMenu = (() => {
   }
 
   return {go, matchFrame};
+})();
+
+/* The menu cup: one renderer behind Match Setup and its sub pages. The home
+   crest is the title canvas; this one picks up from the same spot and carries
+   the cup into the centre lane. */
+(function menuCup(){
+  const cv = document.getElementById('menuCupCv');
+  const wrap = document.getElementById('menuCupWrap');
+  const menu = document.getElementById('menu');
+  const local = document.getElementById('localMenu');
+  if(!cv || !wrap || !menu || !local) return;
+  let renderer = null;
+  try { renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true, alpha:true }); } catch(e){ return; }
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  const scene = new THREE.Scene();
+  const hemi = new THREE.HemisphereLight(0x8a8fd0, 0x05040a, 0.55); scene.add(hemi);
+  const key = new THREE.PointLight(0xffd9a0, 1.15, 10); key.position.set(1.6, 1.2, 2.4); scene.add(key);
+  const rim = new THREE.PointLight(0x7a5cff, 1.9, 10); rim.position.set(-1.8, 0.7, -1.5); scene.add(rim);
+  const fill = new THREE.PointLight(0xffb347, 0.5, 8); fill.position.set(0.4, -0.8, 1.4); scene.add(fill);
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 20);
+  cam.position.set(0, 0, 9);
+  cam.lookAt(0, 0, 0);
+  const pivot = new THREE.Group();
+  scene.add(pivot);
+  const cup = makeChalice();
+  const bone = CH_DARK.clone();
+  bone.color.setHex(0x5a3d1c);
+  bone.emissive.setHex(0x241505);
+  bone.emissiveIntensity = .3;
+  bone.metalness = .38;
+  bone.roughness = .58;
+  const trim = CH_BRIGHT.clone();
+  trim.color.setHex(0xcaa04e);
+  trim.metalness = .85;
+  trim.roughness = .3;
+  cup.traverse(o => {
+    if(!o.isMesh || !o.material) return;
+    if(o.material === CH_DARK) o.material = bone;
+    else if(o.material === CH_BRIGHT) o.material = trim;
+  });
+  cup.position.y = -0.225;
+  pivot.add(cup);
+
+  const HOME = { s:3.0, y:1.68, x:0, z:0, rx:0, dim:.55, op:0 };
+  const TARGET = {
+    setup:   { s:8.2, y:.15,  x:.30, z:-.16, rx:.09, dim:.34, op:.72 },
+    options: { s:5.4, y:.18,  x:.28, z:-.12, rx:.06, dim:.20, op:.38 },
+    map:     { s:5.4, y:.18,  x:.28, z:-.12, rx:.06, dim:.20, op:.38 }
+  };
+  const cur = Object.assign({}, HOME);
+  let last = performance.now(), yaw = 0, lastPage = '';
+
+  function layout(){
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    cam.aspect = window.innerWidth / Math.max(1, window.innerHeight);
+    cam.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', layout);
+
+  function frame(now){
+    requestAnimationFrame(frame);
+    if(menu.hidden || menu.classList.contains('titling')){ wrap.style.opacity = '0'; return; }
+    const page = local.dataset.page;
+    const target = TARGET[page];
+    if(!target){ wrap.style.opacity = '0'; lastPage = page; return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if(page !== lastPage){
+      if(page === 'setup' && lastPage === 'home') Object.assign(cur, HOME);
+      lastPage = page;
+    }
+    const k = 1 - Math.exp(-dt * 3.6);
+    for(const f of ['s','y','x','z','rx','dim','op']) cur[f] += (target[f] - cur[f]) * k;
+    pivot.scale.setScalar(cur.s);
+    pivot.position.set(cur.x, cur.y, 0);
+    pivot.rotation.z = cur.z;
+    pivot.rotation.x = cur.rx;
+    yaw += dt * .55;
+    cup.rotation.y = yaw;
+    hemi.intensity = .55 * cur.dim;
+    key.intensity = 1.15 * cur.dim;
+    rim.intensity = 1.9 * cur.dim;
+    fill.intensity = .5 * cur.dim;
+    animChalice(cup, .72, -1, now / 1000, 1 / 60, 2);
+    wrap.style.opacity = cur.op.toFixed(3);
+    renderer.render(scene, cam);
+  }
+
+  layout();
+  requestAnimationFrame(frame);
 })();
 $('padSens').value = padSens; $('padSensV').textContent = padSens.toFixed(2);
 $('padSens').addEventListener('input', e => { padSens = parseFloat(e.target.value); $('padSensV').textContent = padSens.toFixed(2); try{ localStorage.setItem('dc-pad-sens', String(padSens)); }catch(err){} });
