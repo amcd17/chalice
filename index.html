@@ -1660,7 +1660,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.395</div>
+<div id="ver">Chalice 0.396</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -7369,14 +7369,13 @@ function makeZealot(team){
   const SHR = new V(0.27, 1.43, 0), SHL = new V(-0.27, 1.43, 0);
   // the Bone Sword in one hand: P.weapon is the grip, posed each frame by zealotWorldView (low at the right hip at rest, up through the cut when swinging)
   const sw = SHARED_SWORD ? makeClassSword(team, 'brigand', SWORD_TURN, SWORD_SIZE) : makeBoneSword(); if(!SHARED_SWORD) sw.scale.setScalar(0.72); sw.position.set(0, SHARED_SWORD ? 0.02 : 0.072, 0);   // v0.347: the classic sword in the team's colour
-  sw.scale.multiplyScalar(0.8);   // 24 Nov: a smaller sword in third person
   const swGrip = new THREE.Group(); swGrip.add(sw); g.add(swGrip); P.weapon = swGrip;
   P.armS = new THREE.Group(); P.armS.visible = false; g.add(P.armS);   // kept empty: the game's older Zealot code still toggles it
   P.rightParts = new THREE.Group(); g.add(P.rightParts); P.rightArm = makeMovingArm(P.rightParts, 1, wool, ironD, glove, false, SHR, 1);
   P.gripLow = new V(-0.33, 0.9, -0.08);   // the free left hand, at his side while the sword is out
   P.armJ = new THREE.Group(); P.armJ.visible = false; g.add(P.armJ);
   // shouldered: the bone butt sits on the right shoulder and the barrel runs forward at shoulder height
-  const rifle = makeSkeletonRifle(); rifle.scale.setScalar(0.85); rifle.position.set(0.27, 1.39, -0.54); P.armJ.add(rifle);   // at 85% so the left hand reaches the foregrip
+  const rifle = makeSkeletonRifle(); rifle.scale.setScalar(0.66); rifle.position.set(0.25, 1.39, -0.36); P.armJ.add(rifle);   // 24 Nov: pulled in so the arms are not stretched; : smaller in third person (was 85%); the left hand follows the foregrip
   rifle.updateMatrix(); P.rifle = rifle; P.ribs = rifle.userData.ribs;
   P.jvHand = new THREE.Group(); P.armJ.add(P.jvHand);   // the game's javelin-hand flag; nothing is thrown now
   const jH = new V(0, -.08, .17).applyMatrix4(rifle.matrix); armChain(P.armJ, SHR, jH, new V(0.12, -0.14, 0.1), 0.06, 0.05, wool, wool, skin, 0.05);
@@ -7388,7 +7387,7 @@ function makeZealot(team){
   add(boxM(0.1, 0.11, 0.1, skin), fH.x, fH.y + 0.03, fH.z, 0, 0, 0, P.armR);
   P.armRS = new THREE.Group(); P.armR.add(P.armRS);   // and the Bone Sword hangs from his right hand, point down
   const sH = new V(0.34, 0.92, -0.16); armChain(P.armRS, SHR, sH, new V(0.12, -0.1, 0.06), 0.06, 0.05, wool, wool, skin, 0.05);
-  { const s2 = SHARED_SWORD ? makeClassSword(team, 'brigand', SWORD_TURN, SWORD_SIZE) : makeBoneSword(); if(!SHARED_SWORD) s2.scale.setScalar(0.72); s2.position.copy(sH); s2.rotation.set(-2.25, Math.PI/2, 0.1); s2.scale.multiplyScalar(0.8); P.armRS.add(s2); P.rallySword = s2; }
+  { const s2 = SHARED_SWORD ? makeClassSword(team, 'brigand', SWORD_TURN, SWORD_SIZE) : makeBoneSword(); if(!SHARED_SWORD) s2.scale.setScalar(0.72); s2.position.copy(sH); s2.rotation.set(-2.25, Math.PI/2, 0.1); P.armRS.add(s2); P.rallySword = s2; }
     P.mats = { cloth:wool, skin }; P.baseScale = 1; inkOutline(g); return P;
 }
 function buildBody(k, team, showcase){   // showcase: the menu portrait pose (gridiron knight with sword and cannon both out)
