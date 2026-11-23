@@ -9,7 +9,7 @@ A first-person medieval-fantasy class shooter, played against bots. Two teams, T
 The whole game is one file, `index.html`: three.js r128 from a CDN, every image embedded, no build step. It runs by opening the file in a browser.
 
 - Repo: `https://github.com/amcd17/chalice` (branch `main`).
-- Live site: `https://chalice-game.vercel.app/`. A push to `main` publishes it. Only commit or push when Alex asks; he pushes from his own terminal.
+- Live site: `https://chalice-game.vercel.app/`. A push to `main` publishes it. Commit finished, tested changes unless Alex has said not to; never push, he pushes from his own terminal.
 
 ## Modes
 

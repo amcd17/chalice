@@ -1660,7 +1660,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.392</div>
+<div id="ver">Chalice 0.394</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -8429,6 +8429,15 @@ function staffHeat(f, c){
   f.heat = h + STAFF_HEAT*(1 + STAFF_RAMP*h)*(1 + (BOLT_HEAT_X - 1)*c);   // the hotter it runs, the faster it climbs
   if(f.heat >= 1){ f.heat = 1; f.overheat = f.overheatMax = STAFF_OVERHEAT; sfx('block', f.isPlayer ? null : f.pos); if(f.isPlayer) toast('STAFF OVERHEATED', '#ff8a4a'); }
 }
+const VMC_A = new V(), VMC_B = new V(), BOLT_LAUNCH_T = 0.15;
+function vmCrystalMuzzle(out){   // 23 Nov: where the first-person staff's crystal sits on screen, carried into the world just under a metre ahead, so your bolt is seen leaving it
+  const sm = VM.staffMesh; if(!sm || !VM.staff || !VM.staff.visible) return false;
+  const cr = sm.userData.crystal; VMC_A.copy(cr ? cr.position : VMC_B.set(0, 1.42, 0));
+  vmScene.updateMatrixWorld(); vmCam.updateMatrixWorld(); sm.localToWorld(VMC_A).project(vmCam);
+  if(!(VMC_A.z < 1) || Math.abs(VMC_A.x) > 1.2 || Math.abs(VMC_A.y) > 1.2) return false;
+  VMC_B.set(VMC_A.x, VMC_A.y, 0.5).unproject(camera).sub(camera.position).normalize();
+  out.copy(camera.position).addScaledVector(VMC_B, 0.9); return true;
+}
 function fireBolt(f, c){
   c = c || 0; if(sorcKit(f)) f.lastBoltAt = clock;
   if(sorcKit(f) && c >= 0.999){ fireTrialBeam(f); return; }
@@ -8437,9 +8446,10 @@ function fireBolt(f, c){
   const hit = raycastWorld(eye, look, 220, f, true), aim = eye.clone().addScaledVector(look, Math.max(hit.t, 4));
   const right = T1.set(Math.cos(f.yaw), 0, -Math.sin(f.yaw));
   const muzzle = eye.clone().addScaledVector(look, 0.6).addScaledVector(right, 0.22); muzzle.y -= 0.15;
+  const seen = f.isPlayer && sorcKit(f) ? (() => { const c = new V(); return vmCrystalMuzzle(c) ? c.sub(camera.position).normalize() : null; })() : null;   // your own bolt is drawn along the line through the crystal, then eases onto its true path
   const dir = aim.sub(muzzle).normalize();
-  const mesh = makeBoltMesh(f.team, c); mesh.scale.setScalar(0.8*(1 + 1.4*c));   // a charged bolt is one big sizzling ball mesh.position.copy(muzzle); scene.add(mesh);
-  PROJ.push({ owner:f, k:'bolt', pos:muzzle, vel:dir.multiplyScalar(s.speed*(1 + 0.25*c)), life:2.5, mesh, home:f.burstLock, homeY:f.burstLockY, dmg:sorcKit(f) ? BOLT_DMG + (BOLT_FULL - BOLT_DMG)*c : undefined });
+  const mesh = makeBoltMesh(f.team, c); mesh.scale.setScalar(0.8*(1 + 1.4*c)); mesh.position.copy(muzzle); scene.add(mesh);   // a charged bolt is one big sizzling ball (23 Nov: the add sat inside this comment, so no bolt was ever drawn)
+  PROJ.push({ owner:f, k:'bolt', pos:muzzle, vel:dir.multiplyScalar(s.speed*(1 + 0.25*c)), life:2.5, mesh, seen, born:clock, home:f.burstLock, homeY:f.burstLockY, dmg:sorcKit(f) ? BOLT_DMG + (BOLT_FULL - BOLT_DMG)*c : undefined });
   applyTrialRecoil(f,'bolt',1+0.65*c);
   if(f.isPlayer) VM.flash = 1 + c;
   sfx(c > 0.5 ? 'thud' : 'lev', f.isPlayer ? null : f.pos);
@@ -10849,6 +10859,9 @@ function updateProjectiles(dt){
     if(done && p.k === 'relic'){ landRelic(p); PROJ.splice(i, 1); continue; }   // the book stays: it lies there and falls open
     if(done){ if(p.k === 'smoke') popSmoke(p); else if(p.k === 'flask') popFire(p); if(!p.stuck) scene.remove(p.mesh); PROJ.splice(i,1); continue; }
     p.mesh.position.copy(p.pos);
+    if(p.seen){ const u = (clock - p.born)/BOLT_LAUNCH_T; if(u >= 1) p.seen = null; else {   // drawn on the line of sight through the crystal at the bolt's depth, merging onto the real path
+      camera.getWorldDirection(T6); const depth = T5.copy(p.pos).sub(camera.position).dot(T6), along = Math.max(0.05, p.seen.dot(T6));
+      T5.copy(camera.position).addScaledVector(p.seen, Math.max(0.9, depth)/along); p.mesh.position.lerp(T5, 1 - u*u*(3 - 2*u)); } }
     if(p.k === 'relic'){ p.mesh.rotation.x += dt*9; }   // end over end
     else if(p.k === 'smoke' || p.k === 'flask'){ p.mesh.rotation.x += dt*6; p.mesh.userData.spark.material.opacity = 0.6 + 0.4*Math.random(); }
     if(p.k === 'knives' || p.k === 'infernal' || p.k === 'bolt' || p.k === 'javelin' || p.k === 'dart' || p.k === 'spear'){ T1.copy(p.pos).add(p.vel); p.mesh.lookAt(T1); if(p.k === 'bolt') p.mesh.children[0].rotation.z += dt*14; }
@@ -12526,9 +12539,10 @@ function updateVM(dt){
     VM.reachGlow.material.opacity = 0.35 + 0.3*Math.sin(clock*10); }
   if(VM.lantern){   // lampist: the lantern raised before her while it's lit; the guns dropped and tipped up to reload
     const on = p.lampOn ? 1 : 0; VM.lnK = (VM.lnK || 0) + (on - (VM.lnK || 0))*Math.min(1, dt*12); const k = VM.lnK, ln = VM.lantern;
-    ln.visible = !p.hasChalice && (p.weapon === 'melee' || k > 0.05 || !!p.lbOn) && !(p.blinkTravel) && (VM.gun || 0) < 0.5; ln.position.y -= 0.35*(VM.gun || 0); if(p.weapon !== 'melee') ln.position.y -= 0.4*(1 - k);   // with the blunderbuss out the lantern only comes up while it's lit ln.position.x += 0.06*k; ln.position.y += 0.06*k; ln.position.z -= 0.1*k; ln.rotation.z = Math.sin(clock*2.1)*0.04*(1 - k);
+    ln.visible = !p.hasChalice && (p.weapon === 'melee' || k > 0.05 || !!p.lbOn) && !(p.blinkTravel) && (VM.gun || 0) < 0.5; ln.position.y -= 0.35*(VM.gun || 0); if(p.weapon !== 'melee') ln.position.y -= 0.4*(1 - k); ln.position.x += 0.06*k; ln.position.y += 0.06*k; ln.position.z -= 0.1*k; ln.rotation.z = Math.sin(clock*2.1)*0.04*(1 - k);   // with the blunderbuss out the lantern only comes up while it's lit; lit, it lifts toward the centre, and sways a little at rest (23 Nov: restored from inside this comment)
     const u = VM.lanternU, gk = Math.max(k, p.lbOn ? 0.8 : 0); lampTint(u, gk);
-    if((k > 0.6 || p.lbOn) && ln.visible){ VM.plusAcc = (VM.plusAcc || 0) + dt; if(VM.plusAcc > 0.18){ VM.plusAcc = 0; healPlus(vmRoot, T7.copy(ln.position).add(T6.set(0, -0.06, 0)), 0.038, 0.26); } }   // pluses drift from the raised lantern, and from her hip through the lightbath u.glow.material.opacity = 0.3 + 0.45*gk; u.glow.scale.setScalar(0.5 + 0.5*gk + 0.05*gk*Math.sin(clock*13)); u.flame.scale.set(0.09*(1 + 0.5*k), 0.13*(1 + 0.5*k)*(0.9 + 0.2*Math.random()), 1);
+    if((k > 0.6 || p.lbOn) && ln.visible){ VM.plusAcc = (VM.plusAcc || 0) + dt; if(VM.plusAcc > 0.18){ VM.plusAcc = 0; healPlus(vmRoot, T7.copy(ln.position).add(T6.set(0, -0.06, 0)), 0.038, 0.26); } }   // pluses drift from the raised lantern, and from her hip through the lightbath
+    u.glow.material.opacity = 0.3 + 0.45*gk; u.glow.scale.setScalar(0.5 + 0.5*gk + 0.05*gk*Math.sin(clock*13)); u.flame.scale.set(0.09*(1 + 0.5*k), 0.13*(1 + 0.5*k)*(0.9 + 0.2*Math.random()), 1);   // the glow swells and the flame flickers with it (23 Nov: restored from inside a comment)
 
   }
   if(VM.wisps){ VM.wisps.visible = !!p.flying; if(p.flying) animWisps(VM.wisps, clock, 0.16); }
