@@ -82,14 +82,16 @@ function makeBell(s, mat = BRONZE){
 function makeBow(){
   const g = new THREE.Group();
   // the stave: a recurved limb above and below the cradle (bow points toward -z, string toward +z)
-  const limb = sgn => new THREE.CatmullRomCurve3([new V(0, .26*sgn, 0), new V(0, .5*sgn, .02), new V(0, .78*sgn, .12), new V(0, .98*sgn, .3), new V(0, 1.04*sgn, .36)]);
-  for(const s of [1, -1]) g.add(mesh(new THREE.TubeGeometry(limb(s), 24, .028, 8, false), WOOD));
+  // angular limbs: straight segments meeting at hard corners, square in section
+  const limb = sgn => { const pts = [new V(0, .36*sgn, 0), new V(0, .6*sgn, -.06), new V(0, .86*sgn, .06), new V(0, 1.0*sgn, .24), new V(0, 1.06*sgn, .36)], path = new THREE.CurvePath();
+    for(let i = 0; i < pts.length - 1; i++) path.add(new THREE.LineCurve3(pts[i], pts[i + 1])); return path; };
+  for(const s of [1, -1]) g.add(mesh(new THREE.TubeGeometry(limb(s), 40, .034, 4, false), WOOD));
   for(const s of [1, -1]){ const tip = mesh(new THREE.SphereGeometry(.035, 10, 8), WOOD, 0, 1.04*s, .36); g.add(tip); }
   // the oval cradle round the grip
-  const cr = mesh(new THREE.TorusGeometry(.26, .026, 8, 40), WOOD); cr.scale.set(.62, 1, 1); g.add(cr);
+  const cr = mesh(new THREE.TorusGeometry(.36, .03, 4, 8), WOOD); cr.scale.set(.74, 1, 1); cr.rotation.z = Math.PI/8; g.add(cr);   // a wider, eight-sided cradle
   // the bell, centred across the stave inside the cradle, mouth toward the string
-  const bell = makeBell(.3); bell.position.set(0, -.12, 0); g.add(bell); g.userData.bell = bell;
-  g.add(mesh(new THREE.CylinderGeometry(.012, .012, .2, 6), IRON, 0, .16, 0));   // the rod it hangs from
+  const bell = makeBell(.46); bell.position.set(0, -.2, 0); g.add(bell); g.userData.bell = bell;
+  g.add(mesh(new THREE.CylinderGeometry(.014, .014, .12, 6), IRON, 0, .3, 0));   // the rod it hangs from
   // the string and the striker
   const sg = new THREE.BufferGeometry().setFromPoints([new V(0, 1.04, .36), new V(0, 0, .36), new V(0, -1.04, .36)]);
   const str = new THREE.Line(sg, STRING); g.add(str); g.userData.string = sg;
