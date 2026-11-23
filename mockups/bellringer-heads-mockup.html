@@ -11,13 +11,17 @@ header p{margin:4px 0 0;color:#9c8f78;font-family:system-ui,sans-serif;font-size
 .card p{margin:0;padding:2px 12px 12px;font-family:system-ui,sans-serif;font-size:12px;line-height:1.5;color:#cbbfa4}
 @media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body>
-<header><h1>BELLRINGER HEADWEAR</h1><p>Five ways to cover his face. Same body, Thistle colours.</p></header>
+<header><h1>BELLRINGER HEADWEAR</h1><p>Nine ways to cover his face. Same body, Thistle colours.</p></header>
 <div class="grid">
- <div class="card"><h2>1 · BELL HELM</h2><canvas data-h="bell"></canvas><p>A bronze bell worn over the head, open at the front in the T of an ancient Corinthian helm, a dark face inside. Sound holes at the sides.</p></div>
+ <div class="card"><h2>1 · BRONZE HELM</h2><canvas data-h="bell"></canvas><p>A bronze helmet with a rounded skull, a low ridge and a short neck flare. Open at the front in the T of an ancient Corinthian helm, a dark face inside. A bell-rope loop on the crown is the only hint of the bell.</p></div>
  <div class="card"><h2>2 · BELFRY LOUVRES</h2><canvas data-h="louvres"></canvas><p>A hood with a mask of wooden slats, like a bell tower's sound shutters. Clever, and reads as "bell tower" to anyone who has seen one.</p></div>
  <div class="card"><h2>3 · MUFFLED</h2><canvas data-h="muffled"></canvas><p>The face fully wrapped in stitched cloth under his cap: the ear binding taken all the way. Creepy, and echoes the Lampist's bandages.</p></div>
  <div class="card"><h2>4 · LIRIPIPE AND MASK</h2><canvas data-h="mask"></canvas><p>A minstrel's hood with a long trailing tail, and a pale mask with closed painted eyes and a round singing mouth. The most "musician".</p></div>
  <div class="card"><h2>5 · VEILED</h2><canvas data-h="veil"></canvas><p>A broad hat with a dark mourning veil over the face. A funeral bellringer: tolling for the dead.</p></div>
+ <div class="card"><h2>6 · TRICKSTER'S COWL</h2><canvas data-h="cowl"></canvas><p>A jester's two-point cowl with a little bronze bell on each tip, and a small bronze half-mask over the eyes. The mouth shows: a smirk. Light, fast, nothing a soldier would wear.</p></div>
+ <div class="card"><h2>7 · BORROWED POT</h2><canvas data-h="pot"></canvas><p>A dented kettle helm two sizes too big, tipped over one eye on a frayed strap, with a cloth rag knotted under it. Reads as scavenged, not drilled.</p></div>
+ <div class="card"><h2>8 · SCARF AND BELL CAP</h2><canvas data-h="scarf"></canvas><p>A floppy cap with one long tail and a bell on the end, and a cream scarf wound over the nose and mouth. Eyes show, narrow and dark.</p></div>
+ <div class="card"><h2>9 · COWL AND T-MASK</h2><canvas data-h="cowlT"></canvas><p>The jester cowl and bells, with the helm's bronze T-front worn as a mask. Dark face behind the T, bell-rope loop dropped. The soldier's face with a trickster's hat.</p></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -116,23 +120,28 @@ function makeMinstrel(style){
 
 const CLOTH = () => std(0xe6dcc6, { roughness:.95 });
 const HEADS = {
-  bell(head, c){   // a bronze bell worn as a helm, open at the front in a Corinthian T: a dark face inside
-    const b = makeBell(.62); b.position.y = -.24; head.add(b);
+  bell(head0, c){   // a bronze bell worn as a helm, open at the front in a Corinthian T: a dark face inside
+    const head = new THREE.Group(); head.scale.setScalar(.78); head0.add(head);   // the whole helm scaled down to sit closer to the head
+    // a helmet skull in bronze: round dome, near-straight sides, a short flare for the neck guard
+    const prof = [[.245,-.29],[.232,-.24],[.212,-.15],[.206,-.04],[.203,.04],[.19,.11],[.15,.17],[.09,.21],[.03,.225],[0,.228]].map(([r,y]) => new THREE.Vector2(r,y));
+    const skull = mesh(new THREE.LatheGeometry(prof, 32), new THREE.MeshStandardMaterial({ color:BRONZE.color, metalness:.35, roughness:.4, side:THREE.DoubleSide })); head.add(skull);
+    const rim = mesh(new THREE.TorusGeometry(.245, .012, 6, 36), BRONZE, 0, -.29, 0, false); rim.rotation.x = Math.PI/2; head.add(rim);   // beaded lower edge
+    const comb = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V(0,.02,-.2), new V(0,.14,-.17), new V(0,.225,-.04), new V(0,.225,.06), new V(0,.14,.17), new V(0,-.05,.205)]), 24, .014, 6, false), BRONZE); head.add(comb);   // a low ridge front to back
     const faceM = new THREE.MeshStandardMaterial({ color:0x1e1824, roughness:.9, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2 });
     const lip = std(0x8a5a2c, { metalness:.3, roughness:.5 });
     // the eye band: a strip of the bell's surface across the front
-    const band = new THREE.Mesh(new THREE.CylinderGeometry(.199, .203, .06, 24, 1, true, Math.PI - .62, 1.24), faceM); band.position.y = .02; head.add(band);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(.207, .207, .06, 24, 1, true, Math.PI - .62, 1.24), faceM); band.position.y = .02; head.add(band);
     // the slot: from the eye band down to the mouth of the bell, following its flare
-    const slot = new THREE.Mesh(new THREE.CylinderGeometry(.203, .285, .22, 12, 1, true, Math.PI - .2, .4), faceM); slot.position.y = -.12; head.add(slot);
+    const slot = new THREE.Mesh(new THREE.CylinderGeometry(.207, .24, .26, 12, 1, true, Math.PI - .2, .4), faceM); slot.position.y = -.14; head.add(slot);
     // bronze lips round the opening, so it reads as cut
     const edge = (pts) => head.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, .007, 5, false), lip, 0, 0, 0, false));
     const at = (r, a, y) => new V(Math.sin(a)*r, y, Math.cos(a)*r);
-    edge([at(.2, Math.PI - .62, .05), at(.2, Math.PI, .052), at(.2, Math.PI + .62, .05)]);
-    edge([at(.2, Math.PI - .62, -.01), at(.2, Math.PI - .2, -.012)]); edge([at(.2, Math.PI + .2, -.012), at(.2, Math.PI + .62, -.01)]);
-    edge([at(.2, Math.PI - .62, -.01), at(.2, Math.PI - .62, .05)]); edge([at(.2, Math.PI + .62, -.01), at(.2, Math.PI + .62, .05)]);
-    edge([at(.205, Math.PI - .2, -.012), at(.285, Math.PI - .2, -.23)]); edge([at(.205, Math.PI + .2, -.012), at(.285, Math.PI + .2, -.23)]);
-    for(const sx of [-1, 1]){ const h = mesh(new THREE.CircleGeometry(.016, 10), c.dark, sx*.2, -.12, -.12, false); h.rotation.y = sx*1.0 + Math.PI; head.add(h); }   // sound holes on the sides
-    const loop = mesh(new THREE.TorusGeometry(.05, .014, 8, 20), BRONZE, 0, .235, 0); head.add(loop);   // the crown loop a bell rope would run through, in the bell's own bronze
+    edge([at(.208, Math.PI - .62, .05), at(.208, Math.PI, .052), at(.208, Math.PI + .62, .05)]);
+    edge([at(.208, Math.PI - .62, -.01), at(.208, Math.PI - .2, -.012)]); edge([at(.208, Math.PI + .2, -.012), at(.208, Math.PI + .62, -.01)]);
+    edge([at(.208, Math.PI - .62, -.01), at(.208, Math.PI - .62, .05)]); edge([at(.208, Math.PI + .62, -.01), at(.208, Math.PI + .62, .05)]);
+    edge([at(.208, Math.PI - .2, -.01), at(.24, Math.PI - .2, -.27)]); edge([at(.208, Math.PI + .2, -.01), at(.24, Math.PI + .2, -.27)]);
+    for(const sx of [-1, 1]){ const h = mesh(new THREE.CircleGeometry(.016, 10), c.dark, sx*.21, -.12, -.06, false); h.rotation.y = sx*1.0 + Math.PI; head.add(h); }   // sound holes on the sides
+    const loop = mesh(new THREE.TorusGeometry(.05, .014, 8, 20), BRONZE, 0, .25, 0); head.add(loop);   // the crown loop a bell rope would run through, in the bell's own bronze
   },
   louvres(head, c){   // a hood in the team colour, a mask of wooden slats like a belfry's sound shutters
     const hood = mesh(new THREE.SphereGeometry(.205, 18, 14, 0, Math.PI*2, 0, Math.PI*.62), c.teamM, 0, .0, .02); hood.scale.set(1, 1.15, 1); head.add(hood);
@@ -156,6 +165,50 @@ const HEADS = {
     const mouth = mesh(new THREE.CircleGeometry(.024, 14), c.dark, 0, -.075, -.172, false); mouth.rotation.y = Math.PI; head.add(mouth);
     const cheek = mesh(new THREE.CircleGeometry(.018, 10), std(0xd98a8a), .085, -.035, -.158, false); cheek.rotation.y = Math.PI - .5; head.add(cheek);
     const cheek2 = mesh(new THREE.CircleGeometry(.018, 10), std(0xd98a8a), -.085, -.035, -.158, false); cheek2.rotation.y = Math.PI + .5; head.add(cheek2);
+  },
+  cowl(head, c){
+    head.add(mesh(new THREE.SphereGeometry(.17, 18, 14), c.skin));
+    const hood = mesh(new THREE.SphereGeometry(.19, 18, 14, Math.PI*1.5 + .55, Math.PI*2 - 1.1, 0, Math.PI*.7), c.teamM, 0, .01, .02); head.add(hood);
+    for(const sx of [-1, 1]){
+      const pts = [new V(sx*.1, .14, 0), new V(sx*.2, .24, .02), new V(sx*.34, .24, .08), new V(sx*.42, .13, .1)];
+      head.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, .035, 8, false), sx > 0 ? c.cream : c.teamM));
+      head.add(mesh(new THREE.SphereGeometry(.036, 10, 8), BRONZE, sx*.42, .1, .1));
+    }
+    const mask = mesh(new THREE.CylinderGeometry(.176, .176, .075, 20, 1, true, Math.PI - .85, 1.7), new THREE.MeshStandardMaterial({ color:BRONZE.color, metalness:.35, roughness:.4, side:THREE.DoubleSide }), 0, .035, 0); head.add(mask);
+    for(const sx of [-1, 1]){ const e = mesh(new THREE.CircleGeometry(.02, 10), c.dark, sx*.065, .04, -.178, false); e.scale.set(1.4, .7, 1); e.rotation.y = Math.PI; e.rotation.z = sx*.3; head.add(e); }
+    const smirk = mesh(new THREE.TorusGeometry(.05, .008, 4, 12, Math.PI*.8), c.dark, .01, -.065, -.163, false); smirk.rotation.set(0, Math.PI, Math.PI + .3); head.add(smirk);
+  },
+  cowlT(head, c){
+    HEADS.cowl(head, c);
+    for(let i = head.children.length - 1; i >= 0; i--){ const o = head.children[i]; if(o.geometry && o.geometry.type === 'CylinderGeometry' || (o.geometry && o.geometry.type === 'CircleGeometry') || (o.geometry && o.geometry.type === 'TorusGeometry')) head.remove(o); }   // drop the half-mask, eye slits and smirk
+    const bronze = new THREE.MeshStandardMaterial({ color:BRONZE.color, metalness:.35, roughness:.4, side:THREE.DoubleSide });
+    const faceM = new THREE.MeshStandardMaterial({ color:0x1e1824, roughness:.9, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2 });
+    const plate = mesh(new THREE.CylinderGeometry(.197, .19, .26, 24, 1, true, Math.PI - .75, 1.5), bronze, 0, -.02, 0); head.add(plate);
+    const band = mesh(new THREE.CylinderGeometry(.2, .2, .05, 20, 1, true, Math.PI - .5, 1.0), faceM, 0, .04, 0); head.add(band);
+    const slot = mesh(new THREE.CylinderGeometry(.199, .194, .17, 12, 1, true, Math.PI - .13, .26), faceM, 0, -.075, 0); head.add(slot);
+  },
+  pot(head, c){
+    head.add(mesh(new THREE.SphereGeometry(.17, 18, 14), c.skin));
+    for(const sx of [-1, 1]){ const e = mesh(new THREE.CircleGeometry(.018, 10), c.dark, sx*.06, -.01, -.168, false); e.rotation.y = Math.PI; head.add(e); }
+    const grin = mesh(new THREE.TorusGeometry(.04, .007, 4, 12, Math.PI*.8), c.dark, 0, -.07, -.158, false); grin.rotation.set(0, Math.PI, Math.PI); head.add(grin);
+    const pot = new THREE.Group(); pot.rotation.set(.12, 0, .2); pot.position.set(.02, .1, 0);
+    const iron = new THREE.MeshStandardMaterial({ color:0x6a6670, metalness:.5, roughness:.55, side:THREE.DoubleSide });
+    pot.add(mesh(new THREE.SphereGeometry(.24, 20, 14, 0, Math.PI*2, 0, Math.PI*.55), iron, 0, 0, 0));
+    const brim = mesh(new THREE.TorusGeometry(.27, .014, 6, 30), iron, 0, -.085, 0, false); brim.rotation.x = Math.PI/2; brim.scale.set(1, 1, 1); pot.add(brim);
+    const dent = mesh(new THREE.SphereGeometry(.05, 10, 8), std(0x4a464e, { metalness:.5, roughness:.7 }), .12, .12, -.1, false); pot.add(dent);
+    head.add(pot);
+    const strap = mesh(new THREE.TorusGeometry(.17, .008, 4, 20, Math.PI), std(0x6a3a2a), 0, -.1, 0, false); strap.rotation.set(Math.PI/2, 0, 0); head.add(strap);
+    const rag = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V(-.16, -.1, -.05), new V(-.2, -.2, 0), new V(-.17, -.32, .05)]), 10, .018, 6, false), c.cream); head.add(rag);
+  },
+  scarf(head, c){
+    head.add(mesh(new THREE.SphereGeometry(.17, 18, 14), c.skin));
+    const wrap = mesh(new THREE.SphereGeometry(.18, 18, 14, 0, Math.PI*2, Math.PI*.52, Math.PI*.3), c.cream, 0, -.01, 0); head.add(wrap);
+    for(let i = 0; i < 3; i++){ const b = mesh(new THREE.TorusGeometry(.172 - i*.004, .016, 6, 24), c.cream, 0, -.11 + i*.04, 0, false); b.rotation.x = Math.PI/2 + (i % 2 ? .12 : -.12); head.add(b); }
+    for(const sx of [-1, 1]){ const e = mesh(new THREE.CircleGeometry(.02, 10), c.dark, sx*.06, .05, -.17, false); e.scale.set(1.5, .55, 1); e.rotation.y = Math.PI; e.rotation.z = sx*-.25; head.add(e); }
+    const cap = mesh(new THREE.SphereGeometry(.18, 18, 10, 0, Math.PI*2, 0, Math.PI*.42), c.teamM, 0, .06, 0); head.add(cap);
+    const tail = new THREE.CatmullRomCurve3([new V(0, .2, .02), new V(.05, .3, .1), new V(.2, .32, .2), new V(.3, .2, .24), new V(.34, .02, .22)]);
+    head.add(mesh(new THREE.TubeGeometry(tail, 20, .045, 8, false), c.teamM));
+    head.add(mesh(new THREE.SphereGeometry(.05, 10, 8), BRONZE, .34, -.03, .22));
   },
   veil(head, c){   // a broad hat with a dark mourning veil over the face
     head.add(mesh(new THREE.SphereGeometry(.17, 18, 14), c.skin));

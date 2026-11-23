@@ -1660,7 +1660,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.394</div>
+<div id="ver">Chalice 0.395</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -3950,6 +3950,7 @@ const TEAMCOL = [0x7a4fe8, 0xe8461e];            // Thistle (royal violet) and M
 const TEAMGLOW = [0x8a5cff, 0xff5a24, 0xdce6ff];           // stronger versions for magic, gems, eyes and holy ground
 const TEAMCSS = ['#a98cff', '#ff7048'];
 // skin tones: the violet team lighter, the amber team darker (gridiron knights, sorcerers)
+const ZEALOT_SKIN = new THREE.Color(0xe6cdb6).convertSRGBToLinear().getHex();   // 24 Nov: the Zealot is paler, and the same for both teams (hands and body)
 const SKIN = [0xc48a62, 0x7a4a30], SKIN_S = [0xd8b090, 0x7a4a30], ELF_SKIN = 0x4f78ae;   // 23 Nov: a deeper blue (was 0xb4cfe6)
 // v0.348: each class's own hands in first person: the Skulker's pale grey-green, the Lampist's pale, the Crusader's gauntlets, the Arcanist and Zealot's skin
 function fpHandMat(p, rough = 0.76){
@@ -3958,6 +3959,7 @@ function fpHandMat(p, rough = 0.76){
   if(k === 'sorcerer') return new THREE.MeshStandardMaterial({ color:ELF_SKIN, roughness:0.62 });
   if(k === 'lampist') return new THREE.MeshStandardMaterial({ color:0xdde3e8, roughness:0.6 });
   if(k === 'knight') return new THREE.MeshStandardMaterial({ color:KNIGHT_METAL[p.team][0], metalness:0.6, roughness:0.32 });
+  if(k === 'brigand') return new THREE.MeshStandardMaterial({ color:ZEALOT_SKIN, roughness:rough });
   return new THREE.MeshStandardMaterial({ color:SKIN_S[p.team], roughness:rough });
 }
 const KNIGHT_METAL = [[0x9aa4b8, 0x6c7486, 0x6a7182], [0xaf915a, 0x80663e, 0x786342], [0xa0a4aa, 0x70747a, 0x6c7076]];
@@ -7243,10 +7245,10 @@ function makeZealot(team){
   const std = (c, r, mt) => new THREE.MeshStandardMaterial({ color:c, roughness:r === undefined ? .85 : r, metalness:mt || 0 });
   const tex = (w, h, draw, rx, ry) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx || 1, ry || 1); return t; };
   const speck = (x, w, h, n, a, b) => { for(let i = 0; i < n; i++){ x.fillStyle = 'rgba(' + (Math.random() < .5 ? a : b) + ',' + (Math.random() * .18).toFixed(2) + ')'; x.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 3, 1 + Math.random() * 3); } };
-  const deep = hx(T.clone().multiplyScalar(.5)), mid = hx(T.clone().multiplyScalar(.7)), light = hx(T.clone().lerp(new THREE.Color(0xf2ead8), .62));
-  const feltC = hx(T.clone().multiplyScalar(.6)), robeC = hx(new THREE.Color(0x6e6258).lerp(T.clone().multiplyScalar(.7), .3)), runeC = hx(T.clone().lerp(new THREE.Color(0xffffff), .3));
+  const deep = hx(T.clone().multiplyScalar(.68)), mid = hx(T.clone().multiplyScalar(.9)), light = hx(T.clone().lerp(new THREE.Color(0xf2ead8), .62));
+  const feltC = hx(T.clone().multiplyScalar(.78)), robeC = hx(new THREE.Color(0x978a7c).lerp(T.clone().multiplyScalar(.85), .25)), runeC = hx(T.clone().lerp(new THREE.Color(0xffffff), .3));
 
-  const skin = std(lin(SKIN[0]), .8), hair = std(lin(0x3a2618), .9);   // one skin tone for both teams: the game's lighter SKIN
+  const skin = std(ZEALOT_SKIN, .8), hair = std(lin(0x3a2618), .9);   // one skin tone for both teams: the game's lighter SKIN
   const bone = std(0xd8c49a, .75), boneS = std(0xc09a70, .8), boneD = std(0xa88e62, .8), plateB = std(0xcbb48a, .8), plateD = std(0x9c855e, .85);
   const iron = std(0x4a4c50, .4, .75), ironD = std(0x2a2a2e, .45, .7), brass = std(0xd9a22a, .35, .7);
   const leather = std(0x5a3b22, .85), boot = std(0x3a2618, .9), rope = std(0x9a8462, .95), glove = std(0x2b211b, .75), dark = std(0x120d10, .9);
@@ -7343,7 +7345,7 @@ function makeZealot(team){
   torus(.12, .04, wool, 0, 1.53, 0, Math.PI / 2);
   // patterned stole down the front, fringed at the ends
   for(const s of [-1, 1]){
-    add(new THREE.Mesh(new THREE.PlaneGeometry(.075, .62), stole), s * .085, .915, -.24, .06, 0, s * .03);
+    add(new THREE.Mesh(new THREE.PlaneGeometry(.075, .9), stole), s * .085, 1.055, -.24, .06, 0, s * .03);   // 24 Nov: up to the collar again (was .62 long, stopping at the chest)
     for(let i = 0; i < 6; i++) cyl(.006, .004, .07, stole, s * .085 + (-.035 + i * .014), .57, -.255, 0, 0, 0, undefined, 3);
   }
   // the kettle hat: the Brigand's mesh, now in team-tinted felt with a twisted cord band and bone thorns; the ridge is gone
@@ -7367,6 +7369,7 @@ function makeZealot(team){
   const SHR = new V(0.27, 1.43, 0), SHL = new V(-0.27, 1.43, 0);
   // the Bone Sword in one hand: P.weapon is the grip, posed each frame by zealotWorldView (low at the right hip at rest, up through the cut when swinging)
   const sw = SHARED_SWORD ? makeClassSword(team, 'brigand', SWORD_TURN, SWORD_SIZE) : makeBoneSword(); if(!SHARED_SWORD) sw.scale.setScalar(0.72); sw.position.set(0, SHARED_SWORD ? 0.02 : 0.072, 0);   // v0.347: the classic sword in the team's colour
+  sw.scale.multiplyScalar(0.8);   // 24 Nov: a smaller sword in third person
   const swGrip = new THREE.Group(); swGrip.add(sw); g.add(swGrip); P.weapon = swGrip;
   P.armS = new THREE.Group(); P.armS.visible = false; g.add(P.armS);   // kept empty: the game's older Zealot code still toggles it
   P.rightParts = new THREE.Group(); g.add(P.rightParts); P.rightArm = makeMovingArm(P.rightParts, 1, wool, ironD, glove, false, SHR, 1);
@@ -7385,7 +7388,7 @@ function makeZealot(team){
   add(boxM(0.1, 0.11, 0.1, skin), fH.x, fH.y + 0.03, fH.z, 0, 0, 0, P.armR);
   P.armRS = new THREE.Group(); P.armR.add(P.armRS);   // and the Bone Sword hangs from his right hand, point down
   const sH = new V(0.34, 0.92, -0.16); armChain(P.armRS, SHR, sH, new V(0.12, -0.1, 0.06), 0.06, 0.05, wool, wool, skin, 0.05);
-  { const s2 = SHARED_SWORD ? makeClassSword(team, 'brigand', SWORD_TURN, SWORD_SIZE) : makeBoneSword(); if(!SHARED_SWORD) s2.scale.setScalar(0.72); s2.position.copy(sH); s2.rotation.set(-2.25, Math.PI/2, 0.1); P.armRS.add(s2); P.rallySword = s2; }
+  { const s2 = SHARED_SWORD ? makeClassSword(team, 'brigand', SWORD_TURN, SWORD_SIZE) : makeBoneSword(); if(!SHARED_SWORD) s2.scale.setScalar(0.72); s2.position.copy(sH); s2.rotation.set(-2.25, Math.PI/2, 0.1); s2.scale.multiplyScalar(0.8); P.armRS.add(s2); P.rallySword = s2; }
     P.mats = { cloth:wool, skin }; P.baseScale = 1; inkOutline(g); return P;
 }
 function buildBody(k, team, showcase){   // showcase: the menu portrait pose (gridiron knight with sword and cannon both out)
@@ -12163,6 +12166,7 @@ function buildVM(k){
                 : k === 'knight' ? new THREE.MeshStandardMaterial({ color:KNIGHT_METAL[pt][0], metalness:0.6, roughness:0.32 })
                 : k === 'lampist' ? new THREE.MeshStandardMaterial({ color:0xdde3e8, roughness:0.6 })   // her pale hands
                 : k === 'sorcerer' ? new THREE.MeshStandardMaterial({ color:ELF_SKIN, emissive:0x2a4058, emissiveIntensity:0.35, roughness:0.6 })   // the Arcanist's pale blue hands
+                : k === 'brigand' ? new THREE.MeshStandardMaterial({ color:ZEALOT_SKIN, roughness:0.6 })   // the Zealot's pale hands, the same for both teams
                 : new THREE.MeshStandardMaterial({ color:SKIN_S[PLAYER ? PLAYER.team : 0], roughness:0.6 });
   const hand = () => sphereM(0.055, handMat, 1, 0.85, 1.25);
   // sword in the right hand
