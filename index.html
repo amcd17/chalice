@@ -3950,7 +3950,7 @@ const TEAMCOL = [0x7a4fe8, 0xe8461e];            // Thistle (royal violet) and M
 const TEAMGLOW = [0x8a5cff, 0xff5a24, 0xdce6ff];           // stronger versions for magic, gems, eyes and holy ground
 const TEAMCSS = ['#a98cff', '#ff7048'];
 // skin tones: the violet team lighter, the amber team darker (gridiron knights, sorcerers)
-const SKIN = [0xc48a62, 0x7a4a30], SKIN_S = [0xd8b090, 0x7a4a30], ELF_SKIN = 0xb4cfe6;
+const SKIN = [0xc48a62, 0x7a4a30], SKIN_S = [0xd8b090, 0x7a4a30], ELF_SKIN = 0x4f78ae;   // 23 Nov: a deeper blue (was 0xb4cfe6)
 // v0.348: each class's own hands in first person: the Skulker's pale grey-green, the Lampist's pale, the Crusader's gauntlets, the Arcanist and Zealot's skin
 function fpHandMat(p, rough = 0.76){
   const k = p.clsKey;
@@ -7748,7 +7748,7 @@ function buildBody(k, team, showcase){   // showcase: the menu portrait pose (gr
     P.weapon = null;
   } else {
     // dark robe in the team's colour, silver runic trim, a V-edged shoulder cape, deep hood, gem-studded belt, bell sleeves
-    const skin = new THREE.MeshStandardMaterial({ color:ELF_SKIN, emissive:0x2a4058, emissiveIntensity:0.55, roughness:0.66 });   // v0.355: the Arcanist is an elf, pale blue skin
+    const skin = new THREE.MeshStandardMaterial({ color:ELF_SKIN, emissive:0x1a2a44, emissiveIntensity:0.4, roughness:0.66 });   // v0.355: the Arcanist is an elf, pale blue skin
     const robeM = new THREE.MeshStandardMaterial({ color:new THREE.Color(tc).multiplyScalar(0.62), roughness:0.92, side:THREE.DoubleSide });
     const silver = new THREE.MeshStandardMaterial({ map:RUNE_SILVER, color:0xffffff, metalness:0.55, roughness:0.45, side:THREE.DoubleSide });
     const gemM = new THREE.MeshStandardMaterial({ color:new THREE.Color(TEAMGLOW[team]).lerp(new THREE.Color(0xffffff), 0.3), emissive:TEAMGLOW[team], emissiveIntensity:1.0, roughness:0.15, metalness:0.1 });   // team glow, like the flight wisps
@@ -7777,11 +7777,14 @@ function buildBody(k, team, showcase){   // showcase: the menu portrait pose (gr
     const belt = add(new THREE.Mesh(new THREE.CylinderGeometry(0.225, 0.235, 0.09, 28, 1, true), leather), 0, 0.98, 0); belt.scale.z = 0.86;
     for(const a of [-0.9, -0.45, 0, 0.45, 0.9]){ const gm = sphereM(0.016, gemM); gm.position.set(Math.sin(a)*0.23, 0.98, -Math.cos(a)*0.2); g.add(gm); }
     // the hood: deep, pointed, lined in silver
-    add(sphereM(0.15, skin), 0, 1.6, -0.01);   // v0.355: the hood is open, a pale blue face inside it
-    { const eyeM = new THREE.MeshBasicMaterial({ color:0xff2a1e });   // 23 Nov: red eyes (were pale blue-white)
+    add(sphereM(0.15, skin), 0, 1.6, -0.01);   // v0.355: the hood is open, a blue face inside it
+    { const eyeM = new THREE.MeshBasicMaterial({ color:0xe2d4ff });   // 23 Nov: eyes the colour of his crystal, glowing out of the dark
+      const shadowM = new THREE.MeshStandardMaterial({ color:0x2a1f4a, roughness:0.8, side:THREE.DoubleSide });
       const alm = new THREE.Shape(); alm.moveTo(-0.036, -0.004); alm.quadraticCurveTo(0, 0.02, 0.036, 0.008); alm.quadraticCurveTo(0.002, -0.014, -0.036, -0.004);   // an almond, the outer tip drawn up and out
       const almG = new THREE.ShapeGeometry(alm); eyeM.side = THREE.DoubleSide;
-      for(const sx of [-1,1]){ const eye = add(new THREE.Mesh(almG, eyeM), sx*0.058, 1.63, -0.147); eye.rotation.set(0, -sx*0.37, sx*0.32); eye.scale.set(0.7, 0.7, 1); }
+      for(const sx of [-1,1]){ const eye = add(new THREE.Mesh(almG, eyeM), sx*0.058, 1.63, -0.147); eye.rotation.set(0, -sx*0.37, sx*0.224); eye.scale.set(sx*0.8, 0.8, 1);   // mirrored per side, so both outer tips sweep up
+        const sh = add(new THREE.Mesh(almG, shadowM), sx*0.0585, 1.633, -0.145); sh.rotation.copy(eye.rotation); sh.scale.set(sx*1.05, 1.35, 1);   // eye shadow: a smoky patch behind the eye, swept up toward the brow
+        const gl = add(fxSprite(FX_GLOW, 0xb896ff, 0.55), sx*0.058, 1.63, -0.16); gl.scale.setScalar(0.045); }   // a soft lilac glow round each
       const nose = add(new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.04, 4), skin), 0, 1.595, -0.158); nose.rotation.x = -Math.PI/2;
       for(const sx of [-1,1]){ const ear = add(new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.2, 5), skin), 0, 0, 0), dir = new V(sx*0.7, 0.5, -0.5).normalize();
         ear.quaternion.setFromUnitVectors(new V(0, 1, 0), dir); ear.position.set(sx*0.115, 1.645, -0.1).addScaledVector(dir, 0.1); } }   // pointed ears swept out through the hood's opening, clear of the shell
