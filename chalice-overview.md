@@ -103,7 +103,7 @@ Six bot matches on Mausoleum at v0.378 (before the latest changes): kill/death r
 - Zealot splinter UI (mockup in `mockups/zealot-splinter-mockup.html`). Agreed: a SPLINTERED status with pips and a timer, plus a count over the enemy for the Zealot; no damage preview.
 - Remove the dead blowgun dart code (nothing fires darts any more).
 - Cathedral: a more natural layout and the floating artefacts.
-- A Trapper class (a launcher primary was the favourite idea).
+- The Bellringer, a sixth class (the trapper, with a bell theme). Alex's design: a bow whose drawn striker hits a bell set in an oval cradle in the grip, so the bow fires sound (a quick peal up close, a travelling note at full draw). Field ability: three tuning forks, thrown one at a time; they stick where they land; only his own bow's note sets them off, and striking one rings all three; enemies within 4 m of a ringing fork are silenced for 3 s and slowed 20%; any enemy damage breaks a fork. Movement: Bell Rope (a short vertical climb). Still open: the class ability (Alarm Bell or Death Knell) and the draw time.
 - Retake the tutorial screenshots, including the Sword slide.
 - Scrollwork II.
 - A fresh balance run, which should also count how often each ability is used, and check for a spawn-side bias on Mausoleum.
