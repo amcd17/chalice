@@ -205,6 +205,7 @@ Each map leans toward one class. The other two still need a plan there, so picki
 - Four landmarks, one per quarter, under collapsed ceiling patches with coloured light: fallen tree, toppled angel, fungus column, king's tomb.
 - A flow rework (v104: low runnable walls, open rotunda, beams between tops) was tried and rejected. Alex: "Original Mausoleum is much better. The new one does not work at all." Don't redo it; any flow changes should keep the original's enclosed character.
 - Pathfinding: the route table is built by a search from each waypoint instead of the all-pairs method; identical routes, kept from that work.
+- Backlog, approved as a visual reference: the flooded rotunda from the first Bellringer mockup. It has an open oculus with teal daylight, two tiers of stone arches, a timber gallery, faded banners, and mossy piers rising from reflective water.
 
 ## Menu camera (v106)
 - The menu's slow orbit is per map: high and steep inside Basilica's dome and under Scrollwork's ceiling, and round the edge of the rotunda drum in Mausoleum.
@@ -745,3 +746,160 @@ Alex wants tiered seating around every map that players can't reach, full of cla
 
 ## v0.325 (18 Nov)
 - Classes show teammate names beside the same class crests used in the HUD. Removed class squad numbers from name tags, armor, and setup. Champions keep their squad numbers.
+
+## v0.326 (18 Nov)
+- Dagger, greatsword, and Champions sword attacks clash when opposing strikes are in reach and close to landing. Both recoil without taking damage.
+- Shroud uses the status chip above health for nearby allies and the Rascal who casts it.
+
+## v0.327 (18 Nov)
+- Shroud uses a hood dissolving into wisps on the Rascal's ability tile and the active status chip.
+
+## v0.328 (18 Nov)
+- The main menu has a Classes page with live portraits, health, loadouts, and ability descriptions. Browsing is separate from the match class choice.
+
+## v0.334 (20 Nov)
+- Hand rules for the Crusader, Lampist, Rascal and Seeker, following the Zealot. Left hands now stay on the weapon and leave it only for an ability or the cup.
+- New shared carry (carryLeft, CARRY_LOW): the left hand reaches down to the cup, lifts it, lowers it on a drop, then returns to the weapon. The cup rides the hand through f.chHand for all five classes, not just the Zealot.
+- Crusader: with the Holy Blunderbuss out the left hand sits at its fore point (model.userData.fore). The book, the charge and the raised shield still take the hand first. First person gains the foregrip hand.
+- Lampist: the Furnace Lantern hold keeps its support grip, and the cup carry now rides the same hand through the reach, lift and lower.
+- Rascal: his read on the Infernal Daggers. The fan stays in the right hand (the right arm now follows it, it used to hang at the old kit hold), the left hand does the sending: a quick wrist flick per knife thrown and a sharp whip back on the recall, in both views. trialRecall stamps w.recalledAt for the whip. The smoke bomb no longer floats over the left hand while the throwing kit is out.
+- Seeker: with the Runic Repeater out the left hand carries the cup with the same reach and lift. Staff and spear holds are unchanged on purpose.
+- No balance numbers changed, nothing to log in codex-weapon-niches.md.
+
+## v0.337 (20 Nov)
+- The Crusader's blessing reload went in: through the three-second reload the blunderbuss tips its bell up, the left hand traces the sign over it, a bead of light runs from the cross into the bell, and the cross lights with it. Both views. This entry is logged late, the version landed between other agents' builds.
+
+## v0.341 (20 Nov)
+- The Crusader's blessing actually moves his hand now, in first person. The reload path helper was called with the wrong argument list, so every point on the path collapsed to one static chest point and the hand sat still for the whole reload. Found with a throwaway hooked copy of the page, never shipped.
+- The Lampist's feeding reload: the lantern dims a little with every shot and gutters nearly dark by the sixth. On the reload she rolls the launcher slightly right, her hand hovers just off the left glass side, golden-orange flame wisps curve from her palm into the cage, and the six lid dots relight one by one. Both views.
+- The Seeker's wicking: on the three-second overheat her hand comes out low to the left, palm up, and the heat swings off the crystal and curves down into her palm while the crystal cools back to her colour. Both views, the wick arms built lazily over the staff pose.
+- The Rascal's catch: the whip back already existed, now each returning knife snaps into the fan with a short pop and a small catch pulse of the hand, one per arrival. Both views.
+- The Zealot's knitting: on the two-second recharge the left hand passes along the rifle's spine only as far as the furthest broken rib, and the ribs regrow in a wave behind the fingers, bone closing like frost. A full magazine walks the whole spine. Both views.
+- The class portraits hold their primaries casually now: the Crusader with the Holy Blunderbuss low at his side, the Lampist with the current armory lantern, the Rascal with the three floating Infernal Daggers, the Zealot with the Skeleton Rifle low across the front. The Seeker keeps her staff.
+- No balance numbers changed, nothing to log in codex-weapon-niches.md.
+
+## v0.342 (20 Nov)
+- The Lampist's reload no longer blinds you in first person. The game's fxSprite takes opacity as its third argument and has no scale argument; the feeding, wicking and knitting passed their intended sprite scale there and never set the scale, so every wisp and palm glow rendered at 1 by 1, which at viewmodel distance is most of the screen, additive. All those sprites now carry explicit scales.
+- The Crusader's holy symbol hangs from his belt now, and the Lampist's lantern hangs from hers, both with a small sway. The hands pick them up only for the light, the charge and the heal, and put them back. First person shows the props only while the ability is in hand.
+- The Rascal's three daggers in third person now match their first-person size (0.82 instead of 1.05 on the trial hold).
+
+## v0.343 (20 Nov)
+- The Rascal's daggers in third person halve again (0.41 on the trial hold) and the cluster is lifted 0.14 above his hand, so the blades hover over it instead of sitting through it.
+- The furnace lantern loses the raised lid panel. The six shot dots are set straight into the peaked roof, up the rear slope, and the lantern's glass now dims with the ember as the fuel runs down.
+- The Seeker's staff is held down lower in first person (base at -0.82), the crystal head is 30% smaller, and both her hands are on the shaft. The floating ward hand that used to hang out to the left whenever the staff was out is retired from that state; it only appears for the spear's cast moment.
+- The Zealot's knitting pass rides 0.25 above the barrel axis instead of 0.05, clearing the spine rod and the rib knuckles it used to clip through.
+
+## v0.344 (21 Nov)
+- The Seeker's hands are visible on her staff: they were inheriting the staff's 0.7 scale and coming out smaller than the grip they sat on. Scaled past it and set to the camera side of the shaft. The staff also moves right, base at 0.40 instead of 0.24.
+
+## v0.345 (21 Nov)
+- Selecting a class no longer inherits the previous class's weapon slot: setClass resets the trial record, so a new class always starts on its primary. This is what auto-switched the Seeker to her melee.
+- The Diamond Spear's first-person hands are scaled up past its viewmodel scale, same fix as the staff's, so the melee view reads too.
+
+## v0.346 (21 Nov)
+- One sword for every class (SHARED_SWORD, on). In the melee slot, tap left click to slash and hold to draw back, then release to lunge with a heavy blow. Slash 40 damage, 0.6 s between swings. Heavy 70 damage, 3 m lunge, 0.95 s recovery, and you move at 70% while it is drawn. Clash works for every class now. Bots slash, and go heavy to close a gap after a visible draw-back.
+- Models are unchanged for now (hammer, flail, rapier, spear, bone sword). A single sword model needs a mockup.
+- Tuning rows for the heavy blow are in the Match tab under Combat rules. Numbers are in the balance log and the handover.
+
+## v0.347 (21 Nov)
+- The melee slot is now the classic sword for all five classes, named Bastard Sword in the HUD and menus. Same rules as v0.346 (tap slash, hold for a heavy lunge). The pommel stone is the team colour. First and third person both use the new model; the Seeker and Zealot now share the generic melee view.
+- Unequipped weapons are stowed on the body: the sword sheathed across the back (hilt over the right shoulder), the Runic Repeater holstered at the right hip.
+- The Zealot's wool mantle and its tufts are gone.
+- Not stowed yet: the primary weapon. Class page text for the Crusader, Seeker and Zealot is still stale.
+
+## v0.335 (20 Nov)
+- The Crusader's left hand actually reaches the blunderbuss fore now. trialModel wraps the gun in a group and the fore point (and the cross) lived on the inner gun, so the v0.334 pose code read nothing and the hand fell back to rest. The wrapper now carries both, the fore scaled to match the gun build. The cross that lights during the windup was disconnected the same way, it works again.
+
+## v0.336 (20 Nov)
+- The Crusader's holy symbol no longer shows while the Holy Blunderbuss is out, in either view. The old visibility check read `weapon === 'melee'`, which the trial system makes always true for him, so the symbol (with its own hand in first person) sat in the left hand regardless of the weapon. It now shows only when the equipped weapon leaves the left hand free: the trial melee or the repeater, or while charging or flashing.
+
+## v0.348 to v0.350 (21 Nov)
+- Runeblade ported into the game as the shared sword (first person, third person, back sheath). Sword moved to key 3, Repeater to key 2.
+- Arcanist: Ward (RMB, 12 s dome on an ally, 14 s cooldown) and Crystal Grenade (Q, 2 s fuse, 10 shards).
+- Lampist: Lightbath (RMB, 12 s heal field, 18 s cooldown).
+- Per-class first-person hands, Skulker pale green.
+- Rascal renamed Skulker, Seeker renamed Arcanist everywhere user-facing.
+- All throwables set to 20 s recharge (Smoke was 14).
+- Open: Ward and Grenade HUD icons, beam deflection, stale Crusader and Zealot class-page rows, Marigold Runeblade check, stow the primary weapon.
+
+## v0.351 (21 Nov)
+- The Arcanist's staff hands are visible in first person again. The cause was position, not scale: the v0.343 rest put the grip below the bottom edge of the viewmodel frame (the hands read at -1.3 and -1.9 in view space, where -1 is the frame edge). Per Alex the staff is held higher and further right, rest at (0.52, -0.62, -0.74), the hands ride higher on the shaft (local y 0.72 and 0.42) with the sleeve cuffs following. The hands now read at -0.30 and -0.77, the crystal sits upper right clear of the crosshair, and the staff base still enters from the bottom edge, so the low hold keeps its character.
+- Venting with the left hand now drops with the staff. The first-person wick condition tested VM.staff.visible, a flag that never changes on a weapon swap (only its parent group's does), so the venting hand kept floating after switching to the pistol. The condition is now gated on the staff being the equipped slot, the same gate the third-person vent always had.
+- The Arcanist's levitate hand sits lower and further back, rest at (-0.22, -0.22, -0.90), so her long sleeve stays inside the frame instead of grazing and clipping through its bottom edge.
+- The Lampist's lightbath now reads as a faint warm dome shimmering around her rather than the green circle on the floor, and the same gold pluses that used to drift from her raised lantern drift off her hip lantern through the bath, in both views. Numbers untouched: 12 s, 18 s cooldown, the old reach and rate.
+
+## v0.352 (21 Nov)
+- The Arcanist reads two hands, not three. Her left hand now lifts off the staff whenever it is out doing something else, venting, levitating or casting, so the venting hand is her left hand moving off the shaft rather than a third hand appearing beside it. It returns to the grip the moment the vent or the cast is done.
+- Per Alex the right hand sits lower on the shaft and the left hand higher.
+
+## v0.353 (21 Nov)
+- The Arcanist's vent is one hand, animated. Her left hand now travels off the staff grip to the palm spot when the vent starts, holds there while the heat drains into it, and travels back when the lockout ends. The separate venting hand is gone entirely.
+- For levitate and the ward cast, the same left hand slides down the shaft out of the frame while the casting hand rises in, an animated swap rather than a pop.
+- Her robe cuffs in first person are twice as long, the mouths still at the wrists, and the left cuff travels with the venting hand.
+
+## v0.354 (21 Nov)
+- The Arcanist's staff leans gently back toward the camera now, its forward tip eased from -0.30 to -0.18 radians, the crystal closer to the player and still upper right, both hands and the grip in frame.
+- The sleeve cuff no longer separates from her hand ball while she vents: the left cuff rides the wrist at the same rigid offset it keeps at rest, through the whole travel out and back.
+
+## v0.355 (21 Nov)
+- The Arcanist is an elf: pale blue skin, open hood with a visible face, pointed ears, pale blue hands in both views, three crystal shards on the belt.
+- The sword rests low at the bottom right and is drawn in from above on equip.
+- Merged onto the other agent's v0.354 melee and staff work.
+
+## v0.356 (21 Nov)
+- The Arcanist's eyes are almond shaped, tilted up at the outer corners, not straight slits.
+
+## v0.357 to v0.358 (21 Nov)
+- Arcanist eyes 30% smaller.
+- Fixed the Arcanist's first-person staff hands, which were still skin coloured; now pale blue.
+
+## v0.359 (21 Nov)
+- The sword swing is rebuilt in the game: three cuts in rotation, the heavy lunge, hit stop, camera roll and a viewmodel jolt on a hit. Tap windup 0.15 to 0.20 s.
+- Not yet: finisher, parry, tip damage, third person swing.
+- v0.360: sword parry (R). Marth-based window, 1.5 s whiff, flash + ping, 0.22 s freeze on catch, first and third person poses, bots parry.
+- v0.361: forced right to left riposte after a parry, 1.35x damage on an opened enemy.
+- v0.362: gentle first-person movement sway on all weapons.
+
+v0.363 (21 Nov): new class HUD. Health bar sits on the left above the three ability tiles (insignia removed); weapons on the right with flat cream icons (embedded WICON, keyed by weapon name via WI_KEY); status chips show symbol + name for 2 s then shrink to symbol + draining bar, with a Settings toggle (localStorage dc-status-names, default on). Chalice UI: cup points chip beside each score (reserved dashed slot), bank fly animation when the cup is drunk, bottom-middle carry line ("YOU CARRY THE CHALICE  +n NEXT KILL") above the Q/F/E prompts. Old #chalHud panel hidden under body.nhud. Layout wrapper is #nhL; scale set in nhUpdate.
+
+v0.364 (21 Nov): banking chime. sfx bankChime (bright bell, your team) and bankChimeEnemy (lower, their team) play from chalBankFly when the cup is drunk, alongside the points flying to the score.
+
+v0.365 (22 Nov): new map Cathedral (MAP_ID cathedral, buildCathedral, selectable alongside Mausoleum). Two-level basilica 130 x 80 m: apse bases at x +-52..65 behind a chancel screen (main door + flank doors), pillared antechambers, flank corridors with stairs up to a +3 m mezzanine over each antechamber, nave with a 0.6 m chancel step, arcade, pews and toppled drums, a ring of 8 giant columns round the crossing, Chalice dais at centre, chapels with four landmarks (same block, different dressing), transept halls. Gallery at +6 m over the inner aisles and both transepts, chest-high parapets, two bridge spans over the crossing with a 7 m gap above the cup. Ten stairs. Stained glass via glassTex (lancets, two rose windows, dome oculus with a light beam). Flight cap at 18 m. Measured: median sightline 9.5 m, 7% over 40 m, no spawn-to-spawn sightlines. Bot match clean; bots reach the gallery and mezzanines. Menu art borrows the Basilica image for now.
+
+v0.366 (22 Nov): weapon stack rebuilt to match the HUD mockup (#nhWp rows: big panel for the weapon in hand with slot numeral, icon, large count, name and a thin bar; slim rows for the other two with their own counts; team bar on the primary; locked primary fades with the cup icon). wpAmmo(p, slot) gives counts for any slot. No RELOADING text anywhere: the count stays and a thin bar fills during a reload (rifle, furnace, blunderbuss; blunderbuss wind-up uses the same bar). Runic Repeater shows numbers only, violet while charging, held or stowed. Arcanist staff keeps its heat bar and HOT/OVERHEATED.
+
+v0.367 (22 Nov): bot fixes. (1) Nav: bots standing on the Cathedral spawn pads froze ~3 s because two nodes sat closer than the 1.2 m arrival radius; navTarget now skips nodes the bot is already within 1.5 m of, and botControl re-picks the next node the moment one is reached (reached needs |dy| <= 1.4, so a bot on a bench no longer counts a node below it as reached). (2) Lampist Flash Dash: also fires when hp < 45% and the target is within 9 m, and ~1.2%/frame sidestep when an enemy faces her at < 16 m and hp < 80%. (3) Gallery perches: botPerch() gives every even-id Arcanist/Zealot a node with y 4.5 to 9, 14 to 34 m from the objective with LOS to it, held 20 s (3 s retry when none). Only used when there is no target. Bot time at y > 5 is still only ~1% overall (5 to 8% for the perched bots). Measured, not fixed: bots almost never draw the shared sword (< 1% of alive time for every class but Skulker), because their roles keep them at range. Idle % in my harness is mostly bots waiting at goals, not a stuck metric. Harness: /home/claude/w5/au*.js (not on the Mac).
+
+## v0.369 (22 Nov)
+- Cathedral mesh audit: every piece buildCathedral() adds is now logged with its world bounds and support class in cathedral-mesh-audit.md, 297 pieces from the editor record. One flag: the fallen bell at the southwest landmark sat half-buried in its cover block, base at 1.03 against a block top at 1.5. It now lies on the stone, rim resting on the block, y 2.3 to 2.77. Everything else rests on the floor, a wall, a column, a slab, or is mounted glass or light by design. Capture shots for matching: mock-assets/shots/cath-gallery-side.png and cath-aisle-sw/se/nw/ne.png.
+
+v0.368 (22 Nov): team lists show class crests (classCrest(k, team)); Skulker menu portrait daggers use the first-person build at half size with armWisps (P.pwisps animated in pose()).
+v0.369 (22 Nov): (1) Title screen: #titleScr inside #menu, shown while #menu has class `titling`. The real makeChalice() turns in #titleCv (own renderer, stops drawing once dismissed), animChalice drives the ichor, gems strobe like wing lights (blue, ruby, jade, sapphire, out of step). Background is a slow black/navy/purple CSS shimmer. Any key, click or pad button calls dismissTitle() and shows the existing main menu. #ver is now always visible bottom right on every menu (railFoot copy removed). (2) Full gamepad support, one block under "Gamepad (Standard mapping)": padUiScreen() picks title/menu/pause/end/death picker; D-pad or left stick moves a focus ring (.padFocus, nearest item in that direction, held repeat), A selects, B backs out ([data-back], backLocal, lessonBack) or resumes from pause, left/right nudges sliders and selects. In a match: RT fire, LT Q, LB Shift, RB right click/F, X reload/parry (R), B and L3 pass (E), D-pad left call for pass (G), Y tap swap / hold sword, R3 and D-pad down sword, View scores, Start pause. Radial dead zones, curved look response, Settings: Controller look speed (dc-pad-sens) and invert Y (dc-pad-invert). padMode (last input) swaps HUD prompts to pad glyphs via K(); .padOnly/.kbOnly spans. Rumble on hits taken and kills (padBuzz). enableFallback stays silent in padMode. Verified with a fake pad in puppeteer: title to menu, setup, lobby, Ready Up, match, pause, resume, respawn picker. Not tested on real hardware. Also folded in the other session's Cathedral bell fix (y 2.77).
+
+v0.369 fix (22 Nov): pad RT press now adds mpressed(0), so weapons that fire on the press (blunderbuss, daggers, repeater) fire from the trigger; right stick up now looks up (pitch sign was inverted in the original pad code). Selected or hovered gold buttons (.play, .setupBtn) glow via a drop-shadow on the parent (the clip-path would cut a box-shadow) and pulse.
+
+v0.369 menu (22 Nov): the main menus (not the in-match menu) use the title shimmer as their background, with the rail and panel made see-through; the 3D map no longer shows behind them. Gold buttons are wrapped in .goldWrap so the hover/focus glow lights only the button.
+
+v0.369 tuning (22 Nov): BB_SHOTS 3 (was 2; bbshots:2 added to TUNE_OLD_DEFAULTS so an old saved tuning value is dropped). TRIAL_REPEATER.gemRecharge 3 s (was 5). Crusader first person: blessFade now eases fpLeft back to fpLeftBase, so the left hand no longer stays floating above the bell after the blessing reload.
+
+v0.369 pad fix (22 Nov): I.throwL used pressed.has(KeyQ), so LT never threw; now just(KeyQ). Same for the Shift nope flash while carrying the cup.
+
+v0.369 Bumper Jumper (22 Nov, Alex chose it): LB jump, RB melee (draws the sword, then swings; hold for the heavy), RT fire, LT throwable (Q), X movement ability (Shift), A class action / drink (RMB, F), B reload and pass (R + E), Y swap / hold sword, D-pad slots, D-pad left call for pass, R3 sword, L3 pass, View scores, Start pause. PAD_GLYPH matches; death skip shows LB. Menus unchanged: A select, B back.
+
+v0.369 pad layout (22 Nov, Alex chose, replaces Bumper Jumper): A jump, LB movement ability (Shift), RB class action / drink (RMB, F), RT fire, LT throwable (Q), X reload or parry with the sword out (R), B pass (E), Y tap swap / hold sword, R3 sword, D-pad slots, D-pad left call for pass, L3 pass, View scores, Start pause. Aim assist (aimAssist(), controller only, Settings toggle dc-pad-aa, on by default): friction 0.55 look speed while the reticle is within a cone of about 2.2x the target radius (0.025 to 0.14 rad) on a visible enemy within 45 m (LOS and smoke checked), and magnetism carries 35% of the target angular movement while steering. No bullet bending.
+
+v0.369 sword and pad (22 Nov): the three first-person cuts (SWCUTS) now swing from the shoulder: the hand travels a quadratic arc (h: cocked, landing, end; m: control point) across the view, the blade lags (q^2.2) and whips through, the follow-through carries it out of view, recovery eases out. Wind-up is half the windup, hit timing unchanged. The old wrist-flick version is in /home/claude/w5/index.pre-swing.bak. Pad: <summary> headers are now focusable, so the tuning groups in the pause menu and Settings open with A; held left/right on a slider speeds up (x3 after 6 repeats, x10 after 20).
+
+v0.369 thrust (23 Nov): the heavy (THRUST const above swEaseOut3). Charging coils the hand back towards the camera (coil [0.07, 0, 0.15]) with the blade pitched down to point forward (coilPitch -1.3), trembling at full. The thrust drives from the coil to ext [0, -0.03, -0.08] (pitch -1.52) on a q^2/q^3 ease, so the hand stays low right and the blade spans from the corner to the crosshair instead of shrinking into the distance; holds 0.12 s, then pulls back. Hit timing unchanged. Old version: /home/claude/w5/index.pre-thrust.bak.
+
+v0.370 (23 Nov): menu v2. The approved dark and gold controller menu is in the game. Title close-up into the cup, camera pulls back as the canvas shrinks into a 46vh brand over the wordmark. Home column: Local, Online (SOON), Extras (Tutorial, Classes, Map Editor), Settings. Game setup is four boxes: map list, read-only options summary, play box with a dark chalice and ENTER LOBBY, team rosters in the game's Thistle `#a98cff` and Marigold `#ff7048`. Editable settings live on a new Options page (Match, Bots, Classes). Lobby is five class cards with real portraits, weapons, abilities, locked tags for classes a teammate holds when duplicates are off, and Ready Up. Respawn reuses the cards with Deploy. The team switch moved to Settings. Pause is Resume, Settings, Quit with the tuning panel behind Settings and the HUD hidden. Full time and death reskinned. One focus everywhere: gold bar or border, pad A/B. Not done: Classes/Tutorial/Settings inner pages keep the old panels; the player name has no field; the options use chip focus rather than a left/right stepper; a map change still reloads the page. Tested node --check, eslint no-undef, a 15 second live Chalice match on Mausoleum, and the full menu flow with a fake pad. Death and respawn checked with a temp-hook copy, not a real death. No balance changes. Detail in `codex-menu-v2-handover.md`.
+
+v0.371 (23 Nov, built from the v0.370 menu-v2 copy): (1) Skeleton Rifle magazine 15 (was 24). TRIAL_RIFLE.capacity; the existing rifleammo slider (3 to 60, step 3) drags it live; rifleammo:24 added to TUNE_OLD_DEFAULTS so an old saved 24 is dropped. The rib cage now breaks in proportion to the magazine (eight ribs whatever the capacity) in all three places that count them. (2) The carrier's sword kills bank +1: SWORD_CUP_BONUS = 1 beside CH_CUP; chScoreKill(a, t, w) takes the weapon from kill(); the bonus applies only when w === 'sword' and a === CH.holder, between the roll and the push. No cap (max cup value 5, so 6 at most). Tuning row swordcup (0 to 3) on the Chalice tab under The cup. Probe: carrier sword kill banked 2 (rolled 1), rifle kill 1, teammate sword kill 1, carrier sword kill at kill 4 banked 3 (rolled 2). Lint clean, bot match ERRORS 0. Not committed: index.html also carries the other agent's uncommitted menu-v2 work.
+
+v0.372 (23 Nov): the carrier sword-kill toast reads "+N  ·  BY THE SWORD" (N = what that kill banked, bonus included; "· LAST KILL" appended on the seventh). The top scoreboard cup slots (#cpotB / #cpotR) no longer show a dashed empty box: with no cup, each slot shows a solid grey box with the cup outline (CUP_MINI) in grey; when a team takes the cup it lights in that team colour with a soft glow and the pot count. Lint clean, bot match ERRORS 0.
+
+v0.372 scoreboard fix (23 Nov, Alex): the cup slot is vertically centred in its score panel (align-self:center), always the same 56 px with the pot-number space reserved (the em is kept and hidden when empty), so the panel never resizes and the cup never shifts. Empty: transparent, dotted box border, cup outline drawn in dots (stroke-dasharray). Held: lights solid in the team colour with the pot count, as before.
+
+v0.372 scoreboard fix 2 (23 Nov): both team score panels are plain rectangles (the enemy panel had a slanted clip-path edge and yours did not; removed in .tscore.blue/.red and the #topbar.flip variants). The cup slot was picking up the menu-v2 .slot rule (all:unset, 6px 10px padding, display font, cursor) because it shared the class name; it now uses .cpot.shown, so it is its intended 56 x 26 and sits exactly in the vertical middle of the panel. Watch for this: any HUD element with a class called slot will be restyled by the menu.
+
+v0.372 tutorial (23 Nov): CHALICE_LESSONS rewritten for the current carry rules. Carrying: primary and class abilities locked, fight with the Runic Repeater and the sword, throw / drink / pass; new screenshot (TUTORIAL_SHOTS.carrying, Crusader on the Repeater with the lock marks). New slide after it, Sword / "By the sword": the carrier sword kill +1, carrier only (TUTORIAL_SHOTS.sword, the +3 BY THE SWORD toast). Points slide gains a line: the carrier sword kills bank one point more. The older shots (take, full, drink, drop, objective) still show the old HUD and the old flail/warhammer kit and want retaking. Not committed.

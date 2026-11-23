@@ -8,6 +8,7 @@ First-person medieval-fantasy class shooter against bots. One file: `chalice.htm
 - Test in Chalice mode first.
 - Send a mockup before any big visual or map change.
 - Don't build new things unprompted. Backlog items stay backlog until asked.
+- Record every balance adjustment in the playtest balance log in `codex-weapon-niches.md` so the next agent can pick it up.
 - Never add a flashbang.
 - Character hands are simple balls, with no articulated fingers in any view.
 - Don't tie class identity to the cup.

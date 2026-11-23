@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chalice · class select</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+  :root{
+    --ink:#f6e9cf;--cream:#f1e2b8;--dim:#9b8f78;--dimmer:#544c40;--gold:#e8b84a;--hot:#ffd479;
+    --line:rgba(232,184,74,.18);--soft:rgba(232,184,74,.08);
+    --thistle:#a98cff;--marigold:#ff7048;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{margin:0;overflow:hidden;color:var(--ink);font-family:'Barlow Condensed',system-ui,sans-serif;background:#05040a;user-select:none}
+  #bg{position:fixed;inset:0;z-index:0;background:url('mock-assets/map-mausoleum.webp') center/cover no-repeat;filter:blur(2.5px) brightness(.55) saturate(.8);transform:scale(1.04)}
+  #scrim{position:fixed;inset:0;z-index:1;pointer-events:none;background:
+    linear-gradient(90deg,rgba(5,4,10,.94) 0%,rgba(5,4,10,.42) 26%,rgba(5,4,10,.16) 50%,rgba(5,4,10,.55) 74%,rgba(5,4,10,.95) 100%),
+    linear-gradient(0deg,rgba(5,4,10,.96) 0%,rgba(5,4,10,.35) 24%,transparent 44%),
+    linear-gradient(180deg,rgba(5,4,10,.8) 0%,transparent 18%)}
+  #vignette{position:fixed;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 44%,transparent 34%,rgba(2,1,6,.6) 100%)}
+
+  /* top bar */
+  #top{position:fixed;left:0;right:0;top:0;height:64px;z-index:10;display:flex;align-items:center;gap:18px;padding:0 28px}
+  #back{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+    padding:9px 16px;border:1px solid var(--line);color:#c9b893;font-family:'Cinzel',Georgia,serif;font-size:10px;letter-spacing:.18em;background:rgba(5,4,10,.45)}
+  #back:hover{color:#ffe9b4;border-color:rgba(232,184,74,.48)}
+  #back .ar{font-size:14px;line-height:1}
+  #mapName{display:flex;align-items:center;gap:9px;font-family:'Cinzel',Georgia,serif;font-size:15px;letter-spacing:.18em;color:#e7d8b8}
+  #mapName svg{width:19px;height:19px;color:var(--gold);opacity:.8}
+  #mapName small{font-family:'Barlow Condensed';font-size:8px;font-weight:700;letter-spacing:.2em;color:#7d7363}
+  #matchTag{margin-left:auto;font-size:9px;font-weight:700;letter-spacing:.2em;color:#8d8371;text-transform:uppercase}
+  #matchTag b{color:#c9a96a;font-weight:700}
+
+  /* roster */
+  #roster{position:fixed;right:40px;top:96px;z-index:8;width:440px;display:flex;flex-direction:column;gap:0}
+  #roster .head{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;letter-spacing:.24em;margin-bottom:9px}
+  #roster .head .tn{color:var(--thistle)}
+  #roster .head .tg{font-size:8.5px;color:#7d7363;letter-spacing:.16em}
+  #roster .rule{height:2px;background:linear-gradient(90deg,var(--thistle),transparent 78%);margin-bottom:10px}
+  .rr{display:grid;grid-template-columns:50px minmax(0,1fr) auto;gap:15px;align-items:center;padding:11px 12px;border:1px solid transparent;border-bottom:1px solid rgba(232,184,74,.07);background:rgba(8,6,14,.4)}
+  .rr.you{border-color:rgba(169,140,255,.26);background:linear-gradient(90deg,rgba(169,140,255,.14),rgba(8,6,14,.4))}
+  .rr .ic{width:44px;height:46px;background:var(--cl,#a98cff);-webkit-mask:var(--crest) center/contain no-repeat;mask:var(--crest) center/contain no-repeat}
+  .rr .nm{font-size:16px;font-weight:600;letter-spacing:.14em;color:#d8c9a8;line-height:1.1}
+  .rr .st{font-size:9.5px;font-weight:700;letter-spacing:.14em;color:#7d7363;text-align:right}
+  .rr.you .nm{color:#ffe9b4}
+  .rr.you .st{color:var(--gold)}
+  .rr.empty{opacity:.35}
+  .rr.empty .ic{border:1px dashed rgba(232,184,74,.18);background:none;-webkit-mask:none}
+  .rr.empty .nm{color:#5c5548;font-weight:500}
+  #roster .foot{margin-top:14px;padding-top:10px;border-top:1px solid rgba(232,184,74,.1);font-size:8.5px;font-weight:700;letter-spacing:.16em;color:#5c5548}
+
+  /* hero */
+  #hero{position:fixed;left:50%;top:41%;transform:translate(-50%,-50%);z-index:5;width:460px;height:620px;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
+  #hero .glow{position:absolute;left:50%;bottom:6%;width:540px;height:540px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,var(--cc,#e0b45a),transparent 64%);opacity:.2;filter:blur(6px)}
+  #hero .mark{position:absolute;left:50%;top:44%;width:380px;height:380px;transform:translate(-50%,-50%);background:var(--cc,#e0b45a);opacity:.09;
+    -webkit-mask:var(--crest) center/contain no-repeat;mask:var(--crest) center/contain no-repeat}
+  #hero .floor{position:absolute;left:50%;bottom:0;width:380px;height:52px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,var(--cc,#e0b45a),transparent 70%);opacity:.16;filter:blur(8px)}
+  #hero img{position:relative;z-index:2;width:420px;height:590px;object-fit:contain;object-position:bottom center;filter:drop-shadow(0 22px 34px rgba(0,0,0,.75))}
+  #hero img.swap{animation:heroIn .32s ease both}
+  @keyframes heroIn{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:none}}
+
+  /* details */
+  #details{position:fixed;left:44px;top:96px;z-index:8;width:min(430px,30vw);max-height:calc(100vh - 240px);overflow:auto;padding:2px 0 0}
+  #details .name{font-family:'Cinzel',Georgia,serif;font-size:clamp(36px,3.6vw,50px);font-weight:500;letter-spacing:.1em;line-height:1.02;color:#f3e6c9;text-shadow:0 0 30px rgba(0,0,0,.6)}
+  #details .role{margin-top:7px;font-size:9.5px;font-weight:700;letter-spacing:.22em;color:var(--cc,#e0b45a);text-transform:uppercase}
+  #details .role span{color:#8d8371;font-weight:600;margin-left:8px}
+  #details .line{margin-top:16px;font-size:14.5px;font-weight:500;line-height:1.5;letter-spacing:.02em;color:#c9bda6;max-width:35ch}
+  #details .abilHead{margin-top:24px;font-size:8.5px;font-weight:700;letter-spacing:.28em;color:#8d7a4e;text-transform:uppercase;border-top:1px solid var(--line);padding-top:12px}
+  .ab{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(232,184,74,.08)}
+  .ab .ic{width:34px;height:34px;display:grid;place-items:center;border:1px solid rgba(232,184,74,.22);background:rgba(8,6,14,.55);color:var(--cc,#e0b45a)}
+  .ab .ic svg{width:17px;height:17px;display:block}
+  .ab .n{font-size:12.5px;font-weight:600;letter-spacing:.1em;color:#d8c9a8;line-height:1.1}
+  .ab .n small{display:block;font-size:7px;font-weight:700;letter-spacing:.16em;color:#5c5548;margin-top:3px}
+  .ab .n .d{display:block;margin-top:5px;font-size:10.5px;font-weight:500;letter-spacing:.02em;line-height:1.45;color:#9d9179;text-transform:none}
+  .ab .k{font-size:8px;font-weight:700;letter-spacing:.12em;color:#8d7a4e;border:1px solid rgba(232,184,74,.18);padding:2px 4px}
+
+  /* crests */
+  #crestWrap{position:fixed;left:50%;bottom:54px;transform:translateX(-50%);z-index:9;display:flex;flex-direction:column;align-items:center;gap:9px}
+  #crestWrap .cap{font-size:10px;font-weight:700;letter-spacing:.32em;color:#8d7a4e;text-transform:uppercase}
+  #crestRow{display:flex;gap:12px;padding:10px 12px;background:rgba(8,6,14,.62);border:1px solid var(--line)}
+  .ct{all:unset;box-sizing:border-box;cursor:pointer;position:relative;width:88px;height:98px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid rgba(232,184,74,.12);background:rgba(5,4,10,.35);color:var(--cc);opacity:.62}
+  .ct .cr{width:44px;height:44px;background:currentColor;
+    -webkit-mask:var(--crest) center/contain no-repeat;mask:var(--crest) center/contain no-repeat}
+  .ct .cn{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#a99a7c}
+  .ct.focus{border-color:var(--gold);opacity:1;background:linear-gradient(180deg,rgba(232,184,74,.09),rgba(5,4,10,.4));box-shadow:0 0 16px rgba(232,184,74,.15)}
+  .ct.focus .cn{color:#f6e9cf}
+  .ct.locked{opacity:.28;cursor:default}
+  .ct .lock{position:absolute;top:4px;right:5px;font-size:6px;font-weight:700;letter-spacing:.1em;color:#c9a96a}
+  .ct .tick{position:absolute;left:5px;top:4px;font-size:6.5px;font-weight:700;letter-spacing:.08em;color:#241606;background:var(--gold);padding:2px 3px}
+
+  /* lock in */
+  #lockBtn{all:unset;box-sizing:border-box;position:fixed;right:40px;bottom:54px;z-index:9;width:min(380px,28vw);min-height:74px;
+    display:flex;align-items:center;justify-content:space-between;padding:0 20px;cursor:pointer;
+    background:linear-gradient(90deg,#f6d98a,#e8b84a 55%,#c99532);color:#241606;
+    font-family:'Cinzel',Georgia,serif;font-size:18px;font-weight:600;letter-spacing:.16em;
+    clip-path:polygon(0 0,100% 0,98% 100%,0 100%);transition:filter .15s,opacity .2s}
+  #lockBtn:hover{filter:brightness(1.07)}
+  #lockBtn[disabled]{opacity:.4;cursor:default;filter:none}
+  #lockBtn .sub{font-family:'Barlow Condensed';font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+
+  /* hint */
+  #hint{position:fixed;left:0;right:0;bottom:16px;z-index:9;display:flex;justify-content:center;gap:26px;font-size:10.5px;font-weight:600;letter-spacing:.18em;color:#6f6659;pointer-events:none}
+  #hint .k{display:inline-flex;align-items:center;gap:7px}
+  #hint .g{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;border:1px solid rgba(232,184,74,.3);border-radius:50%;color:var(--gold);font-size:8px;font-weight:700;letter-spacing:0;padding:0 4px}
+
+  /* countdown */
+  #countdown{position:fixed;inset:0;z-index:30;display:none;place-items:center;background:rgba(3,2,7,.84);backdrop-filter:blur(3px)}
+  #countdown.on{display:grid}
+  #countdown .num{font-family:'Cinzel',Georgia,serif;font-weight:400;font-size:clamp(100px,17vw,190px);line-height:1;color:#f6e9cf;text-shadow:0 0 54px rgba(232,184,74,.45);animation:cp 1s ease-in-out infinite}
+  @keyframes cp{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.05);opacity:1}}
+  #countdown .go{display:none;font-family:'Cinzel',Georgia,serif;font-size:clamp(24px,3vw,38px);letter-spacing:.14em;color:#f3e6c9}
+  #countdown .sub{margin-top:16px;font-size:9.5px;font-weight:700;letter-spacing:.26em;color:#c9a96a;text-transform:uppercase}
+  #countdown.ready .num{display:none}
+  #countdown.ready .go{display:block}
+  #cdBack{all:unset;display:none;margin:26px auto 0;cursor:pointer;font-family:'Cinzel',Georgia,serif;font-size:12px;letter-spacing:.18em;color:#c99b4a;border:1px solid var(--line);padding:10px 22px}
+  #countdown.ready #cdBack{display:block}
+
+  #toast{position:fixed;left:50%;bottom:54px;transform:translateX(-50%);z-index:40;padding:8px 16px;border:1px solid var(--line);background:rgba(8,6,14,.92);font-size:11px;letter-spacing:.1em;color:#cbbfa4;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap}
+  #toast.on{opacity:1}
+
+  @media (max-width:1500px){
+    #roster{width:420px}
+    #details{width:400px}
+    #hero{width:440px;height:600px}
+    #hero img{width:400px;height:570px}
+    #lockBtn{width:min(360px,27vw)}
+  }
+  @media (max-width:1320px){
+    #roster{width:360px;right:24px}
+    #details{width:310px;left:24px}
+    #hero{width:360px;height:500px}
+    #hero img{width:330px;height:470px}
+    #crestWrap{bottom:50px}
+    #lockBtn{right:24px;bottom:50px;width:300px;min-height:62px}
+    .ct{width:78px;height:88px}
+    .rr{grid-template-columns:44px minmax(0,1fr) auto;gap:12px;padding:9px 10px}
+    .rr .ic{width:38px;height:40px}
+    .rr .nm{font-size:14px}
+  }
+  @media (max-width:900px){
+    #roster{display:none}
+    #details{left:22px;right:22px;top:auto;bottom:190px;width:auto;max-height:160px;display:flex;gap:20px;flex-wrap:wrap}
+    #details .line{display:none}
+    #hero{top:38%}
+    #lockBtn{left:50%;right:auto;transform:translateX(-50%);bottom:56px}
+    #crestWrap{bottom:130px}
+  }
+  @media (max-height:760px){
+    #hero{top:40%;width:420px;height:500px}
+    #hero img{height:470px;width:400px}
+    #roster{top:80px}
+    #details{top:84px}
+    #crestWrap{bottom:40px}
+    .ct{height:80px}
+    #lockBtn{bottom:40px;min-height:56px}
+  }
+</style>
+</head>
+<body>
+<div id="bg"></div><div id="scrim"></div><div id="vignette"></div>
+
+<header id="top">
+  <a id="back" href="match-setup-mockup.html"><span class="ar">‹</span> BACK</a>
+  <div id="mapName">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 4l6 2 5-2v14l-5 2-6-2-5 2V6z"/><path d="M9 4v14M15 6v14"/></svg>
+    <span>MAUSOLEUM</span><small>MAP</small>
+  </div>
+  <div id="matchTag">CHALICE · <b>3V3</b> · FIRST TO 30</div>
+</header>
+
+<aside id="roster"></aside>
+
+<div id="hero">
+  <span class="glow" id="heroGlow"></span>
+  <span class="mark" id="heroMark"></span>
+  <span class="floor" id="heroFloor"></span>
+  <img id="heroImg" alt="">
+</div>
+
+<section id="details"></section>
+
+<div id="crestWrap">
+  <div class="cap">Select your class</div>
+  <div id="crestRow"></div>
+</div>
+
+<button id="lockBtn" type="button"><span>READY</span><span class="sub" id="lockSub">CRUSADER</span></button>
+
+<footer id="hint">
+  <span class="k"><span class="g">← →</span> CHANGE</span>
+  <span class="k"><span class="g">A</span> READY</span>
+  <span class="k"><span class="g">B</span> BACK</span>
+</footer>
+
+<div id="countdown">
+  <div>
+    <div class="num" id="cdNum">3</div>
+    <div class="go">MATCH STARTING</div>
+    <div class="sub" id="cdSub">3 SECOND COUNTDOWN</div>
+    <button id="cdBack" type="button">BACK TO MATCH SETUP</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+
+const CLASSES = [
+  { key:'Arcanist', img:'sorcerer', crest:'class-seeker.svg', colour:'#9a7bff', role:'CONTROLLER', hp:120,
+    line:'Shapes the fight from range: slows the enemy down and armours a teammate.',
+    ab:[
+      ['TEAM','Ward','RMB','A glass dome on one ally for 12 s. It mirrors every enemy projectile, grenades included.'],
+      ['FIELD','Crystal Grenade','Q','Sticks to a surface or an enemy, then bursts after 2 s. Stuck to an enemy, it kills.'],
+      ['MOVEMENT','Float','SHIFT','Hold to float until the charge runs out.']] },
+  { key:'Crusader', img:'knight', crest:'class-crusader.svg', colour:'#e0b45a', role:'GUARDIAN', hp:145,
+    line:'Holds a point, walls off fire for the team, and breaks up a rush.',
+    ab:[
+      ['TEAM','Bulwark','RMB','A wide wall of light in front of you. It stops enemy shots and movement. Allies pass through. Lasts 4 s.'],
+      ['FIELD','Holy Book','Q','Opens where it lands and sends out three shockwaves over 3 s, pushing enemies back.'],
+      ['MOVEMENT','Pious Charge','SHIFT','Raises the cross for 0.4 s, then charges through enemies.']] },
+  { key:'Lampist', img:'lampist', crest:'class-lampist.svg', colour:'#ffc06a', role:'HEALER', hp:120,
+    line:'Keeps the team on its feet with the lantern and burns anyone who gets close.',
+    ab:[
+      ['TEAM','Lightbath','RMB','A field of light travels with you for 12 s, healing you and nearby teammates.'],
+      ['FIELD','Marking Lantern','Q','Hovers for 5 s and reveals enemies within 10 m through cover.'],
+      ['MOVEMENT','Flash Dash','SHIFT','Dashes up to 5.25 m forward or 4.25 m to the side. Back after 3.5 s.']] },
+  { key:'Skulker', img:'goblin', crest:'class-rascal.svg', colour:'#6fd08a', role:'ROGUE', hp:100,
+    line:'Gets behind people, marks a target for the team, and is gone before they turn.',
+    ab:[
+      ['TEAM','Shroud','RMB','Shrouds you and nearby teammates for a few seconds. Attacking breaks it.'],
+      ['FIELD','Poison Smoke','Q','Blocks sight. Enemies inside move 15% slower and take 4 poison damage a second.'],
+      ['MOVEMENT','Blink','SHIFT','Hold to mark a spot. Let go to vanish in smoke and reappear there, even a floor above.']] },
+  { key:'Zealot', img:'brigand', crest:'class-brigand.svg', colour:'#d9744a', role:'VANGUARD', hp:135,
+    line:'First through the door: hits hardest up close and drives the team forward.',
+    ab:[
+      ['TEAM','Rally','RMB','Punches his fist high. Teammates it reaches move and attack faster for 6 s, and slows fall away.'],
+      ['FIELD','Powder Grenade','Q','A bouncing grenade that explodes after a short fuse.'],
+      ['MOVEMENT','Sprint','SHIFT','Hold Shift while moving forward to sprint 30% faster for up to 1.75 s.']] }
+];
+const BY = Object.fromEntries(CLASSES.map(c => [c.key, c]));
+
+// teammates already locked in. The player is the third slot.
+const TEAM = [
+  { name:'Wren', cls:'Lampist', locked:true },
+  { name:'Ash', cls:'Arcanist', locked:true }
+];
+
+const state = { cls:'Crusader', locked:false, starting:false };
+const locks = new Set(TEAM.map(t => t.cls));
+const free = CLASSES.filter(c => !locks.has(c.key)).map(c => c.key);
+
+const $ = id => document.getElementById(id);
+const crestURL = f => `url('mock-assets/icons/${f}')`;
+const portrait = c => `mock-assets/thistle_${c.img}.png`;
+const get = () => BY[state.cls];
+
+const AB_ICON = {
+  TEAM:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2l8 3v7c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5z"/><path d="M12 8v7M8.5 11.5h7"/></svg>',
+  FIELD:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><path d="M12 5l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></svg>',
+  MOVEMENT:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l6 6-6 6M13 6l6 6-6 6"/></svg>'
+};
+
+let toastT = 0;
+function toast(msg){
+  const el = $('toast'); el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 1700);
+}
+
+function renderRoster(){
+  const c = get();
+  const rows = [];
+  rows.push(`<div class="rr you">
+    <span class="ic" style="--crest:${crestURL(c.crest)};--cl:${c.colour}"></span>
+    <span class="nm">${c.key.toUpperCase()}</span>
+    <span class="st">${state.locked ? 'READY' : 'YOU'}</span>
+  </div>`);
+  for(const t of TEAM){
+    const tc = BY[t.cls];
+    rows.push(`<div class="rr">
+      <span class="ic" style="--crest:${crestURL(tc.crest)};--cl:${tc.colour}"></span>
+      <span class="nm">${tc.key.toUpperCase()}</span>
+      <span class="st">LOCKED</span>
+    </div>`);
+  }
+  const size = TEAM.length + 1;
+  for(let i = size; i < 3; i++) rows.push(`<div class="rr empty"><span class="ic"></span><span class="nm">OPEN SLOT</span><span class="st">—</span></div>`);
+  $('roster').innerHTML = `<div class="head"><span class="tn">THISTLE</span><span class="tg">YOUR TEAM</span></div>
+    <div class="rule"></div>${rows.join('')}
+    <div class="foot">3 OF 3 SLOTS</div>`;
+}
+
+function renderHero(){
+  const c = get();
+  document.documentElement.style.setProperty('--cc', c.colour);
+  const img = $('heroImg');
+  const next = portrait(c);
+  if(img.getAttribute('src') !== next){
+    img.classList.remove('swap'); void img.offsetWidth;
+    img.src = next; img.alt = c.key; img.classList.add('swap');
+  }
+  $('heroMark').style.setProperty('--crest', crestURL(c.crest));
+  $('heroMark').style.setProperty('--cc', c.colour);
+}
+
+function renderDetails(){
+  const c = get();
+  $('details').innerHTML = `<div class="name">${c.key.toUpperCase()}</div>
+    <div class="role">${c.role}<span>${c.hp} HP</span></div>
+    <div class="line">${c.line}</div>
+    <div class="abilHead">ABILITIES</div>
+    ${c.ab.map(([kind,name,key,desc]) => `<div class="ab">
+      <span class="ic">${AB_ICON[kind] || ''}</span>
+      <span class="n">${name.toUpperCase()}<small>${kind}</small><span class="d">${desc}</span></span>
+      <span class="k">${key}</span>
+    </div>`).join('')}`;
+  $('details').style.setProperty('--cc', c.colour);
+}
+
+function renderCrests(){
+  $('crestRow').innerHTML = CLASSES.map(c => {
+    const locked = locks.has(c.key), focused = c.key === state.cls;
+    return `<button type="button" class="ct${locked ? ' locked' : ''}${focused ? ' focus' : ''}" data-cls="${c.key}" ${locked || state.locked ? 'disabled' : ''} style="--cc:${c.colour}">
+      <span class="cr" style="--crest:${crestURL(c.crest)}"></span>
+      <span class="cn">${c.key}</span>
+      ${locked ? '<span class="lock">LOCKED</span>' : ''}
+      ${state.locked && focused ? '<span class="tick">YOURS</span>' : ''}
+    </button>`;
+  }).join('');
+}
+
+function renderLock(){
+  const btn = $('lockBtn');
+  btn.disabled = state.locked;
+  btn.querySelector('span').textContent = state.locked ? 'READY' : 'READY';
+  $('lockSub').textContent = get().key.toUpperCase();
+}
+
+function render(){
+  renderRoster(); renderHero(); renderDetails(); renderCrests(); renderLock();
+}
+
+function focusByIndex(i){
+  const n = free.length;
+  state.cls = free[(i % n + n) % n];
+  render();
+}
+function move(d){
+  if(state.locked) return;
+  focusByIndex(free.indexOf(state.cls) + d);
+}
+
+/* ---------- countdown ---------- */
+let cdTimer = null;
+function lockIn(){
+  if(state.locked || state.starting) return;
+  state.locked = true;
+  render();
+  const cd = $('countdown');
+  cd.classList.add('on'); cd.classList.remove('ready');
+  $('cdNum').textContent = '3';
+  $('cdSub').textContent = '3 SECOND COUNTDOWN';
+  let n = 3;
+  clearInterval(cdTimer);
+  cdTimer = setInterval(() => {
+    n--;
+    if(n > 0){ $('cdNum').textContent = String(n); }
+    else {
+      clearInterval(cdTimer); cdTimer = null;
+      cd.classList.add('ready');
+      $('cdSub').textContent = 'MOCK ONLY · THE MATCH LOADS HERE';
+    }
+  }, 1000);
+}
+function backToSetup(){
+  clearInterval(cdTimer); cdTimer = null;
+  $('countdown').classList.remove('on','ready');
+  location.href = 'match-setup-mockup.html';
+}
+
+/* ---------- input ---------- */
+addEventListener('keydown', e => {
+  if($('countdown').classList.contains('on')){
+    if(e.code === 'Escape' || e.code === 'Backspace' || e.code === 'KeyB' || e.code === 'Enter' && $('countdown').classList.contains('ready')){
+      e.preventDefault(); backToSetup();
+    }
+    return;
+  }
+  if(state.locked){ if(e.code === 'Escape' || e.code === 'KeyB') backToSetup(); return; }
+  if(e.code === 'ArrowLeft' || e.code === 'KeyA' && e.shiftKey){ e.preventDefault(); move(-1); }
+  else if(e.code === 'ArrowRight' || e.code === 'KeyD'){ e.preventDefault(); move(1); }
+  else if(e.code === 'ArrowLeft'){ e.preventDefault(); move(-1); }
+  else if(e.code === 'Enter' || e.code === 'Space'){ e.preventDefault(); lockIn(); }
+  else if(e.code === 'Escape' || e.code === 'KeyB'){ e.preventDefault(); location.href = 'match-setup-mockup.html'; }
+});
+$('crestRow').addEventListener('click', e => {
+  const b = e.target.closest('.ct'); if(!b || b.disabled) return;
+  const k = b.dataset.cls;
+  if(!free.includes(k)) return;
+  state.cls = k; render();
+});
+$('lockBtn').addEventListener('click', lockIn);
+$('cdBack').addEventListener('click', backToSetup);
+
+render();
+})();
+</script>
+</body>
+</html>
