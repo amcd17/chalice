@@ -1,7 +1,13 @@
 # Chalice
 (Called Dark Chalice until v0.291.)
 
-First-person medieval-fantasy class shooter against bots. One file: `chalice.html` (three.js r128, no build step). Notes and history: `scryball-backlog.md`.
+First-person medieval-fantasy class shooter against bots. One file: `index.html` (three.js r128, no build step). Notes and history: `scryball-backlog.md`.
+
+## Folder layout
+- Top level: the current build (`index.html`) and the notes agents use now (`scryball-backlog.md`, `codex-weapon-niches.md`, `codex-sword-handover.md`, `codex-handover-hands.md`, the menu and git handovers, `cathedral-mesh-audit.md`).
+- `mockups/`: mockups for work that is pending or recent, with `mock-assets/` beside them. New mockups go here.
+- `old/`: built, superseded or abandoned mockups, test pages and handovers. Reference only.
+- `_to_delete/`: safe to delete.
 
 ## Rules from Alex
 - Bump `<div id="ver">Chalice 0.N</div>` on every change that gets published.
@@ -22,7 +28,7 @@ First-person medieval-fantasy class shooter against bots. One file: `chalice.htm
 4. Open the page in a browser and play a Chalice match.
 
 ## Roster
-Crusader (`knight`), Seeker (`sorcerer`), Rascal (`goblin`), Lampist (`lampist`), Brigand (`brigand`).
+Crusader (`knight`), Arcanist (`sorcerer`), Skulker (`goblin`), Lampist (`lampist`), Zealot (`brigand`).
 
 ## Where things live (search by name)
 - Chalice: `CH`, `CH_CUP`, `CH_PTS`, `chMult`, `chScoreKill`, `chTake`, `chDrop`, `CH_DRAIN` (kills per second internally, shown in the menu as seconds per kill).

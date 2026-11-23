@@ -449,6 +449,8 @@ body.nhud #chalBot #chalSub{position:static;transform:none}
   radial-gradient(ellipse 12% 20% at 0% 62%,rgba(255,150,40,.65),transparent 70%),radial-gradient(ellipse 12% 20% at 100% 62%,rgba(255,150,40,.65),transparent 70%),radial-gradient(ellipse 11% 18% at 0% 24%,rgba(255,120,30,.55),transparent 70%),radial-gradient(ellipse 11% 18% at 100% 24%,rgba(255,120,30,.55),transparent 70%)}
 #aegisEdge{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(ellipse at 50% 50%,transparent 62%,rgba(90,170,255,.16) 82%,rgba(70,150,255,.34) 100%);box-shadow:inset 0 0 70px rgba(110,180,255,.28)}
 #aegisEdge.on{opacity:1}
+#rallyEdge{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(ellipse at 50% 50%,transparent 58%,rgba(255,200,90,.14) 80%,rgba(255,180,60,.38) 100%);box-shadow:inset 0 0 80px rgba(255,190,80,.3)}
+#rallyEdge.on{opacity:1;animation:lbBreath 1.2s ease-in-out infinite}
 #lbEdge{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .6s;background:radial-gradient(ellipse at 50% 50%,transparent 64%,rgba(255,200,96,.10) 84%,rgba(255,190,80,.26) 100%);box-shadow:inset 0 0 60px rgba(255,200,100,.2);animation:lbBreath 3.2s ease-in-out infinite}
 #lbEdge.on{opacity:1}
 #parryFlash{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(circle at 50% 55%,rgba(255,255,255,.6),rgba(190,225,255,.28) 36%,transparent 72%)}
@@ -1645,6 +1647,7 @@ body.paused #hud{visibility:hidden}
   <div id="potTag" hidden></div>
   <div id="fuseTag"></div>
   <div id="fireEdge"></div>
+  <div id="rallyEdge"></div>
   <div id="aegisEdge"></div><div id="lbEdge"></div><div id="parryFlash"></div>
   <div id="vignette"></div>
   <div id="teamEdge"></div>
@@ -1654,7 +1657,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.382</div>
+<div id="ver">Chalice 0.385</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -2026,8 +2029,15 @@ function trialDaggerStep(p, dt){
   return false;
 }
 
+const RALLY_TIMERS = ['repeaterAt', 'gemAt', 'furnaceAt', 'furnaceReloadAt', 'blunderAt', 'daggerAt', 'rifleReloadAt', 'nextSplinter', 'nextBurstAt'];
+function rallyWeaponTick(f, w, dt){   // 23 Nov: while rallied, every pending fire and reload timer runs RALLY_HASTE times as fast (bars fill faster, nothing jumps)
+  if(!(f.rallyT > clock) || RALLY_HASTE <= 1) return; const ex = dt*(RALLY_HASTE - 1);
+  for(const k of RALLY_TIMERS) if(w[k] > clock) w[k] = Math.max(clock, w[k] - ex);
+  if(f.bbReload > 0) f.bbReload = Math.max(1e-4, f.bbReload - ex);
+}
 function trialTickWeapons(f, dt, fire, held, reload){
   const w = trialWeapon(f), I = f.in;
+  rallyWeaponTick(f, w, dt);
   if(SHARED_SWORD && w.slot !== TRIAL_SLOT.melee && (w.swordArm || w.swordPend || f.swordDraw)) swordCancel(f, w);
   // the Runic Repeater: each spent gem returns gemRecharge seconds after it was spent, in whatever hand it is held
   if(w.repeater < TRIAL_REPEATER.capacity){
@@ -3844,7 +3854,7 @@ let BOLT_DMG = 8, BOLT_CD = 0.36, BOLT_HOLD = 0.15, BOLT_CHARGE_T = 0.65, BOLT_F
 let STAFF_HEAT = 0.05, STAFF_RAMP = 1.25, STAFF_COOL = 0.5, STAFF_COOL_DELAY = 0.4, STAFF_OVERHEAT = 3, STAFF_CHARGE_OVER = 3;
 let LIGHT_SIDE = 0, LIGHT_R = 6, LIGHT_PASS = false, LIGHT_RETORT = 12, LIGHT_REPEL = 9;   // v0.277: the wall is now a wide curved arc (radius LIGHT_R) standing LIGHT_DIST out; LIGHT_PASS lets enemies walk through it
 //   // the wall of light sits this far to his left, leaving his hammer side open
-let LIGHT_MAX = 4, LIGHT_RECHARGE = 20, LIGHT_DELAY = 0.6, LIGHT_DIST = 2.5, LIGHT_HW = 3.1, LIGHT_HH = 1.495, LIGHT_HP = 100, LIGHT_BREAK_CD = 20;   // LIGHT_HP: damage it can soak before it shatters; LIGHT_BREAK_CD: seconds before a spent or shattered light comes back
+let LIGHT_MAX = 4, LIGHT_RECHARGE = 18, LIGHT_DELAY = 0.6, LIGHT_DIST = 2.5, LIGHT_HW = 3.1, LIGHT_HH = 1.495, LIGHT_HP = 100, LIGHT_BREAK_CD = 18;   // LIGHT_HP: damage it can soak before it shatters; LIGHT_BREAK_CD: seconds before a spent or shattered light comes back
 const BULWARK_MERLONS = 5, BULWARK_MERLON_WIDTH = 0.54;
 const BULWARK_PARAPET = 0.28, BULWARK_CREST = 0.69, BULWARK_BASE = -0.96;
 const bulwarkPitch = () => 2*LIGHT_HW/(BULWARK_MERLONS - 1);
@@ -3872,18 +3882,18 @@ let SWARD_T = 12, SWARD_R = 2, SWARD_CD = 14;
 // the rascal's blowgun (right click): a dart that marks one enemy; his team sees them outlined through walls and they take more damage
 let DART_T = 5, DART_MUL = 1.2, DART_CD = 10, DART_RAISE = 0.2, DART_ZOOM = 10;   // DART_RAISE: seconds to lift the blowgun to his lips; DART_ZOOM: degrees of zoom while aiming
 // the crusader's Q: a blessed book. It lands, falls open, and bursts in a ring of holy force that throws enemies back
-let RELIC_CD = 20, RELIC_R = 5, RELIC_PUSH = 14, RELIC_DMG = 25, RELIC_MIN = 10, RELIC_SPEED = 15, RELIC_OPEN = 0.35;
+let RELIC_CD = 12, RELIC_R = 5, RELIC_PUSH = 14, RELIC_DMG = 25, RELIC_MIN = 10, RELIC_SPEED = 15, RELIC_OPEN = 0.35;
 const RELIC_PULSES = 3, RELIC_PULSE_GAP = 1.2, RELIC_PULSE_FORCE = 0.4, RELIC_PULSE_T = 3;
 // Zealot abilities: Rally (right click), Sprint (Shift), and Powder Grenade (Q).
 let ZEALOT_SPRINT_TIME = 1.75, ZEALOT_SPRINT_SPEED = 1.30;
 let ZEALOT_SPRINT_REFILL = 5;
 let SPEAR_MAX = 3, SPEAR_REFILL = 8, SPEAR_CD = 0.7, SPEAR_WIND = 0.12, SPEAR_STAY = 20, SPEAR_SPEED = 38;
-let RALLY_CD = 20, RALLY_T = 6, RALLY_R = 10, RALLY_SPEED = 1, RALLY_HASTE = 1.25, RALLY_CDR = 1.5, RALLY_ANIM = 2, RALLY_AT = 0.4, GS_CLEAVE = 0.6, CH_BURDEN = true, CH_EMPOWER = true, CH_LVL_STEP = 0.02;   // GS_CLEAVE: the greatsword's sweep carries on into a second enemy for this share of the damage
-let FRAG_CD = 20, FRAG_FUSE = 1.8, FRAG_R = 4.5, FRAG_DMG = 90, FRAG_MIN = 15, FRAG_SPEED = 17;   // the grenade: kept for the Zealot
-let FLASK_CD = 20, FIRE_T = 5, FIRE_R = 2.6, FIRE_DPS = 20, FLASK_SPEED = 16;   // FIRE_R: the patch where a flask hits a wall
+let RALLY_CD = 18, RALLY_T = 6, RALLY_R = 10, RALLY_SPEED = 1.2, RALLY_HASTE = 1.25, RALLY_CDR = 1, RALLY_ANIM = 2, RALLY_AT = 0.4, GS_CLEAVE = 0.6, CH_BURDEN = true, CH_EMPOWER = true, CH_LVL_STEP = 0.02;   // GS_CLEAVE: the greatsword's sweep carries on into a second enemy for this share of the damage
+let FRAG_CD = 12, FRAG_FUSE = 1.8, FRAG_R = 4.5, FRAG_DMG = 90, FRAG_MIN = 15, FRAG_SPEED = 17;   // the grenade: kept for the Zealot
+let FLASK_CD = 12, FIRE_T = 5, FIRE_R = 2.6, FIRE_DPS = 20, FLASK_SPEED = 16;   // FIRE_R: the patch where a flask hits a wall
 let FIRE_LEN = 7, FIRE_TH = 1, FIRE_AFTER = 3, FIRE_AFTER_DPS = 8, FLASK_HIT = 15;   // the flask bursts into a wall of fire across its path; touching it (or being hit) sets you burning for a while
-let SHROUD_ON = true, SHROUD_T = 5, SHROUD_R = 5, SHROUD_CD = 15, SHROUD_SPEED = 1.15, SHROUD_SEE = 4, SHROUD_REVEAL = 1, BLINK_CLOUD = true, BLINK_CLOUD_R = 1.5, BLINK_CLOUD_T = 1.6;   // v0.284: the Skulker's shroud (right click), how long enemies stay marked after leaving his smoke, and the small clouds at both ends of a blink
-let SMOKE_CD = 20, SMOKE_T = 6, SMOKE_R = 4, SMOKE_H = 3.2, SMOKE_SPEED = 16, SMOKE_SEE = 0;   // cooldown, life, radius, height, throw speed, how close you can see someone inside
+let SHROUD_ON = true, SHROUD_T = 6, SHROUD_R = 0, SHROUD_CD = 12, SHROUD_SPEED = 1, SHROUD_AMBUSH = 1.25, SHROUD_AMBUSH_T = 0.5, SHROUD_SEE = 4, SHROUD_REVEAL = 1, BLINK_CLOUD = true, BLINK_CLOUD_R = 1.5, BLINK_CLOUD_T = 1.6;   // v0.284: the Skulker's shroud (right click), how long enemies stay marked after leaving his smoke, and the small clouds at both ends of a blink
+let SMOKE_CD = 12, SMOKE_T = 6, SMOKE_R = 4, SMOKE_H = 3.2, SMOKE_SPEED = 16, SMOKE_SEE = 0;   // cooldown, life, radius, height, throw speed, how close you can see someone inside
 // clamber: in the air, running into a ledge up to MANTLE above your feet pulls you up onto it; this is how long it takes (the sorcerer is the baseline)
 let CLAMBER_T = 0.45; const CLAMBER_MUL = { sorcerer:1, goblin:1, knight:1.3, gridiron:1, lampist:1.2, brigand:1.1 };   // the knight is heavier: a slower pull-up
 let HAM_CHARGE = 1.2; const HOLD_DELAY = 0.2;
@@ -8704,14 +8714,14 @@ function shroudSweep(f){
 }
 function castShroud(f){
   f.shroudCd = SHROUD_CD;
-  f.shroudCastAt = clock;
-  for(const g of FIGHTERS){ if(!g.alive || g.team !== f.team) continue; if(g !== f && g.pos.distanceTo(f.pos) > SHROUD_R) continue;
-    g.shroudT = clock + SHROUD_T; g.shroudOn = true; g.shroudBy = f;
-    if(!g.isPlayer) shroudPuff(g); }
+  f.shroudCastAt = clock; f.ambushShown = false;
+  f.shroudT = clock + SHROUD_T; f.shroudOn = true; f.shroudBy = f;   // 23 Nov: the Skulker's alone now
+  if(!f.isPlayer) shroudPuff(f);
   sfx('thud', f.isPlayer ? null : f.pos);
 }
 function breakShroud(f){
   if(!f.shroudOn) return; f.shroudOn = false; f.shroudRevealT = clock + SHROUD_REVEAL;
+  if(f.shroudT > clock) f.ambushT = clock + SHROUD_AMBUSH_T;   // broken by his own attack (not run out): that attack lands harder
   if(f.isPlayer) toast('REVEALED', '#c9c9d2');
   else shroudPuff(f);
 }
@@ -8828,7 +8838,7 @@ function throwFrag(f){
   f.smokeCd = FRAG_CD; sfx('swing', f.isPlayer ? null : f.pos);
 }
 // v0.348: the Arcanist's Crystal Grenade (Q). A faceted stone that flies a true arc (no aim assist), sticks to whatever it touches, rings brighter and faster through its fuse, and bursts into crystal shrapnel. Stuck to an enemy, it kills them outright
-let CGREN_CD = 20, CGREN_FUSE = 2, CGREN_SPEED = 17, CGREN_R = 5, CGREN_SHARDS = 10, CGREN_SHARD_DMG = 16;
+let CGREN_CD = 12, CGREN_FUSE = 2, CGREN_SPEED = 17, CGREN_R = 5, CGREN_SHARDS = 10, CGREN_SHARD_DMG = 16;
 function makeCrystalGrenade(team){
   const g = new THREE.Group(), tg = TEAMGLOW[team] ?? TEAMGLOW[0], u = {};
   u.gemM = new THREE.MeshStandardMaterial({ color:0x5a3a78, emissive:tg, emissiveIntensity:0.8, roughness:0.3, flatShading:true });
@@ -9896,6 +9906,7 @@ function damage(t, amt, a, w, head, volley, melee = false){
   amt += shatter*TRIAL_SPLINTER.shatter;
   if(TRIAL_SCALED_WEAPONS.has(w) && !(w === 'hammer' && a?.swingPious)) amt *= TRIAL_WEAPON_DAMAGE;
   if(a && a !== t && a.hasChalice) amt *= chEmpower(a);
+  if(a && a !== t && a.ambushT > clock && a.team !== t.team){ amt *= SHROUD_AMBUSH; if(a.isPlayer && !a.ambushShown){ a.ambushShown = true; toast('AMBUSH', '#c9c9d2'); } }
 
   if(CLASS_KIT && t.markT > clock && a && a.team === t.markTeam) amt *= DART_MUL;   // a blowgun dart in them: his team hits harder   // caught in an enemy rascal's smoke: every blow lands harder
   if(t.enemyHealthUntil && t.hp >= maxHp(t)) t.enemyHealthUntil = 0;
@@ -10982,7 +10993,8 @@ function actCore(f, dt){
   if(CLASS_KIT) toolHand(f, I);
   if(f.scWind > 0){ f.scWind -= dt; if(f.scWind <= 0){ f.scWind = 0; if(f.alive && f.stun <= 0 && !f.hasChalice){ f.ram = { t:SC_T, dir:f.fwd(new V()), hit:new Set(), x0:f.pos.x, z0:f.pos.z }; f.ramFx = SC_T + 0.3; sfx('ram', f.isPlayer ? null : f.pos); if(f.isPlayer) shake = 0.25; } } }
   const haste = (f.rallyT > clock ? RALLY_HASTE : 1)*chBurden(f);
-  f.meleeCd -= dt*(f.swing?.trial ? 1 : haste);
+  const rk = f.rallyT > clock ? RALLY_HASTE : 1;   // 23 Nov: the Rally speeds the shared sword too
+  f.meleeCd -= dt*(f.swing?.trial ? rk : haste);
   if(!(f.hasChalice && heavyW(f, f.weapon))) f.rangedCd -= (sorcKit(f) ? aegisStaffTime(f, dt) : dt)*haste;
   const cdr = f.rallyT > clock ? RALLY_CDR : 1;   // v0.284: a rallied fighter's skills and throwables recharge faster (not the rally itself)
   if(f.gwardCd > 0) f.gwardCd -= dt*cdr; if(f.smokeCd > 0) f.smokeCd -= dt*cdr; f.abilityCd = Math.max(0, f.abilityCd - dt*cdr); f.stun -= dt;   // (the dash burst runs down in physics)
@@ -10990,7 +11002,7 @@ function actCore(f, dt){
   if(f.reloadT > 0 && !(gobKit(f) && f.dartAim > 0)){ f.reloadT -= dt*haste; if(f.reloadT <= 0){ f.reloadT = 0; f.ammo = 2; } }
   if(clock - f.lastDmg > REGEN_DELAY && f.hp < maxHp(f)) f.hp = Math.min(maxHp(f), f.hp + REGEN_RATE*maxHp(f)/100*dt);
   if(f.swing){
-    if(!(f.lunge && f.swing.t >= MELEE[f.swing.w].windup)) f.swing.t += f.swing.trial ? dt : dt*haste;
+    if(!(f.lunge && f.swing.t >= MELEE[f.swing.w].windup)) f.swing.t += f.swing.trial ? dt*rk : dt*haste;
     if(f.swing.t > f.swing.dur) f.swing = null;
   }
   if(f.lunge){
@@ -11951,7 +11963,7 @@ function botControl(b, dt){
   if(CLASS_KIT && b.smokeCd <= 0 && !b.hasChalice && t && b.targetVis && (knKit(b) || !trial && lampKit(b) || brigKit(b))){   // a grenade or a flask at someone 5 to 14 m off, more often when they're near the cup
     const d = t.pos.distanceTo(b.pos), A = objAnchor(), atCup = A && t.pos.distanceTo(A) < 6;
     if(d > 5 && d < 14 && b.aimErr < 0.3 && Math.random() < (atCup || t.hasChalice ? 0.05 : 0.015)) I.throwL = true; }
-  if(!trial && CLASS_KIT && gobKit(b) && !(b.shroudCd > 0) && !b.hasChalice && t && b.targetVis && b.pos.distanceTo(t.pos) < 30 && FIGHTERS.some(a => a !== b && a.alive && a.team === b.team && a.pos.distanceTo(b.pos) < SHROUD_R && !isCloaked(a)) && Math.random() < 0.04) I.shroud = true;   // he veils himself and the mates around him before a push
+  if(!trial && CLASS_KIT && gobKit(b) && !(b.shroudCd > 0) && !b.hasChalice && t && b.targetVis && b.pos.distanceTo(t.pos) < 30 && !isCloaked(b) && b.pos.distanceTo(t.pos) > 8 && Math.random() < 0.04) I.shroud = true;   // he veils himself and the mates around him before a push
   if(CLASS_KIT && sorcKit(b) && b.aegisCd <= 0 && !b.hasChalice && Math.random() < 0.15){   // the seeker shields a teammate under fire, the holder first
     const eye = b.eye(T6); let best = null, bs = 0;
     for(const m of FIGHTERS){ if(m === b || !m.alive || m.team !== b.team || wardOn(m)) continue; const d = m.pos.distanceTo(b.pos); if(d > AEGIS_RANGE - 4) continue;
@@ -13397,7 +13409,7 @@ function wpAmmo(p, slot){
 // status symbols over heads: what's on a fighter, teammate or enemy, shown with the symbol of the thing that did it
 const ST_GOOD = '#ffd27a', ST_BAD = '#ff5a4a';
 const ST_DEF = [   // [id, active?, icon, colour, viewer]: marks show to the whole marking team; other effects show to their source
-  ['rally', f => f.rallyT > clock, () => NH_IC.ab.brigand[0], ST_GOOD, f => f.rallyBy],
+  ['rally', f => f.rallyT > clock, () => NH_IC.ab.brigand[0], ST_GOOD, () => PLAYER],   // 23 Nov: everyone sees a rallied fighter, enemies included
   ['aegis', f => wardOn(f), () => NH_IC.aegis, ST_GOOD, f => f.swardBy],
   ['heal', f => f.healT > clock, () => '<span class="hl"><i style="color:#ffd27a;--g:#ffd27a"><svg viewBox="0 0 24 24"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="currentColor" stroke="#3a2a08" stroke-width="1"/></svg></i><u class="hpb"><b></b></u></span>', ST_GOOD, f => f.healBy],
   ['mark', f => f.team !== PLAYER.team && marked4(f, PLAYER.team), () => MARK_OVERHEAD_ICON, ST_BAD, () => PLAYER] ];
@@ -13454,6 +13466,7 @@ function updateHUD(dt){
   $('lbEdge').classList.toggle('on', !!(p.alive && p.lbOn && state === 'play'));
   $('aegisEdge').classList.toggle('on', !!(p.alive && wardOn(p) && state === 'play'));
   $('fireEdge').classList.toggle('on', !!(p.alive && p.burnT > 0 && state === 'play'));
+  $('rallyEdge').classList.toggle('on', !!(p.alive && p.rallyT > clock && state === 'play'));
   hud.sBlue.textContent = SCORE[0] + (SCORE_HOLD[0] ? SCORE_HOLD[0].n : 0); hud.sRed.textContent = SCORE[1] + (SCORE_HOLD[1] ? SCORE_HOLD[1].n : 0); hud.timer.textContent = fmtTime(matchT);
   hud.shield.style.width = clamp(p.hp/maxHp(p)*100,0,100) + '%'; hud.shieldWrap.classList.toggle('low', p.alive && p.hp < 0.4*maxHp(p)); hud.shieldWrap.classList.toggle('aegis', p.alive && wardOn(p)); { const ab = document.getElementById('aegisBar'); ab.classList.toggle('on', p.alive && wardOn(p)); ab.firstChild.style.width = clamp(((p.swardEnd || 0) - clock)/SWARD_T*100, 0, 100) + '%'; }
   // ball line: only what matters right now; who did what goes to the feed
@@ -14117,7 +14130,7 @@ const TUNES = [
   ...meleeTuning('goblin'),
   { k:'shron',  label:'Shroud on (right click)', type:'bool', get:() => SHROUD_ON, set:v => { SHROUD_ON = !!v; } },
   { k:'shrt',   label:'Shroud: lasts', unit:'s', min:1, max:15, step:0.5, get:() => SHROUD_T, set:v => { SHROUD_T = v; } },
-  { k:'shrr',   label:'Shroud: radius around him', unit:'m', min:2, max:15, step:0.5, get:() => SHROUD_R, set:v => { SHROUD_R = v; } },
+  { k:'shramb', label:'Shroud: ambush damage', unit:'×', min:1, max:2, step:0.05, get:() => SHROUD_AMBUSH, set:v => { SHROUD_AMBUSH = v; } },
   { k:'shrcd',  label:'Shroud cooldown', unit:'s', min:2, max:60, step:1, get:() => SHROUD_CD, set:v => { SHROUD_CD = v; } },
   { k:'shrsp',  label:'Shroud: move speed', unit:'×', min:1, max:1.6, step:0.05, get:() => SHROUD_SPEED, set:v => { SHROUD_SPEED = v; } },
   { k:'shrsee', label:'Shroud: enemies still see you within', unit:'m', min:0, max:12, step:0.5, get:() => SHROUD_SEE, set:v => { SHROUD_SEE = v; } },
@@ -14159,7 +14172,7 @@ const TUNES = [
   { k:'ralr', label:'Rally reach', unit:'m', min:2, max:30, step:0.5, get:() => RALLY_R, set:v => { RALLY_R = v; } },
   { k:'ralsp', label:'Rally: move speed', unit:'×', min:1, max:2, step:0.05, get:() => RALLY_SPEED, set:v => { RALLY_SPEED = v; } },
   { k:'ralcdr', label:'Rally: ability and throwable recharge speed', unit:'×', min:1, max:3, step:0.05, get:() => RALLY_CDR, set:v => { RALLY_CDR = v; } },
-  { k:'ralha', label:'Staff shot recovery multiplier', unit:'×', min:1, max:2, step:0.05, get:() => RALLY_HASTE, set:v => { RALLY_HASTE = v; } },
+  { k:'ralha', label:'Rally: fire, reload and swing speed', unit:'×', min:1, max:2, step:0.05, get:() => RALLY_HASTE, set:v => { RALLY_HASTE = v; } },
   { k:'fragcd', label:'Grenade cooldown', unit:'s', min:2, max:60, step:1, get:() => FRAG_CD, set:v => { FRAG_CD = v; } },
   { k:'fragfuse', label:'Grenade fuse', unit:'s', min:0.3, max:5, step:0.1, get:() => FRAG_FUSE, set:v => { FRAG_FUSE = v; } },
   { k:'fragr', label:'Grenade blast radius', unit:'m', min:1, max:10, step:0.25, get:() => FRAG_R, set:v => { FRAG_R = v; } },
@@ -14188,7 +14201,7 @@ const TUNES = [
   { k:'tosst', label:'Throwables: time from Q to letting go', unit:'s', min:0, max:1, step:0.05, get:() => TOSS_REL, set:v => { TOSS_REL = v; TOSS_T = Math.max(TOSS_T, v + 0.1); } },
 ];
 const TUNE_DEFAULTS = {}; for(const t of TUNES) TUNE_DEFAULTS[t.k] = t.get();
-const TUNE_OLD_DEFAULTS = { splintertime:4, runicrecharge:[3, 4], furnacedirect:34, furnacesplash:16, rifleammo:24, bbshots:3, furnacecapacity:4, furnaceinterval:0.75, furnacepatchradius:1.25, furnacespeed:18, bbdamage:110, bbmiddamage:95, hamtap2:0.05, smkmark:2.5, fragcd:14, flaskcd:14, flmdps:40, flmrng:7, gwardcd:8, dmgham:60, dmgbb:12, bstab:1.5, flrl:1.5, chwin:60, chcup:[10, 6], chs2:0.5, chs3:0.8, dagcd:[0.4, 0.3], sheat:[0.065, 0.06], sramp:2, bfull:40, bcd:0.3, hpg:[80, 90, 100, 110, 107, 115], hps:[100, 110, 118, 126], hpk:[180, 150, 130, 139, 147], hpl:[110, 118, 126], hpbr:[115, 123, 131], shslow:0.85, lightw:2.75, lightrec:6, chdmg:[15, 40], dmgdag:25, dmgknf:[50, 40, 25], dblgap:0.13, dmgbolt:[12.5, 10, 10.5], dmgjav:[60, 75, 65], javcd:3.8, chspd:10, cht:0.6, chwind2:1, match:5, lunge:4.6, scramble:3, team:4, speed:[9.2, 8.2, 7.544], jumph:4.77, clsspd:[6.8, 6.256], clsjmp:1.8, ability:8, htkh:1, htkball:1, spk:0.88 };   // a saved value that is just an old default gives way to the new default
+const TUNE_OLD_DEFAULTS = { relcd:20, cgrencd:20, smkcd:20, ralcd:20, lightbrk:20, shrt:5, shrcd:15, shrsp:1.15, ralsp:1, ralcdr:1.5, splintertime:4, runicrecharge:[3, 4], furnacedirect:34, furnacesplash:16, rifleammo:24, bbshots:3, furnacecapacity:4, furnaceinterval:0.75, furnacepatchradius:1.25, furnacespeed:18, bbdamage:110, bbmiddamage:95, hamtap2:0.05, smkmark:2.5, fragcd:[14, 20], flaskcd:[14, 20], flmdps:40, flmrng:7, gwardcd:8, dmgham:60, dmgbb:12, bstab:1.5, flrl:1.5, chwin:60, chcup:[10, 6], chs2:0.5, chs3:0.8, dagcd:[0.4, 0.3], sheat:[0.065, 0.06], sramp:2, bfull:40, bcd:0.3, hpg:[80, 90, 100, 110, 107, 115], hps:[100, 110, 118, 126], hpk:[180, 150, 130, 139, 147], hpl:[110, 118, 126], hpbr:[115, 123, 131], shslow:0.85, lightw:2.75, lightrec:[6, 20], chdmg:[15, 40], dmgdag:25, dmgknf:[50, 40, 25], dblgap:0.13, dmgbolt:[12.5, 10, 10.5], dmgjav:[60, 75, 65], javcd:3.8, chspd:10, cht:0.6, chwind2:1, match:5, lunge:4.6, scramble:3, team:4, speed:[9.2, 8.2, 7.544], jumph:4.77, clsspd:[6.8, 6.256], clsjmp:1.8, ability:8, htkh:1, htkball:1, spk:0.88 };   // a saved value that is just an old default gives way to the new default
 try{ const saved = JSON.parse(localStorage.getItem('chalice-class-tuning-v1') || '{}'); for(const k in TUNE_OLD_DEFAULTS) if([].concat(TUNE_OLD_DEFAULTS[k]).includes(saved[k])) delete saved[k]; for(const t of TUNES) if(typeof saved[t.k] === (t.type === 'bool' ? 'boolean' : 'number') && (t.type === 'bool' || (saved[t.k] >= t.min && saved[t.k] <= t.max))) t.set(saved[t.k]); }catch(e){}   // a saved value outside its slider's range is stale (or from an old clash of names): ignore it
 function fmtTune(t, v){
   if(t.fmt) return t.fmt(Math.round(v));
@@ -14678,14 +14691,14 @@ const KIT = {
   knight:{ role:'The guard. Holds a point, walls off fire for the team, and breaks up a rush.', rows:[
     ['1', 1, 'Flail', 'Sweeping overhead strikes hit several enemies in front of you. Available while carrying the chalice.'],
     ['2', 2, 'Warhammer', 'Heavy overhead hits knock enemies back. Hold after a swing to charge a smash. Unavailable while carrying the chalice.'],
-    ['RIGHT CLICK', 0, 'Bulwark', 'Tap to plant a wide wall of light in front of you. It stays in place while you move and fight. It blocks enemy shots and movement, but allies can fire and move through it. It lasts up to 4 s and returns after 20 s.'],
+    ['RIGHT CLICK', 0, 'Bulwark', 'Tap to plant a wide wall of light in front of you. It stays in place while you move and fight. It blocks enemy shots and movement, but allies can fire and move through it. It lasts up to 4 s and returns after 18 s.'],
     ['F', 1, 'Holy Book', 'Throws a holy book that opens and sends out three shockwaves over 3 s, pushing nearby enemies back.'],
     ['SHIFT', 2, 'Pious Charge', 'He raises the cross for 0.40 s, then charges through enemies.'] ] },
   sorcerer:{ role:'The controller. Shapes the fight from range: slows the enemy down and armours a teammate.', rows:[
     ['1', 1, 'Crystal staff', 'Tap for a light bolt. Hold to charge: half charge looses two heavier bolts, full charge three. Overheats if pushed.'],
     ['2', 2, 'Diamond spear', 'Two-handed jabs at long reach. Switch to the staff up close or while carrying the chalice.'],
     ['RIGHT CLICK', 0, 'Ward', 'A glass dome on one ally (never yourself) for 12 s. It travels with them and mirrors every enemy projectile, grenades included. The cooldown starts when it ends.'],
-    ['Q', 1, 'Crystal Grenade', 'Thrown on a true arc. It sticks to surfaces and enemies, chimes faster as it primes, and bursts after 2 s into crystal shrapnel. Stuck to an enemy, it kills them. One charge, 20 s to recharge.'],
+    ['Q', 1, 'Crystal Grenade', 'Thrown on a true arc. It sticks to surfaces and enemies, chimes faster as it primes, and bursts after 2 s into crystal shrapnel. Stuck to an enemy, it kills them. One charge, 12 s to recharge.'],
     ['SHIFT', 2, 'Float', 'Hold to float until the charge runs out.'] ] },
   lampist:{ role:'The healer. Keeps the team on its feet with the lantern and burns anyone who gets close.', rows:[
     ['1', 2, 'Furnace Lantern', 'A slow fireball bursts for splash damage and leaves a brief burning patch. Six shots before reloading.'],
@@ -14785,43 +14798,28 @@ const MENU_MODES = {
 
 const MENU_CLASSES = [
   { key:'knight', name:'Crusader', role:'GUARDIAN', hp:125, line:'Holds a point, walls off fire for the team, and breaks up a rush.',
-    loadout:[
-      ['1','Flail','Sweeping overhead strikes hit several enemies in front of you. Available while carrying the chalice.'],
-      ['2','Warhammer','Heavy overhead hits knock enemies back. Hold after a swing to charge a smash. Unavailable while carrying the chalice.']],
     abil:[
-      ['TEAM','Bulwark','RMB','Plant a wide wall of light in front of you. It stays there while you move and fight. It blocks enemy shots and movement, but allies can fire and move through it. It lasts up to 4 s and returns after 20 s.'],
+      ['CLASS','Bulwark','RMB','Plant a wide wall of light in front of you. It stays there while you move and fight. It blocks enemy shots and movement, but allies can fire and move through it. It lasts up to 4 s and returns after 18 s.'],
       ['FIELD','Holy Book','Q','Throws a holy book that opens and sends out three shockwaves over 3 s, pushing nearby enemies back.'],
       ['MOVEMENT','Pious Charge','SHIFT','Raises the cross for 0.40 s, then charges through enemies.']] },
   { key:'sorcerer', name:'Arcanist', role:'CONTROLLER', hp:120, line:'Shapes the fight from range: slows the enemy down and armours a teammate.',
-    loadout:[
-      ['1','Crystal staff','Tap for a light bolt or hold to charge a stronger one. Charged bolts build more heat.'],
-      ['2','Diamond spear','Two-handed jabs at long reach. Switch to the staff up close or while carrying the chalice.']],
     abil:[
-      ['TEAM','Ward','RMB','A glass dome on one ally for 12 s that mirrors every enemy projectile, grenades included.'],
+      ['CLASS','Ward','RMB','A glass dome on one ally for 12 s that mirrors every enemy projectile, grenades included.'],
       ['FIELD','Crystal Grenade','Q','Sticks to surfaces and enemies, bursts after 2 s into shrapnel. Stuck to an enemy, it kills them.'],
       ['MOVEMENT','Float','SHIFT','Hold to float until the charge runs out.']] },
-  { key:'goblin', name:'Skulker', role:'ROGUE', hp:100, line:'Gets behind people, marks a target for the team, and is gone before they turn.',
-    loadout:[
-      ['1','Dagger','Quick, light slashes, much harder from behind. No block.'],
-      ['2','Throwing daggers','One in each hand: click to throw, right then left. He grabs two more in a second.']],
+  { key:'goblin', name:'Skulker', role:'ROGUE', hp:100, line:'Gets behind people, strikes before they turn, and is gone in smoke.',
     abil:[
-      ['TEAM','Shroud','RMB','Shrouds you and nearby teammates for a few seconds. Attacking breaks your Shroud.'],
+      ['CLASS','Shroud','RMB','Vanish for 6 s: enemies lose you beyond 4 m. Attacking breaks it, and that first attack hits 25% harder. Recharges in 12 s.'],
       ['FIELD','Poison Smoke','Q','Blocks sight. Enemies inside move 15% slower and take 4 poison damage per second.'],
       ['MOVEMENT','Blink','SHIFT','Hold to mark a spot, let go to vanish in smoke and reappear there, even on a floor above.']] },
   { key:'lampist', name:'Lampist', role:'HEALER', hp:100, line:'Keeps the team on its feet with the lantern and burns anyone who gets close.',
-    loadout:[
-      ['1','Furnace Lantern','Fire slow orbs that burst on impact and leave brief surface fire. Six shots before reloading.'],
-      ['3','Bastard Sword','Tap to slash. Hold and release for a heavy lunging blow.']],
     abil:[
-      ['TEAM','Lightbath','RMB','Raise the lantern, then a field of light travels with you for 12 s, healing you and nearby teammates.'],
+      ['CLASS','Lightbath','RMB','Raise the lantern, then a field of light travels with you for 12 s, healing you and nearby teammates.'],
       ['FIELD','Marking Lantern','Q','Tap to throw or hold to preview the landing point. It hovers for five seconds and reveals enemies within 10 m through cover.'],
       ['MOVEMENT','Flash Dash','SHIFT','Dash up to 5.25 m forward or 4.25 m in other directions. Shift alone dashes backwards. Recharges in 3.5 s.']] },
-  { key:'brigand', name:'Zealot', role:'VANGUARD', hp:120, line:'First through the door: hits hardest up close and drives the team forward.',
-    loadout:[
-      ['1','Greatsword','The longest reach, a wide sweep that carries into a second enemy.'],
-      ['2','Javelins','Three on his back. Throw them, walk over them to take them back, and one returns every 8 s.']],
+  { key:'brigand', name:'Zealot', role:'VANGUARD', hp:120, line:'First through the door: splinters a target with the rifle, shatters them with the sword, and drives the team forward.',
     abil:[
-      ['TEAM','Rally','RMB','Punches his fist high and a shockwave rolls out: teammates it reaches move and attack faster for 6 s, and slows fall away.'],
+      ['CLASS','Rally','RMB','Punches his fist high and a shockwave rolls out: for 6 s, teammates it reaches move 20% faster, fire, reload and swing 25% faster, and shake off slows.'],
       ['FIELD','Powder Grenade','Q','Throws a bouncing grenade that explodes after a short fuse.'],
       ['MOVEMENT','Sprint','SHIFT','Hold Shift while moving forward to sprint 30% faster for up to 1.75 s. It recharges after a brief pause.']] }
 ];
@@ -15210,14 +15208,14 @@ const localMenu = (() => {
   function loadoutRows(c){
     const kit = TRIAL_LOADOUT[c.key];
     const primary = {
-      knight:'Each press winds up for 0.45 s and then fires eight pellets. A full hit deals 88 damage within 2 m and 73 at 4 m. The first damaging pellet knocks the target back. R reloads.',
-      lampist:'Click to launch an arcing fireball. It bursts on impact and leaves brief surface fire. Six shots, then reload.',
+      knight:'Each press winds up for 0.45 s and then fires eight pellets. A full hit deals 88 damage within 2 m and 73 at 4 m. The first damaging pellet knocks the target back. Two shots, then a 3 s reload.',
+      lampist:'Click to launch an arcing fireball: 40 damage on a direct hit and up to 20 splash. It leaves brief surface fire that burns anyone standing in it. Six shots, then a 3 s reload.',
       sorcerer:'Tap for a quick bolt. Release at full charge for a travelling pulse that pierces up to three enemies.',
       goblin:'Daggers stick to enemies. They return after the third throw or when you press R.',
-      brigand:'24 rounds, enough for eight three-shot bursts. Each burst has a 0.10 s wind-up and can start every 0.55 s.'
+      brigand:'15 rounds, five three-shot bursts. Each hit lodges a bone splinter (up to 3, for 6 s). A sword hit shatters them all for extra damage and heals you.'
     };
-    const rows = [['1',kit[0],primary[c.key]], ['2','Runic Repeater','Six 18-damage shots. Tap to fire up to four shots per second. R recharges.'],
-      ['3',kit[1],'The Runeblade, one-handed melee. Tap to slash, hold and release to lunge. Available while carrying the Chalice.']];
+    const rows = [['1',kit[0],primary[c.key]], ['2','Runic Repeater','Six 18-damage shots, up to four a second. Each spent gem returns 3.75 s after you fire it.'],
+      ['3',kit[1],'One-handed. Tap to slash, hold and release to lunge, R to parry. Usable while carrying the Chalice. While your team holds the cup, every sword kill adds +1 to it.']];
     return rows.map(([k, name, d], i) => {
       const hands = i === 0 && c.key !== 'sorcerer' ? 2 : 1;
       return `<div class="loRow"><span class="k">${k}</span><span class="t"><b>${name}</b><span class="nhhand">${hands}H</span>${d}</span></div>`;
@@ -16136,8 +16134,14 @@ function updateBodies(){
       if(ral){ const k = rallyUp(f); P.armR.position.y = -0.35*(1 - k); P.armRS.position.y = 0.35*(1 - k); P.armRS.visible = !rng; }
       P.jvHand.visible = rng && ns > 0 && clock - (f.spearThrowAt || -9) > 0.3; P.armJ.rotation.x = f.spearWind > 0 ? 0.12 : 0;
       P.quiver.forEach((q, i) => { q.visible = i < ns - (rng && ns > 0 ? 1 : 0); }); P.belt[1].visible = f.smokeCd <= 0; }
-    if(f.rallyT > clock){ if(!P.rallyFx){ P.rallyFx = fxSprite(FX_GLOW, 0xffd27a, 0.7); P.rallyFx.scale.set(1.6, 0.6, 1); P.rallyFx.position.y = 0.05; P.root.add(P.rallyFx); } P.rallyFx.visible = true; P.rallyFx.material.opacity = 0.45 + 0.25*Math.sin(clock*9 + f.id); }
-    else if(P.rallyFx) P.rallyFx.visible = false;
+    if(f.rallyT > clock && !(CLASS_KIT && isCloaked(f))){
+      if(!P.rallyFx){ P.rallyFx = fxSprite(FX_GLOW, 0xffd27a, 0.7); P.rallyFx.scale.set(2.2, 0.8, 1); P.rallyFx.position.y = 0.05; P.root.add(P.rallyFx);
+        P.rallySp = []; for(let i = 0; i < 6; i++){ const sp = fxSprite(FX_GLOW, i % 2 ? 0xffe08a : 0xffb347, 0.9); sp.userData.ph = i/6; sp.userData.a = i*2.1; P.root.add(sp); P.rallySp.push(sp); } }
+      P.rallyFx.visible = true; P.rallyFx.material.opacity = 0.7 + 0.25*Math.sin(clock*9 + f.id);
+      const hgt = 2.2*(CLASS_SIZE[f.clsKey] || 1);
+      for(const sp of P.rallySp){ const u = (clock*0.9 + sp.userData.ph) % 1, a = sp.userData.a + clock*2; sp.visible = true;   // embers rising round him
+        sp.position.set(Math.cos(a)*0.45, 0.1 + u*hgt, Math.sin(a)*0.45); sp.scale.setScalar(0.22*(1 - u*0.6)); sp.material.opacity = 0.9*Math.sin(u*Math.PI); } }
+    else if(P.rallyFx){ P.rallyFx.visible = false; for(const sp of P.rallySp) sp.visible = false; }
     if(P.lampP || blinkKit(f)){ P.root.visible = !f.blinkTravel; }
     const shrouded = CLASS_KIT && isCloaked(f);
     if(shrouded !== !!P.ghostOn) setGhost(P, shrouded);
