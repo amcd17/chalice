@@ -13,7 +13,7 @@ header p{margin:4px 0 0;color:#9c8f78;font-family:system-ui,sans-serif;font-size
 </style></head><body>
 <header><h1>BELLRINGER HEADWEAR</h1><p>Five ways to cover his face. Same body, Thistle colours.</p></header>
 <div class="grid">
- <div class="card"><h2>1 · BELL HELM</h2><canvas data-h="bell"></canvas><p>A bronze bell worn over the head, an eye slit and three sound holes. The most literal; unmistakable at range.</p></div>
+ <div class="card"><h2>1 · BELL HELM</h2><canvas data-h="bell"></canvas><p>A bronze bell worn over the head, open at the front in the T of an ancient Corinthian helm, a dark face inside. Sound holes at the sides.</p></div>
  <div class="card"><h2>2 · BELFRY LOUVRES</h2><canvas data-h="louvres"></canvas><p>A hood with a mask of wooden slats, like a bell tower's sound shutters. Clever, and reads as "bell tower" to anyone who has seen one.</p></div>
  <div class="card"><h2>3 · MUFFLED</h2><canvas data-h="muffled"></canvas><p>The face fully wrapped in stitched cloth under his cap: the ear binding taken all the way. Creepy, and echoes the Lampist's bandages.</p></div>
  <div class="card"><h2>4 · LIRIPIPE AND MASK</h2><canvas data-h="mask"></canvas><p>A minstrel's hood with a long trailing tail, and a pale mask with closed painted eyes and a round singing mouth. The most "musician".</p></div>
@@ -116,10 +116,24 @@ function makeMinstrel(style){
 
 const CLOTH = () => std(0xe6dcc6, { roughness:.95 });
 const HEADS = {
-  bell(head, c){   // a bronze bell worn as a helm, an eye slit, sound holes
+  bell(head, c){   // a bronze bell worn as a helm, open at the front in a Corinthian T: a dark face inside
     const b = makeBell(.62); b.position.y = -.24; head.add(b);
-    const slit = mesh(new THREE.BoxGeometry(.24, .022, .04), c.dark, 0, .02, -.205, false); slit.rotation.x = -.22; head.add(slit);
-    for(const [x, y, z] of [[-.1, -.09, -.235], [.1, -.09, -.235], [0, -.14, -.25]]){ const h = mesh(new THREE.CircleGeometry(.016, 10), c.dark, x, y, z, false); h.rotation.x = -.3; h.rotation.y = Math.PI; head.add(h); }
+    const faceM = new THREE.MeshStandardMaterial({ color:0x1e1824, roughness:.9, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2 });
+    const lip = std(0x8a5a2c, { metalness:.3, roughness:.5 });
+    // the eye band: a strip of the bell's surface across the front
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(.199, .203, .06, 24, 1, true, Math.PI - .62, 1.24), faceM); band.position.y = .02; head.add(band);
+    // the slot: from the eye band down to the mouth of the bell, following its flare
+    const slot = new THREE.Mesh(new THREE.CylinderGeometry(.203, .285, .22, 12, 1, true, Math.PI - .2, .4), faceM); slot.position.y = -.12; head.add(slot);
+    // bronze lips round the opening, so it reads as cut
+    const edge = (pts) => head.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, .007, 5, false), lip, 0, 0, 0, false));
+    const at = (r, a, y) => new V(Math.sin(a)*r, y, Math.cos(a)*r);
+    edge([at(.2, Math.PI - .62, .05), at(.2, Math.PI, .052), at(.2, Math.PI + .62, .05)]);
+    edge([at(.2, Math.PI - .62, -.01), at(.2, Math.PI - .2, -.012)]); edge([at(.2, Math.PI + .2, -.012), at(.2, Math.PI + .62, -.01)]);
+    edge([at(.2, Math.PI - .62, -.01), at(.2, Math.PI - .62, .05)]); edge([at(.2, Math.PI + .62, -.01), at(.2, Math.PI + .62, .05)]);
+    edge([at(.205, Math.PI - .2, -.012), at(.285, Math.PI - .2, -.23)]); edge([at(.205, Math.PI + .2, -.012), at(.285, Math.PI + .2, -.23)]);
+    // two faint eyes in the dark
+    for(const sx of [-1, 1]){ const e = mesh(new THREE.SphereGeometry(.012, 8, 6), new THREE.MeshBasicMaterial({ color:0x8a7a9a }), sx*.06, .02, -.19, false); head.add(e); }
+    for(const sx of [-1, 1]){ const h = mesh(new THREE.CircleGeometry(.016, 10), c.dark, sx*.2, -.12, -.12, false); h.rotation.y = sx*1.0 + Math.PI; head.add(h); }   // sound holes on the sides
     const knob = mesh(new THREE.SphereGeometry(.045, 10, 8), c.teamM, 0, .19, 0); head.add(knob);
   },
   louvres(head, c){   // a hood in the team colour, a mask of wooden slats like a belfry's sound shutters
