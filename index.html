@@ -1660,7 +1660,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.390</div>
+<div id="ver">Chalice 0.392</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -12634,14 +12634,14 @@ function updateVM(dt){
 
 // ---------------- Title screen: the chalice turns above the wordmark; any key, click or pad button goes on to the menu ----------------
 // the chalice gems wink slowly, each fading up and back down on its own long cycle, out of step, in blue, ruby, jade and sapphire (title and match setup)
-function winkGems(cup, t){
-  const pal = [GEM_STATES[2], GEM_STATES[3], GEM_STATES[1], GEM_STATES[4]];
+function winkGems(cup, t){   // 23 Nov: each gem in its own colour, as in play (Onyx, Jade, Blue, Ruby, Sapphire), each winking on its own slow beat
   cup.userData.progressGems.forEach((gem, i) => {
-    const st = pal[i % pal.length], ph = t/3.2 + i*0.37;
+    const st = GEM_STATES[gem.tier], ph = t/3.2 + i*0.37;
     const k = Math.pow(Math.max(0, Math.sin(ph*Math.PI*2)), 2);   // a soft rise and fall, then a dark rest
     gem.material.color.setHex(st.color);
-    gem.material.emissive.setHex(st.glow);
-    gem.material.emissiveIntensity = 1.6*k;
+    gem.material.emissive.setHex(gem.tier === 0 ? 0xcabbd4 : st.glow);   // Onyx glows pale, as it does in play
+    gem.material.emissiveIntensity = (gem.tier === 0 ? 0.45 : 1.6)*k;
+    gem.halo.visible = true; gem.halo.scale.setScalar(0.03 + 0.009*k);   // the in-game halo size
     gem.halo.material.color.setHex(st.haloColor || st.glow);
     gem.halo.material.opacity = 0.8*k;
   });
