@@ -1,6 +1,6 @@
 # Menu simplification handover
 
-23 Nov 2026. Ported into the game as v0.376.
+23 Nov 2026. Ported into the game as v0.377.
 
 ## What is in the game
 
@@ -12,7 +12,7 @@ The v0.370 Local game type page and the four-box setup are no longer on that pat
 
 ## Files
 
-- `index.html`: the game, v0.376. All of the work is here.
+- `index.html`: the game, v0.377. All of the work is here.
 - `menu-redesign-mockup.html`: the approved home and cup transition reference.
 - `match-setup-mockup.html`: the approved setup, map and options reference.
 - `class-select-mockup.html`: the approved class select reference.
@@ -28,7 +28,7 @@ The mockups remain useful as a visual reference. They are not loaded by the game
 - Centre: the menu cup renderer.
 - Right column: player count and the Thistle and Marigold rosters. `namePanel()` shows YOU or the generated bot name with a YOU or BOT tag. No classes are shown; classes are picked on the class select. With bots off, only the player is listed and the other slots read OPEN. Your team is first.
 - Back returns to the home menu.
-- Map opens the new Map page. Choosing a different map reloads into `?menu=setup`, the same as the old setup did.
+- Map opens the new Map page. Mausoleum is the only playable map in the menu; Basilica and Scrollwork are listed dim. Cathedral was removed from the list and from `PLAYABLE_MAPS` in v0.377. Choosing a different map reloads into `?menu=setup`, the same as the old setup did.
 - Edit Game Options opens the wide options page. The existing options are kept and laid out as rows. Bots are shown as a sub-list when on.
 - Start Game builds the lobby roster if needed and opens the class select.
 

@@ -1504,7 +1504,7 @@ body.paused #hud{visibility:hidden}
 #localMenu .csReady[disabled]{opacity:.4;cursor:default;filter:none}
 #localMenu .csReady .sub{font-family:var(--ui);font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
 #localMenu .csBack{position:absolute;left:0;top:0;z-index:4;color:#c9b893;border:1px solid rgba(232,184,74,.16);background:rgba(5,4,10,.5);padding:9px 16px;font-family:var(--display);font-size:10px;letter-spacing:.18em}
-#localMenu .vBack{color:#c9b893;border:1px solid rgba(232,184,74,.16);background:rgba(5,4,10,.5);padding:9px 16px;font-family:var(--display);font-size:10px;letter-spacing:.18em}
+#localMenu .vBack{display:inline-flex;align-self:flex-start;color:#c9b893;border:1px solid rgba(232,184,74,.16);background:rgba(5,4,10,.5);padding:9px 16px;font-family:var(--display);font-size:10px;letter-spacing:.18em}
 #localMenu .vBack:hover{color:#ffe9b4;border-color:rgba(232,184,74,.48)}
 #localMenu .csBack:hover{color:#ffe9b4;border-color:rgba(232,184,74,.48)}
 
@@ -1644,7 +1644,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.376</div>
+<div id="ver">Chalice 0.377</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -1665,7 +1665,7 @@ body.paused #hud{visibility:hidden}
         <div class="mleft">
           <div class="mline"><span class="mlabel">GAME MODE</span><span class="seg" id="gameSeg"><button data-g="chalice">Chalice</button><button data-g="oddball">Divination</button><button data-g="dm">Skirmish</button></span></div>
           <div class="mline"><span class="mlabel">PLAY AS</span><span class="seg" id="rosterSeg"><button data-mode="classes">Classes</button><button data-mode="classic">Champions</button></span></div>
-          <div class="mline"><span class="mlabel">MAP</span><span class="seg" id="mapSeg"><button data-m="basilica">Basilica</button><button data-m="scrollwork">Scrollwork</button><button data-m="mausoleum">Mausoleum</button><button data-m="cathedral">Cathedral</button></span></div>
+          <div class="mline"><span class="mlabel">MAP</span><span class="seg" id="mapSeg"><button data-m="basilica">Basilica</button><button data-m="scrollwork">Scrollwork</button><button data-m="mausoleum">Mausoleum</button></span></div>
           <div class="mline"><span class="mlabel">BOTS</span><span class="seg" id="diffSeg"><button data-d="easy" id="diff-easy">Easy</button><button data-d="normal" id="diff-normal" class="on">Normal</button><button data-d="hard" id="diff-hard">Hard</button></span></div>
           <div class="mbtns"><button class="play" id="mainPlay">PLAY</button><button class="small" id="setBtn">SETTINGS</button><button class="small" id="edBtn">MAP EDITOR</button></div>
         </div>
@@ -3908,7 +3908,7 @@ let diffKey = 'normal'; try{ const d = localStorage.getItem('scryball-diff'); if
 let DIFF = DIFFS[diffKey];
 // which map: chosen on the menu (the page reloads to build it); ?map= in the address also works
 const MAPS = { basilica:'Basilica', scrollwork:'Scrollwork', mausoleum:'Mausoleum', church:'Church', cathedral:'Cathedral' };
-const PLAYABLE_MAPS = new Set(['mausoleum', 'cathedral']);
+const PLAYABLE_MAPS = new Set(['mausoleum']);
 const MAP_ID = (() => {
   const params = new URLSearchParams(location.search), editing = params.get('edit') === '1';
   const fix = key => key === 'mausoleum1' ? 'mausoleum' : key;
@@ -14797,8 +14797,6 @@ const MENU_MAPS = [
     line:'An observatory above a library of tight corners and long lanes.' },
   { key:'mausoleum', name:'Mausoleum',
     line:'A round crypt. Pillars, side vaults, and room to slip behind.' },
-  { key:'cathedral', name:'Cathedral',
-    line:'A two-level basilica. Gallery above the aisles, a split bridge over the cup, flank corridors to each base.' },
   { key:'church', name:'Church',
     line:'Two naves round a central rotunda. A scriptorium north, a crypt south, a mezzanine above.' }
 ];
@@ -14942,7 +14940,7 @@ const localMenu = (() => {
   const S = {page:'home', phase:'kick', focusClass:false};
   const clsOf = () => clsByKey(S.cls);
   const clsByKey = key => MENU_CLASSES.find(c => c.key === key);
-  const mapOf = () => MENU_MAPS.find(m => m.key === MAP_ID);
+  const mapOf = () => MENU_MAPS.find(m => m.key === MAP_ID) || MENU_MAPS.find(m => m.key === 'mausoleum') || MENU_MAPS[0];
   const modeOf = () => MENU_MODES[GAME_TYPE];
   const botName = () => diffKey[0].toUpperCase() + diffKey.slice(1);
   const teamName = key => key === 'thistle' ? 'Thistle' : 'Marigold';
