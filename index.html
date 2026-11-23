@@ -7778,7 +7778,7 @@ function buildBody(k, team, showcase){   // showcase: the menu portrait pose (gr
     for(const a of [-0.9, -0.45, 0, 0.45, 0.9]){ const gm = sphereM(0.016, gemM); gm.position.set(Math.sin(a)*0.23, 0.98, -Math.cos(a)*0.2); g.add(gm); }
     // the hood: deep, pointed, lined in silver
     add(sphereM(0.15, skin), 0, 1.6, -0.01);   // v0.355: the hood is open, a pale blue face inside it
-    { const eyeM = new THREE.MeshBasicMaterial({ color:0xdff6ff });
+    { const eyeM = new THREE.MeshBasicMaterial({ color:0xff2a1e });   // 23 Nov: red eyes (were pale blue-white)
       const alm = new THREE.Shape(); alm.moveTo(-0.036, -0.004); alm.quadraticCurveTo(0, 0.02, 0.036, 0.008); alm.quadraticCurveTo(0.002, -0.014, -0.036, -0.004);   // an almond, the outer tip drawn up and out
       const almG = new THREE.ShapeGeometry(alm); eyeM.side = THREE.DoubleSide;
       for(const sx of [-1,1]){ const eye = add(new THREE.Mesh(almG, eyeM), sx*0.058, 1.63, -0.147); eye.rotation.set(0, -sx*0.37, sx*0.32); eye.scale.set(0.7, 0.7, 1); }
