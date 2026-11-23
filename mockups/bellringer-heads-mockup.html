@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Bellringer headwear</title>
+<style>
+body{margin:0;background:radial-gradient(ellipse at 50% 30%,#141026,#06050c 70%);color:#f1e2b8;font-family:Georgia,serif}
+header{padding:22px 28px 6px}h1{margin:0;font-weight:400;letter-spacing:.28em;font-size:24px}
+header p{margin:4px 0 0;color:#9c8f78;font-family:system-ui,sans-serif;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;padding:14px 28px 28px}
+.card{border:1px solid rgba(232,184,74,.16);background:rgba(255,255,255,.02)}
+.card canvas{display:block;width:100%;aspect-ratio:3/4}
+.card h2{margin:0;padding:10px 12px 2px;font-size:12px;letter-spacing:.26em;font-weight:400;color:#e8c78a}
+.card p{margin:0;padding:2px 12px 12px;font-family:system-ui,sans-serif;font-size:12px;line-height:1.5;color:#cbbfa4}
+@media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style></head><body>
+<header><h1>BELLRINGER HEADWEAR</h1><p>Five ways to cover his face. Same body, Thistle colours.</p></header>
+<div class="grid">
+ <div class="card"><h2>1 · BELL HELM</h2><canvas data-h="bell"></canvas><p>A bronze bell worn over the head, an eye slit and three sound holes. The most literal; unmistakable at range.</p></div>
+ <div class="card"><h2>2 · BELFRY LOUVRES</h2><canvas data-h="louvres"></canvas><p>A hood with a mask of wooden slats, like a bell tower's sound shutters. Clever, and reads as "bell tower" to anyone who has seen one.</p></div>
+ <div class="card"><h2>3 · MUFFLED</h2><canvas data-h="muffled"></canvas><p>The face fully wrapped in stitched cloth under his cap: the ear binding taken all the way. Creepy, and echoes the Lampist's bandages.</p></div>
+ <div class="card"><h2>4 · LIRIPIPE AND MASK</h2><canvas data-h="mask"></canvas><p>A minstrel's hood with a long trailing tail, and a pale mask with closed painted eyes and a round singing mouth. The most "musician".</p></div>
+ <div class="card"><h2>5 · VEILED</h2><canvas data-h="veil"></canvas><p>A broad hat with a dark mourning veil over the face. A funeral bellringer: tolling for the dead.</p></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const V = THREE.Vector3;
+const TEAM = { thistle:{ cloth:0x7a4fe8, dark:0x3e2477, glow:0x8a5cff }, marigold:{ cloth:0xe8461e, dark:0x7a2110, glow:0xff5a24 } };
+let team = 'thistle';
+const std = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color:c, roughness:.75, metalness:0 }, o));
+const OUT = new THREE.MeshBasicMaterial({ color:0x07060a, side:THREE.BackSide });
+function ol(mesh, w = 1.04){ const o = new THREE.Mesh(mesh.geometry, OUT); o.scale.setScalar(w); mesh.add(o); return mesh; }   // the game's black outline
+function mesh(geo, mat, x = 0, y = 0, z = 0, outline = true){ const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if(outline) ol(m); return m; }
+function rig(canvas, camPos, look, fov = 32){
+  const r = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true }); r.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+  const sc = new THREE.Scene();
+  sc.add(new THREE.HemisphereLight(0x9a90d0, 0x1a1208, .7));
+  const key = new THREE.DirectionalLight(0xffe2b8, 1.1); key.position.set(2.5, 4, 3); sc.add(key);
+  const rim = new THREE.PointLight(0x7a5cff, 1.3, 12); rim.position.set(-2.5, 2.5, -2.5); sc.add(rim);
+  const cam = new THREE.PerspectiveCamera(fov, 1, .05, 60); cam.position.copy(camPos); cam.lookAt(look);
+  function size(){ const w = canvas.clientWidth, h = canvas.clientHeight; r.setSize(w, h, false); cam.aspect = w/h; cam.updateProjectionMatrix(); }
+  addEventListener('resize', size); size();
+  return { r, sc, cam };
+}
+// ---------- shared parts ----------
+const BRONZE = std(0xc28a45, { metalness:.3, roughness:.42 }), IRON = std(0x4a464a, { metalness:.55, roughness:.5 }), WOOD = std(0x8a5a30, { roughness:.7 }),
+      LEATHER = std(0x5a3a22, { roughness:.85 }), STRING = new THREE.LineBasicMaterial({ color:0xd8d2c4 }), STRIKER = std(0xa8392e, { roughness:.6 });
+function bellGeo(s = 1){   // a bell's profile, mouth at y=0, crown at the top
+  const p = [[0,.62],[.16,.62],[.26,.58],[.3,.48],[.33,.3],[.38,.14],[.46,.04],[.48,0],[.44,0]].reverse().map(([x, y]) => new THREE.Vector2(x*s, y*s));   // rim first, so the faces point outward
+  const g = new THREE.LatheGeometry(p, 28); return g;
+}
+function makeBell(s, mat = BRONZE){
+  const g = new THREE.Group(); const b = mesh(bellGeo(s), new THREE.MeshStandardMaterial({ color:mat.color, metalness:mat.metalness, roughness:mat.roughness, side:THREE.DoubleSide })); g.add(b);
+  const crown = mesh(new THREE.CylinderGeometry(.05*s, .07*s, .1*s, 10), mat, 0, .66*s, 0); g.add(crown);
+  const clap = mesh(new THREE.SphereGeometry(.06*s, 10, 8), IRON, 0, .03*s, 0); g.add(clap);
+  return g;
+}
+// ---------- the bell-bow ----------
+function makeBow(){
+  const g = new THREE.Group();
+  // the stave: a recurved limb above and below the cradle (bow points toward -z, string toward +z)
+  const TIP = 1.36;   // 23 Nov: taller
+  const limb = sgn => new THREE.CatmullRomCurve3([new V(0, .26*sgn, 0), new V(0, .62*sgn, .02), new V(0, .98*sgn, .12), new V(0, 1.26*sgn, .3), new V(0, TIP*sgn, .36)]);
+  for(const s of [1, -1]) g.add(mesh(new THREE.TubeGeometry(limb(s), 28, .028, 8, false), WOOD));
+  for(const s of [1, -1]){ const tip = mesh(new THREE.SphereGeometry(.035, 10, 8), WOOD, 0, TIP*s, .36); g.add(tip); }
+  // the oval cradle round the grip
+  const cr = mesh(new THREE.TorusGeometry(.26, .026, 8, 40), WOOD); cr.scale.set(.62, 1, 1); g.add(cr);
+  // the bell, centred across the stave inside the cradle, mouth toward the string
+  const bell = makeBell(.3); bell.position.set(0, -.12, 0); g.add(bell); g.userData.bell = bell;
+  g.add(mesh(new THREE.CylinderGeometry(.012, .012, .2, 6), IRON, 0, .16, 0));   // the rod it hangs from
+  // the string and the striker
+  const sg = new THREE.BufferGeometry().setFromPoints([new V(0, TIP, .36), new V(0, 0, .36), new V(0, -TIP, .36)]);
+  const str = new THREE.Line(sg, STRING); g.add(str); g.userData.string = sg;
+  const striker = new THREE.Group(); const rod = mesh(new THREE.CylinderGeometry(.022, .026, .17, 8), STRIKER, 0, 0, -.085); rod.rotation.x = Math.PI/2; striker.add(rod);   // from the string forward to just short of the bell
+  const knob = mesh(new THREE.SphereGeometry(.04, 10, 8), STRIKER, 0, 0, -.19); striker.add(knob); const nock = mesh(new THREE.CylinderGeometry(.03, .03, .03, 8), LEATHER, 0, 0, 0); nock.rotation.x = Math.PI/2; striker.add(nock);
+  g.add(striker); g.userData.striker = striker;
+  return g;
+}
+function drawBow(bow, k){   // k: 0 at rest, 1 fully drawn
+  const back = .36 + .5*k, pos = bow.userData.string.attributes.position;
+  pos.setXYZ(1, 0, 0, back); pos.needsUpdate = true;
+  bow.userData.striker.position.set(0, 0, back);   // rides on the string; at rest the knob sits on the bell's surface
+}
+// ---------- the minstrel ----------
+let bodyParts = [];
+function makeMinstrel(style){
+  const T = TEAM[team], g = new THREE.Group(); bodyParts = [];
+  const teamM = std(T.cloth), cream = std(0xe9dcbc), skin = std(0xd8a982, { roughness:.6 }), hair = std(0x6b4325), dark = std(0x2a2026);
+  const half = (r0, r1, h, a0, mat, y) => mesh(new THREE.CylinderGeometry(r1, r0, h, 20, 1, false, a0, Math.PI), mat, 0, y, 0);
+  // legs in hose, swapped colours, pointed shoes
+  for(const sx of [-1, 1]){
+    const leg = mesh(new THREE.CylinderGeometry(.075, .065, .72, 12), sx < 0 ? teamM : cream, sx*.11, .46, 0); g.add(leg);
+    const shoe = mesh(new THREE.ConeGeometry(.07, .38, 10), dark, sx*.11, .07, -.12); shoe.rotation.x = -Math.PI/2 + .12; shoe.scale.set(1, 1, .6); g.add(shoe);
+    const heel = mesh(new THREE.SphereGeometry(.075, 10, 8), dark, sx*.11, .07, .02); heel.scale.set(1, .7, 1.1); g.add(heel);
+  }
+  // the two-colour tunic: skirt and body, split down the middle
+  g.add(half(.36, .27, .42, 0, cream, .95)); g.add(half(.36, .27, .42, Math.PI, teamM, .95));
+  g.add(half(.27, .29, .52, 0, cream, 1.4)); g.add(half(.27, .29, .52, Math.PI, teamM, 1.4));
+  const hem = mesh(new THREE.TorusGeometry(.355, .018, 6, 32), std(0xd9a441, { metalness:.4 }), 0, .745, 0); hem.rotation.x = Math.PI/2; g.add(hem);
+  // belt, fork sheath, hand bell
+  const belt = mesh(new THREE.TorusGeometry(.285, .03, 6, 32), LEATHER, 0, 1.16, 0); belt.rotation.x = Math.PI/2; g.add(belt);
+  const sheath = mesh(new THREE.BoxGeometry(.12, .2, .07), LEATHER, .27, 1.08, -.06); sheath.rotation.z = .15; g.add(sheath);
+  for(let i = 0; i < 3; i++){ const h = mesh(new THREE.CylinderGeometry(.011, .011, .13, 6), std(0xc9ced6, { metalness:.8, roughness:.3 }), .24 + i*.03, 1.24, -.06, false); h.rotation.z = .15; g.add(h);
+    const ball = mesh(new THREE.SphereGeometry(.016, 8, 6), std(0xc9ced6, { metalness:.8, roughness:.3 }), .25 + i*.03, 1.31, -.06, false); g.add(ball); }
+  const hb = makeBell(.14); hb.position.set(-.26, .98, -.12); g.add(hb); g.userData.handBell = hb;
+  const cord = mesh(new THREE.CylinderGeometry(.006, .006, .12, 4), LEATHER, -.26, 1.11, -.12, false); g.add(cord);
+  // arms, sleeves swapped to the tunic, ball hands
+  for(const sx of [-1, 1]){
+    const arm = mesh(new THREE.CylinderGeometry(.07, .06, .55, 10), sx < 0 ? cream : teamM, sx*.36, 1.38, 0); arm.rotation.z = sx*.18; g.add(arm);
+    const hand = mesh(new THREE.SphereGeometry(.07, 12, 10), skin, sx*.41, 1.08, 0); g.add(hand);
+  }
+  // collar
+  const col = mesh(new THREE.TorusGeometry(.17, .03, 6, 24), std(0xd9a441, { metalness:.4 }), 0, 1.66, 0); col.rotation.x = Math.PI/2; g.add(col);
+  const head = new THREE.Group(); head.position.y = 1.86; g.add(head); HEADS[style](head, { teamM, cream, skin, hair, dark, T });
+  // the bell-bow across his back
+  const bow = makeBow(); bow.scale.setScalar(.62); bow.position.set(0, 1.42, .32); bow.rotation.set(0, Math.PI, .55); g.add(bow);
+  return g;
+}
+
+const CLOTH = () => std(0xe6dcc6, { roughness:.95 });
+const HEADS = {
+  bell(head, c){   // a bronze bell worn as a helm, an eye slit, sound holes
+    const b = makeBell(.62); b.position.y = -.24; head.add(b);
+    const slit = mesh(new THREE.BoxGeometry(.24, .022, .04), c.dark, 0, .02, -.205, false); slit.rotation.x = -.22; head.add(slit);
+    for(const [x, y, z] of [[-.1, -.09, -.235], [.1, -.09, -.235], [0, -.14, -.25]]){ const h = mesh(new THREE.CircleGeometry(.016, 10), c.dark, x, y, z, false); h.rotation.x = -.3; h.rotation.y = Math.PI; head.add(h); }
+    const knob = mesh(new THREE.SphereGeometry(.045, 10, 8), c.teamM, 0, .19, 0); head.add(knob);
+  },
+  louvres(head, c){   // a hood in the team colour, a mask of wooden slats like a belfry's sound shutters
+    const hood = mesh(new THREE.SphereGeometry(.205, 18, 14, 0, Math.PI*2, 0, Math.PI*.62), c.teamM, 0, .0, .02); hood.scale.set(1, 1.15, 1); head.add(hood);
+    const cape = mesh(new THREE.ConeGeometry(.3, .22, 18, 1, true), c.teamM, 0, -.17, 0); head.add(cape);
+    const frame = mesh(new THREE.BoxGeometry(.24, .26, .03), WOOD, 0, -.02, -.17); head.add(frame);
+    for(let i = 0; i < 5; i++){ const sl = mesh(new THREE.BoxGeometry(.22, .03, .05), std(0x6a4426), 0, .08 - i*.05, -.19, false); sl.rotation.x = .5; head.add(sl); }
+  },
+  muffled(head, c){   // the face fully wrapped in stitched cloth under his cap
+    const wrap = mesh(new THREE.SphereGeometry(.18, 18, 14), CLOTH()); head.add(wrap);
+    for(let i = 0; i < 5; i++){ const b = mesh(new THREE.TorusGeometry(.18 - Math.abs(i - 2)*.012, .012, 6, 28), CLOTH(), 0, -.1 + i*.05, 0, false); b.rotation.set(Math.PI/2 + (i % 2 ? .18 : -.18), 0, 0); head.add(b); }
+    const stitch = mesh(new THREE.BoxGeometry(.012, .16, .01), std(0x6a3a2a), 0, -.01, -.183, false); head.add(stitch);
+    for(let i = 0; i < 5; i++){ const x = mesh(new THREE.BoxGeometry(.04, .008, .008), std(0x6a3a2a), 0, -.08 + i*.035, -.185, false); head.add(x); }
+    const cap = mesh(new THREE.SphereGeometry(.16, 16, 8, 0, Math.PI*2, 0, Math.PI/2), c.teamM, 0, .07, .01); cap.scale.set(1.05, .75, 1.05); head.add(cap);
+    const brim = mesh(new THREE.TorusGeometry(.16, .022, 6, 24), c.cream, 0, .07, .01); brim.rotation.x = Math.PI/2; head.add(brim);
+  },
+  mask(head, c){   // a liripipe hood with a long trailing tail, a pale mask with closed painted eyes and a round singing mouth
+    const hood = mesh(new THREE.SphereGeometry(.21, 18, 14, -Math.PI*.3, Math.PI*1.6, 0, Math.PI*.75), c.teamM, 0, .0, .03); hood.scale.set(1, 1.1, 1); head.add(hood);   // open at the front
+    const tail = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new V(0, .2, .08), new V(0, .3, .22), new V(.05, .2, .38), new V(.08, -.1, .42), new V(.1, -.45, .38)]), 30, .03, 8, false), c.teamM); head.add(tail);
+    const face = mesh(new THREE.SphereGeometry(.17, 18, 14, Math.PI*1.2, Math.PI*.6, Math.PI*.2, Math.PI*.6), std(0xf1ece2, { roughness:.4 }), 0, -.01, -.01); head.add(face);
+    for(const sx of [-1, 1]){ const lid = mesh(new THREE.TorusGeometry(.028, .006, 4, 12, Math.PI), c.dark, sx*.055, .035, -.172, false); lid.rotation.set(0, Math.PI, Math.PI); head.add(lid); }
+    const mouth = mesh(new THREE.CircleGeometry(.024, 14), c.dark, 0, -.075, -.172, false); mouth.rotation.y = Math.PI; head.add(mouth);
+    const cheek = mesh(new THREE.CircleGeometry(.018, 10), std(0xd98a8a), .085, -.035, -.158, false); cheek.rotation.y = Math.PI - .5; head.add(cheek);
+    const cheek2 = mesh(new THREE.CircleGeometry(.018, 10), std(0xd98a8a), -.085, -.035, -.158, false); cheek2.rotation.y = Math.PI + .5; head.add(cheek2);
+  },
+  veil(head, c){   // a broad hat with a dark mourning veil over the face
+    head.add(mesh(new THREE.SphereGeometry(.17, 18, 14), c.skin));
+    const crown = mesh(new THREE.CylinderGeometry(.15, .17, .16, 18), c.teamM, 0, .14, 0); head.add(crown);
+    const brim = mesh(new THREE.CylinderGeometry(.32, .32, .02, 28), c.teamM, 0, .07, 0); head.add(brim);
+    const band = mesh(new THREE.CylinderGeometry(.172, .172, .04, 18), c.cream, 0, .09, 0, false); head.add(band);
+    const veil = mesh(new THREE.CylinderGeometry(.3, .26, .34, 28, 1, true), new THREE.MeshStandardMaterial({ color:0x120e16, transparent:true, opacity:.88, side:THREE.DoubleSide, roughness:1 }), 0, -.1, 0, false); head.add(veil);
+  }
+};
+
+const figs = [];
+document.querySelectorAll('canvas[data-h]').forEach(cv => {
+  const P = rig(cv, new V(0, 1.95, 2.3), new V(0, 1.78, 0), 30);
+  const fl = new THREE.Mesh(new THREE.CircleGeometry(1, 40), std(0x18141f)); fl.rotation.x = -Math.PI/2; P.sc.add(fl);
+  const m = makeMinstrel(cv.dataset.h); P.sc.add(m); figs.push({ P, m });
+});
+const t0 = performance.now();
+(function frame(now){ requestAnimationFrame(frame); const t = (now - t0)/1000;
+  figs.forEach(({ P, m }, i) => { m.rotation.y = Math.PI + Math.sin(t*.45 + i*.4)*.55; P.r.render(P.sc, P.cam); }); })(t0);
+</script></body></html>
