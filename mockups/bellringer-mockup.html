@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bellringer mockup</title>
+<style>
+  :root{--gold:#e8c78a;--ink:#f1e2b8;--dim:#9c8f78}
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(ellipse at 50% 30%,#141026,#06050c 70%);color:var(--ink);font-family:Georgia,serif;min-height:100vh}
+  header{padding:22px 28px 8px;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+  h1{margin:0;font-weight:400;letter-spacing:.28em;font-size:28px}
+  header p{margin:0;color:var(--dim);font-family:system-ui,sans-serif;font-size:13px;letter-spacing:.04em}
+  .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:12px 28px 28px}
+  .panel{background:rgba(255,255,255,.025);border:1px solid rgba(232,184,74,.16);display:flex;flex-direction:column}
+  .panel h2{margin:0;padding:12px 14px 4px;font-size:13px;letter-spacing:.3em;font-weight:400;color:var(--gold)}
+  .panel canvas{display:block;width:100%;aspect-ratio:1/1.08}
+  .notes{padding:10px 14px 14px;font-family:system-ui,sans-serif;font-size:12.5px;line-height:1.55;color:#cbbfa4}
+  .notes b{color:var(--ink);font-weight:600}
+  .bar{display:flex;gap:8px;padding:0 14px 6px}
+  button{all:unset;cursor:pointer;font-family:system-ui,sans-serif;font-size:11px;letter-spacing:.14em;padding:6px 10px;border:1px solid rgba(232,184,74,.25);color:#cbbfa4}
+  button.on{border-color:var(--gold);color:#fff3d2}
+  @media (max-width:1000px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>THE BELLRINGER</h1>
+  <p>Mockup, 23 Nov. Trapper. 125 HP. Bell-bow, tuning forks, Alarm Bell, Bell Rope.</p>
+</header>
+<div class="grid">
+  <section class="panel">
+    <h2>THE MINSTREL</h2>
+    <div class="bar"><button id="tThistle" class="on">THISTLE</button><button id="tMarigold">MARIGOLD</button></div>
+    <canvas id="cBody"></canvas>
+    <div class="notes">Two-colour tunic split down the middle, hose swapped side to side, long pointed shoes, a round cap. Ears bound with cloth: bellringers went deaf. Three tuning forks in a sheath at the hip, a hand bell on the belt, the bell-bow across his back.</div>
+  </section>
+  <section class="panel">
+    <h2>THE BELL-BOW</h2>
+    <canvas id="cBow"></canvas>
+    <div class="notes">The bell sits in the oval cradle at the string's centre. <b>Hold to draw</b> (1 s for a full note): the striker comes back toward you. <b>Release</b>: it snaps into the bell and a ring of sound leaves it. Quick strike, about 35 up close; full note, about 75, travelling at a visible speed.</div>
+  </section>
+  <section class="panel">
+    <h2>HIS KIT IN THE WORLD</h2>
+    <canvas id="cKit"></canvas>
+    <div class="notes"><b>Bell Rope</b>: yoke bells at both ends, the rope between their tops; the far end can be higher, lower or level. The spike of light is the aim preview. <b>Tuning fork</b> (one of three) humming in the floor. <b>Alarm Bell</b>: the Marking Lantern's throw and stats, as a small tinkling bell.</div>
+  </section>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const V = THREE.Vector3;
+const TEAM = { thistle:{ cloth:0x7a4fe8, dark:0x3e2477, glow:0x8a5cff }, marigold:{ cloth:0xe8461e, dark:0x7a2110, glow:0xff5a24 } };
+let team = 'thistle';
+const std = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color:c, roughness:.75, metalness:0 }, o));
+const OUT = new THREE.MeshBasicMaterial({ color:0x07060a, side:THREE.BackSide });
+function ol(mesh, w = 1.04){ const o = new THREE.Mesh(mesh.geometry, OUT); o.scale.setScalar(w); mesh.add(o); return mesh; }   // the game's black outline
+function mesh(geo, mat, x = 0, y = 0, z = 0, outline = true){ const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if(outline) ol(m); return m; }
+function rig(canvas, camPos, look, fov = 32){
+  const r = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true }); r.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+  const sc = new THREE.Scene();
+  sc.add(new THREE.HemisphereLight(0x9a90d0, 0x1a1208, .7));
+  const key = new THREE.DirectionalLight(0xffe2b8, 1.1); key.position.set(2.5, 4, 3); sc.add(key);
+  const rim = new THREE.PointLight(0x7a5cff, 1.3, 12); rim.position.set(-2.5, 2.5, -2.5); sc.add(rim);
+  const cam = new THREE.PerspectiveCamera(fov, 1, .05, 60); cam.position.copy(camPos); cam.lookAt(look);
+  function size(){ const w = canvas.clientWidth, h = canvas.clientHeight; r.setSize(w, h, false); cam.aspect = w/h; cam.updateProjectionMatrix(); }
+  addEventListener('resize', size); size();
+  return { r, sc, cam };
+}
+// ---------- shared parts ----------
+const BRONZE = std(0xc28a45, { metalness:.3, roughness:.42 }), IRON = std(0x4a464a, { metalness:.55, roughness:.5 }), WOOD = std(0x8a5a30, { roughness:.7 }),
+      LEATHER = std(0x5a3a22, { roughness:.85 }), STRING = new THREE.LineBasicMaterial({ color:0xd8d2c4 }), STRIKER = std(0xa8392e, { roughness:.6 });
+function bellGeo(s = 1){   // a bell's profile, mouth at y=0, crown at the top
+  const p = [[0,.62],[.16,.62],[.26,.58],[.3,.48],[.33,.3],[.38,.14],[.46,.04],[.48,0],[.44,0]].reverse().map(([x, y]) => new THREE.Vector2(x*s, y*s));   // rim first, so the faces point outward
+  const g = new THREE.LatheGeometry(p, 28); return g;
+}
+function makeBell(s, mat = BRONZE){
+  const g = new THREE.Group(); const b = mesh(bellGeo(s), new THREE.MeshStandardMaterial({ color:mat.color, metalness:mat.metalness, roughness:mat.roughness, side:THREE.DoubleSide })); g.add(b);
+  const crown = mesh(new THREE.CylinderGeometry(.05*s, .07*s, .1*s, 10), mat, 0, .66*s, 0); g.add(crown);
+  const clap = mesh(new THREE.SphereGeometry(.06*s, 10, 8), IRON, 0, .03*s, 0); g.add(clap);
+  return g;
+}
+// ---------- the bell-bow ----------
+function makeBow(){
+  const g = new THREE.Group();
+  // the stave: a recurved limb above and below the cradle (bow points toward -z, string toward +z)
+  const limb = sgn => new THREE.CatmullRomCurve3([new V(0, .26*sgn, 0), new V(0, .5*sgn, .02), new V(0, .78*sgn, .12), new V(0, .98*sgn, .3), new V(0, 1.04*sgn, .36)]);
+  for(const s of [1, -1]) g.add(mesh(new THREE.TubeGeometry(limb(s), 24, .028, 8, false), WOOD));
+  for(const s of [1, -1]){ const tip = mesh(new THREE.SphereGeometry(.035, 10, 8), WOOD, 0, 1.04*s, .36); g.add(tip); }
+  // the oval cradle round the grip
+  const cr = mesh(new THREE.TorusGeometry(.26, .026, 8, 40), WOOD); cr.scale.set(.62, 1, 1); g.add(cr);
+  // the bell, centred across the stave inside the cradle, mouth toward the string
+  const bell = makeBell(.3); bell.position.set(0, -.12, 0); g.add(bell); g.userData.bell = bell;
+  g.add(mesh(new THREE.CylinderGeometry(.012, .012, .2, 6), IRON, 0, .16, 0));   // the rod it hangs from
+  // the string and the striker
+  const sg = new THREE.BufferGeometry().setFromPoints([new V(0, 1.04, .36), new V(0, 0, .36), new V(0, -1.04, .36)]);
+  const str = new THREE.Line(sg, STRING); g.add(str); g.userData.string = sg;
+  const striker = new THREE.Group(); const rod = mesh(new THREE.CylinderGeometry(.022, .026, .42, 8), STRIKER); rod.rotation.x = Math.PI/2; striker.add(rod);
+  const knob = mesh(new THREE.SphereGeometry(.045, 10, 8), STRIKER, 0, 0, -.22); striker.add(knob); const nock = mesh(new THREE.CylinderGeometry(.03, .03, .03, 8), LEATHER, 0, 0, .2); nock.rotation.x = Math.PI/2; striker.add(nock);
+  g.add(striker); g.userData.striker = striker;
+  return g;
+}
+function drawBow(bow, k){   // k: 0 at rest, 1 fully drawn
+  const back = .36 + .5*k, pos = bow.userData.string.attributes.position;
+  pos.setXYZ(1, 0, 0, back); pos.needsUpdate = true;
+  bow.userData.striker.position.set(0, 0, back - .2);
+}
+// ---------- the minstrel ----------
+let bodyParts = [];
+function makeMinstrel(){
+  const T = TEAM[team], g = new THREE.Group(); bodyParts = [];
+  const teamM = std(T.cloth), cream = std(0xe9dcbc), skin = std(0xd8a982, { roughness:.6 }), hair = std(0x6b4325), dark = std(0x2a2026);
+  const half = (r0, r1, h, a0, mat, y) => mesh(new THREE.CylinderGeometry(r1, r0, h, 20, 1, false, a0, Math.PI), mat, 0, y, 0);
+  // legs in hose, swapped colours, pointed shoes
+  for(const sx of [-1, 1]){
+    const leg = mesh(new THREE.CylinderGeometry(.075, .065, .72, 12), sx < 0 ? teamM : cream, sx*.11, .46, 0); g.add(leg);
+    const shoe = mesh(new THREE.ConeGeometry(.07, .38, 10), dark, sx*.11, .07, -.12); shoe.rotation.x = -Math.PI/2 + .12; shoe.scale.set(1, 1, .6); g.add(shoe);
+    const heel = mesh(new THREE.SphereGeometry(.075, 10, 8), dark, sx*.11, .07, .02); heel.scale.set(1, .7, 1.1); g.add(heel);
+  }
+  // the two-colour tunic: skirt and body, split down the middle
+  g.add(half(.36, .27, .42, 0, cream, .95)); g.add(half(.36, .27, .42, Math.PI, teamM, .95));
+  g.add(half(.27, .29, .52, 0, cream, 1.4)); g.add(half(.27, .29, .52, Math.PI, teamM, 1.4));
+  const hem = mesh(new THREE.TorusGeometry(.355, .018, 6, 32), std(0xd9a441, { metalness:.4 }), 0, .745, 0); hem.rotation.x = Math.PI/2; g.add(hem);
+  // belt, fork sheath, hand bell
+  const belt = mesh(new THREE.TorusGeometry(.285, .03, 6, 32), LEATHER, 0, 1.16, 0); belt.rotation.x = Math.PI/2; g.add(belt);
+  const sheath = mesh(new THREE.BoxGeometry(.12, .2, .07), LEATHER, .27, 1.08, -.06); sheath.rotation.z = .15; g.add(sheath);
+  for(let i = 0; i < 3; i++){ const h = mesh(new THREE.CylinderGeometry(.011, .011, .13, 6), std(0xc9ced6, { metalness:.8, roughness:.3 }), .24 + i*.03, 1.24, -.06, false); h.rotation.z = .15; g.add(h);
+    const ball = mesh(new THREE.SphereGeometry(.016, 8, 6), std(0xc9ced6, { metalness:.8, roughness:.3 }), .25 + i*.03, 1.31, -.06, false); g.add(ball); }
+  const hb = makeBell(.14); hb.position.set(-.26, .98, -.12); g.add(hb); g.userData.handBell = hb;
+  const cord = mesh(new THREE.CylinderGeometry(.006, .006, .12, 4), LEATHER, -.26, 1.11, -.12, false); g.add(cord);
+  // arms, sleeves swapped to the tunic, ball hands
+  for(const sx of [-1, 1]){
+    const arm = mesh(new THREE.CylinderGeometry(.07, .06, .55, 10), sx < 0 ? cream : teamM, sx*.36, 1.38, 0); arm.rotation.z = sx*.18; g.add(arm);
+    const hand = mesh(new THREE.SphereGeometry(.07, 12, 10), skin, sx*.41, 1.08, 0); g.add(hand);
+  }
+  // collar
+  const col = mesh(new THREE.TorusGeometry(.17, .03, 6, 24), std(0xd9a441, { metalness:.4 }), 0, 1.66, 0); col.rotation.x = Math.PI/2; g.add(col);
+  // head: bowl-cut hair, a round cap, ears bound with cloth, a calm face
+  const head = new THREE.Group(); head.position.y = 1.86; g.add(head);
+  head.add(mesh(new THREE.SphereGeometry(.17, 18, 14), skin));
+  const bowl = mesh(new THREE.SphereGeometry(.178, 18, 10, 0, Math.PI*2, 0, Math.PI*.52), hair, 0, .01, .012); head.add(bowl);
+  const cap = mesh(new THREE.SphereGeometry(.15, 16, 8, 0, Math.PI*2, 0, Math.PI/2), teamM, 0, .09, .01); cap.scale.set(1.05, .75, 1.05); head.add(cap);
+  const brim = mesh(new THREE.TorusGeometry(.15, .022, 6, 24), cream, 0, .09, .01); brim.rotation.x = Math.PI/2; head.add(brim);
+  const band = mesh(new THREE.TorusGeometry(.178, .032, 8, 28), std(0xe6dcc6, { roughness:.95 }), 0, .0, .01); band.rotation.set(0, Math.PI/2, .05); head.add(band);   // over the crown and through both ears
+  for(const sx of [-1, 1]){ const pad = mesh(new THREE.SphereGeometry(.05, 10, 8), std(0xe6dcc6, { roughness:.95 }), sx*.165, -.01, .01); pad.scale.set(.6, 1, 1); head.add(pad);
+    const stain = mesh(new THREE.SphereGeometry(.022, 8, 6), std(0x8a5a40), sx*.19, -.02, .01, false); head.add(stain);
+    const eye = mesh(new THREE.SphereGeometry(.016, 8, 6), dark, sx*.055, .02, -.158, false); eye.scale.set(1.3, .45, .6); head.add(eye); }   // eyes half closed, listening
+  const nose = mesh(new THREE.ConeGeometry(.022, .06, 6), skin, 0, -.03, -.17, false); nose.rotation.x = -Math.PI/2; head.add(nose);
+  // the bell-bow across his back
+  const bow = makeBow(); bow.scale.setScalar(.62); bow.position.set(0, 1.42, .32); bow.rotation.set(0, Math.PI, .55); g.add(bow);
+  return g;
+}
+// ---------- the yoke bell (rope anchor) ----------
+function makeYoke(){
+  const g = new THREE.Group();
+  const base = mesh(new THREE.CylinderGeometry(.22, .28, .08, 16), IRON, 0, .04, 0); g.add(base);
+  const post = mesh(new THREE.CylinderGeometry(.06, .09, .16, 10), IRON, 0, .16, 0); g.add(post);
+  const arch = new THREE.CatmullRomCurve3([new V(0, .2, 0), new V(-.26, .3, 0), new V(-.36, .62, 0), new V(-.3, .92, 0), new V(0, 1.0, 0), new V(.3, .92, 0), new V(.36, .62, 0), new V(.26, .3, 0), new V(0, .2, 0)], true);
+  g.add(mesh(new THREE.TubeGeometry(arch, 48, .04, 8, true), IRON));
+  for(const s of [-1, 1]){ const tr = mesh(new THREE.CylinderGeometry(.05, .05, .1, 10), IRON, s*.37, .66, 0); tr.rotation.z = Math.PI/2; g.add(tr);
+    const nut = mesh(new THREE.CylinderGeometry(.035, .035, .05, 6), IRON, s*.43, .66, 0); nut.rotation.z = Math.PI/2; g.add(nut); }
+  const bell = makeBell(.62); bell.position.y = .36; g.add(bell); g.userData.bell = bell;
+  const top = mesh(new THREE.CylinderGeometry(.05, .05, .1, 8), IRON, 0, 1.04, 0); g.add(top);
+  const lever = mesh(new THREE.BoxGeometry(.04, .3, .04), WOOD, -.47, .5, 0); lever.rotation.z = .25; g.add(lever);   // a wooden lever where the photo's steam valve was
+  g.userData.top = new V(0, 1.08, 0);
+  return g;
+}
+function makeFork(){
+  const g = new THREE.Group(), steel = std(0xc9ced6, { metalness:.85, roughness:.28 });
+  g.add(mesh(new THREE.CylinderGeometry(.018, .018, .26, 8), steel, 0, .13, 0));
+  const u = new THREE.CatmullRomCurve3([new V(-.06, .62, 0), new V(-.06, .34, 0), new V(0, .26, 0), new V(.06, .34, 0), new V(.06, .62, 0)]);
+  g.add(mesh(new THREE.TubeGeometry(u, 24, .016, 8, false), steel));
+  g.add(mesh(new THREE.SphereGeometry(.03, 10, 8), steel, 0, .02, 0));
+  return g;
+}
+// ================= panel 1: the minstrel =================
+const P1 = rig(document.getElementById('cBody'), new V(0, 1.45, 4.6), new V(0, 1.1, 0), 34);
+const floor1 = new THREE.Mesh(new THREE.CircleGeometry(1.2, 40), std(0x18141f)); floor1.rotation.x = -Math.PI/2; P1.sc.add(floor1);
+let minstrel = makeMinstrel(); P1.sc.add(minstrel);
+function setTeam(t){ team = t; P1.sc.remove(minstrel); minstrel = makeMinstrel(); P1.sc.add(minstrel);
+  document.getElementById('tThistle').classList.toggle('on', t === 'thistle'); document.getElementById('tMarigold').classList.toggle('on', t === 'marigold'); }
+document.getElementById('tThistle').onclick = () => setTeam('thistle'); document.getElementById('tMarigold').onclick = () => setTeam('marigold');
+// ================= panel 2: the bow =================
+const P2 = rig(document.getElementById('cBow'), new V(3.2, .25, 2.4), new V(-.2, 0, -.2), 46);
+const FACE = Math.atan2(3.2, 2.4);
+const bowFront = makeBow(); bowFront.position.set(-.8, 0, .6); bowFront.rotation.y = FACE + Math.PI; P2.sc.add(bowFront);
+const bowSide = makeBow(); bowSide.position.set(.15, 0, -.9); bowSide.rotation.y = FACE + Math.PI/2; P2.sc.add(bowSide);
+const FWD = new V(0, 0, -1).applyQuaternion(bowSide.quaternion);
+const ring = new THREE.Mesh(new THREE.TorusGeometry(.2, .018, 8, 40), new THREE.MeshBasicMaterial({ color:0xf3e2b0, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false }));
+P2.sc.add(ring);
+// ================= panel 3: the kit =================
+const P3 = rig(document.getElementById('cKit'), new V(4.6, 3.2, 5.4), new V(0, .9, -.6), 34);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), std(0x1b1722)); ground.rotation.x = -Math.PI/2; P3.sc.add(ground);
+const ledge = mesh(new THREE.BoxGeometry(2.4, 1.6, 2), std(0x2a2433), -1.6, .8, -1.6); P3.sc.add(ledge);
+const yA = makeYoke(); yA.scale.setScalar(.8); yA.position.set(1.4, 0, 1.0); P3.sc.add(yA);
+const yB = makeYoke(); yB.scale.setScalar(.8); yB.position.set(-1.7, 1.6, -1.5); P3.sc.add(yB);
+const topA = yA.userData.top.clone().multiplyScalar(.8).add(yA.position), topB = yB.userData.top.clone().multiplyScalar(.8).add(yB.position);
+const mid = topA.clone().lerp(topB, .5); mid.y -= .18;
+const rope = mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(topA, mid, topB), 40, .025, 6, false), std(0xb89a62, { roughness:.95 })); P3.sc.add(rope);
+// the aim preview: a spike of light where a new far end would land
+const spike = new THREE.Group(); spike.position.set(1.3, 0, -.9); P3.sc.add(spike);
+const beam = new THREE.Mesh(new THREE.CylinderGeometry(.015, .05, 1.6, 10, 1, true), new THREE.MeshBasicMaterial({ color:0xffe6a8, transparent:true, opacity:.75, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide })); beam.position.y = .8; spike.add(beam);
+const disc = new THREE.Mesh(new THREE.RingGeometry(.18, .26, 36), new THREE.MeshBasicMaterial({ color:0xffe6a8, transparent:true, opacity:.7, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide })); disc.rotation.x = -Math.PI/2; disc.position.y = .01; spike.add(disc);
+const fork = makeFork(); fork.position.set(-.2, 0, 1.6); fork.rotation.z = .12; P3.sc.add(fork);
+const hum = []; for(let i = 0; i < 3; i++){ const h = new THREE.Mesh(new THREE.RingGeometry(.1, .12, 32), new THREE.MeshBasicMaterial({ color:0xbfd6ff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide })); h.rotation.x = -Math.PI/2; h.position.set(-.2, .02, 1.6); P3.sc.add(h); hum.push(h); }
+const alarm = makeBell(.22); alarm.position.set(.4, 1.5, -.6); P3.sc.add(alarm);
+const aglow = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshBasicMaterial({ color:0xffd27a, transparent:true, opacity:.12, depthWrite:false, blending:THREE.AdditiveBlending })); aglow.scale.setScalar(.22); alarm.add(aglow);
+// ================= animate =================
+const t0 = performance.now();
+(function frame(now){
+  requestAnimationFrame(frame); const t = (now - t0)/1000;
+  // 1: turn, the hand bell swings
+  minstrel.rotation.y = Math.PI + Math.sin(t*.45)*.7; minstrel.userData.handBell.rotation.z = Math.sin(t*3.1)*.25;
+  P1.r.render(P1.sc, P1.cam);
+  // 2: the side bow loops draw (1 s), hold, release, ring
+  const cyc = t % 2.6, draw = cyc < 1 ? cyc : cyc < 1.5 ? 1 : 0;
+  const snap = cyc >= 1.5 ? Math.max(0, 1 - (cyc - 1.5)/.08) : 0;
+  drawBow(bowSide, cyc < 1.5 ? Math.min(1, draw) : snap); drawBow(bowFront, 0);
+  const since = cyc - 1.5, bell = bowSide.userData.bell; bell.rotation.z = since > 0 && since < .6 ? Math.sin(since*60)*.06*(1 - since/.6) : 0;
+  if(since > 0){ const k = Math.min(1, since/1.0); ring.position.copy(bowSide.position).addScaledVector(FWD, .05 + k*2.4); ring.position.y = -.05;
+    ring.lookAt(ring.position.clone().add(FWD)); ring.scale.setScalar(1 + k*2.5); ring.material.opacity = .9*(1 - k); } else ring.material.opacity = 0;
+  P2.r.render(P2.sc, P2.cam);
+  // 3: the spike pulses, the fork hums, the alarm bell bobs
+  beam.material.opacity = .55 + .3*Math.sin(t*5); disc.scale.setScalar(1 + .12*Math.sin(t*5));
+  hum.forEach((h, i) => { const u = (t*.8 + i/3) % 1; h.scale.setScalar(1 + u*6); h.material.opacity = .5*(1 - u); });
+  fork.rotation.x = Math.sin(t*40)*.004;
+  alarm.position.y = 1.5 + Math.sin(t*1.6)*.06; alarm.rotation.z = Math.sin(t*4)*.18;
+  P3.r.render(P3.sc, P3.cam);
+})(t0);
+</script>
+</body>
+</html>
