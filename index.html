@@ -264,7 +264,8 @@ body.nhud #chalHud{top:calc(72px + env(safe-area-inset-top,0px))}
 .nhsec .wi.locked{opacity:.4}
 .nhsec .wi .nhWeaponLock{display:block;width:14px;height:14px}
 body.nhud #chalHud{display:none!important}
-#chalBot{position:absolute;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);transform-origin:50% 100%;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
+#chalBot{position:absolute;left:50%;bottom:calc(64px + env(safe-area-inset-bottom,0px));   /* 23 Nov: raised 40 px off the bottom edge */
+  transform:translateX(-50%);transform-origin:50% 100%;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
 body.nhud #chalBot #chalSub{position:static;transform:none}
 #carryLine{display:flex;align-items:center;gap:8px;font:700 14px/1 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:#d9cfb8;text-shadow:0 1px 3px #000;white-space:nowrap;--who:#f2e9d6}
 #carryLine[hidden]{display:none}
@@ -403,7 +404,8 @@ body.nhud #chalBot #chalSub{position:static;transform:none}
 #charge span{position:absolute;left:0;right:0;top:16px;text-align:center;font:600 11px/1 system-ui,sans-serif;letter-spacing:.14em;color:var(--gold);text-shadow:0 0 6px rgba(0,0,0,.9)}
 #charge.full{animation:chFull .35s ease-in-out infinite alternate}
 @keyframes chFull{to{box-shadow:0 0 14px var(--tc,#fff6de),0 0 0 1px rgba(0,0,0,.5)}}
-#toasts{position:absolute;left:50%;top:60%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px}
+#toasts{position:absolute;left:50%;top:71%;   /* 23 Nov: lower, out of the centre of the view (was 60%) */
+  transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px}
 .toast{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.08em;padding:4px 14px;background:var(--panel);border-left:3px solid currentColor;animation:toastIn .2s ease-out;white-space:nowrap}
 @keyframes toastIn{from{transform:translateY(8px);opacity:0}}
 #feed{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:calc(14px + env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:15px;font-weight:700}
@@ -718,6 +720,11 @@ body.padMode .kbOnly{display:none}
 #localMenu .goldWrap:has(> .padFocus),#localMenu .goldWrap:has(> :hover){filter:drop-shadow(0 0 10px rgba(255,214,120,.75)) drop-shadow(0 0 26px rgba(232,184,74,.45))}
 #localMenu .play.padFocus,#localMenu .setupBtn.padFocus{animation:goldPulse 1.6s ease-in-out infinite}
 @keyframes goldPulse{0%,100%{filter:brightness(1.08)}50%{filter:brightness(1.24) saturate(1.15)}}
+.swordrise{position:fixed;left:0;top:0;z-index:30;display:flex;align-items:center;gap:4px;pointer-events:none;font:800 20px/1 var(--ui);filter:drop-shadow(0 0 6px currentColor) drop-shadow(0 1px 2px #000)}
+.swordrise svg{width:18px;height:36px;display:block}
+.swordrise b{color:#fff3d4}
+.cpot.bump{animation:cpotBump .45s ease-out}
+@keyframes cpotBump{0%{transform:scale(1.18);box-shadow:0 0 18px currentColor}100%{transform:scale(1)}}
 </style>
 
 <style id="localMenuStyle">
@@ -1644,7 +1651,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.377</div>
+<div id="ver">Chalice 0.378</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -9287,7 +9294,7 @@ function smokeBlocks(a, b, team){
 // A full cup scores nothing more until the holder drinks (hold F, moving at 40% speed), which banks it. E passes to a teammate;
 // enemies can intercept. A dropped chalice drains a kill's worth a second. First to CH_WIN.
 let CH_DRINK_SLOW = 0.4;   // the holder drinks on the move, at 40% speed
-let SWORD_CUP_BONUS = 1;   // 23 Nov: a kill the cup's carrier takes with the sword banks this many extra points (carrier only, so no bodyguard farming)
+let SWORD_CUP_BONUS = 1;   // 23 Nov: any sword kill by the team holding the cup banks this many extra points (was the carrier's only)
 let CH_CUP = 7, CH_PTS = [1, 1, 1, 2, 2, 3, 5, 5, 5, 5],   // v0.284: what each kill in the cup is worth, in order (1, 1, 1, 2, 2, 3, 5: a full cup is 15). Beyond CH_CUP kills the rest are unused
     CH_WIN = 30, CH_DRINK = 2, CH_DRAIN = 1, CH_PASS_R = 8, CH_TOSS = 20, CH_PICK = 1.3;
 const CH = { state:'loose', pos:new V(0, 3, 0), vel:new V(), holder:null, team:-1, kills:[], drain:0, drink:0, thrower:null, target:null, flightT:0, noCatch:0, home:new V(), homeUnclaimed:false };
@@ -9689,10 +9696,11 @@ function chScoreKill(a, t, w){
   if(CH.team !== a.team || CH.state === 'loose') return;
   if(CH.kills.length >= CH_CUP){ if(a.isPlayer || (CH.holder && CH.holder.isPlayer)) toast('CUP FULL: DRINK IT', TEAMCSS[a.team]); return; }
   let m = chMult(CH.kills.length);
-  if(SWORD_CUP_BONUS > 0 && w === 'sword' && a === CH.holder) m += SWORD_CUP_BONUS;   // the carrier's blade drinks deeper
+  const blade = SWORD_CUP_BONUS > 0 && w === 'sword';   // a sword kill by anyone on the cup's team banks the bonus
+  if(blade) m += SWORD_CUP_BONUS;
   CH.kills.push(m);
-  const blade = SWORD_CUP_BONUS > 0 && w === 'sword' && a === CH.holder;
-  if(CH.holder && CH.holder.isPlayer) toast(blade ? '+' + m + '  ·  BY THE SWORD' + (CH.kills.length >= CH_CUP ? '  ·  LAST KILL' : '') : CH.kills.length >= CH_CUP ? 'LAST KILL  +' + m : '+' + m + (m > 1 ? '  (x' + m + ')' : ''), TEAMCSS[a.team]);
+  if(blade) chalSwordRise(a.team, SWORD_CUP_BONUS);
+  if((CH.holder && CH.holder.isPlayer) || a.isPlayer) toast(blade ? '+' + m + '  ·  BY THE SWORD' + (CH.kills.length >= CH_CUP ? '  ·  LAST KILL' : '') : CH.kills.length >= CH_CUP ? 'LAST KILL  +' + m : '+' + m + (m > 1 ? '  (x' + m + ')' : ''), TEAMCSS[a.team]);
 }
 let chHi = [];
 function updateChalice(dt){
@@ -13115,20 +13123,40 @@ function chalBankFly(t, pts){
   const an = el.animate([{ transform:`translate(${x0}px,${y0}px) scale(1.2)`, opacity:1 }, { transform:`translate(${x1}px,${y1}px) scale(.7)`, opacity:.15 }], { duration:700, easing:'ease-in' });
   an.onfinish = () => { el.remove(); to.classList.remove('scpulse'); void to.offsetWidth; to.classList.add('scpulse'); };
 }
+// 23 Nov: a sword kill's bonus is shown arriving: a sword appears under that team's cup box, rises into it, and the +1 lands as it arrives
+const SWORD_RISE_SVG = '<svg viewBox="0 0 20 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2 L12.5 7 V25 H7.5 V7 Z" fill="currentColor" fill-opacity=".25"/><path d="M3.5 25.5 H16.5"/><path d="M10 26 V33"/><circle cx="10" cy="35.5" r="2"/></svg>';
+function chalSwordRise(t, amt){
+  if(!document.body.classList.contains('nhud')) return;
+  const box = $(t ? 'cpotR' : 'cpotB'); if(!box) return;
+  CHB.hold = { team:t, amt, until:performance.now() + 950 };   // the box keeps the pre-bonus total until the sword lands
+  const a = box.getBoundingClientRect(); if(!a.width) return;
+  const el = document.createElement('div'); el.className = 'swordrise'; el.innerHTML = SWORD_RISE_SVG + '<b>+' + amt + '</b>';
+  el.style.color = PLAYER && t === PLAYER.team ? TEAMCSS[t] : '#ff6a52';
+  document.body.appendChild(el);
+  const x = a.left + a.width/2 - 22, y0 = a.bottom + 22, y1 = a.top + a.height/2 - 20;
+  const an = el.animate([
+    { transform:`translate(${x}px,${y0 + 6}px) scale(.7)`, opacity:0, easing:'ease-out' },   // pops in under the box
+    { transform:`translate(${x}px,${y0}px) scale(1.1)`, opacity:1, offset:.18, easing:'ease-in-out' },
+    { transform:`translate(${x}px,${y0 - 3}px) scale(1)`, opacity:1, offset:.45, easing:'cubic-bezier(.55,0,.8,.3)' },   // a beat to read, then it rises
+    { transform:`translate(${x}px,${y1}px) scale(.65)`, opacity:.15 }
+  ], { duration:950, easing:'linear' });
+  an.onfinish = () => { el.remove(); CHB.hold = null; box.dataset.k = ''; box.classList.remove('bump'); void box.offsetWidth; box.classList.add('bump'); };
+}
 function chalNH(p, on){
   const nh = on && document.body.classList.contains('nhud'), line = $('carryLine');
-  const n = CH.kills.length, m = chMult(n), pot = chPot();
+  const n = CH.kills.length, m = chMult(n), pot = chPot(), hold = CHB.hold && performance.now() < CHB.hold.until ? CHB.hold : null;
   const held = CH.state !== 'loose' && CH.team >= 0, dropped = CH.state === 'loose' && n > 0, ours = held && CH.team === p.team, mine = ours && p.hasChalice;
   for(let t = 0; t < 2; t++){
     const e = $(t ? 'cpotR' : 'cpotB'); e.classList.toggle('shown', nh);
     if(!nh) continue;
     const has = (held || dropped) && CH.team === t || dropped && CHB.team === t, full = n >= CH_CUP;
-    const key = has + '|' + pot + '|' + dropped + '|' + full + '|' + (t === p.team);
+    const shown = hold && hold.team === t ? pot - hold.amt : pot;
+    const key = has + '|' + shown + '|' + dropped + '|' + full + '|' + (t === p.team);
     if(e.dataset.k === key) continue; e.dataset.k = key;
     e.classList.toggle('on', has); e.classList.toggle('ours', t === p.team); e.classList.toggle('theirs', t !== p.team);
     e.classList.toggle('full', has && full); e.classList.toggle('drop', has && dropped);
     e.style.color = t === p.team ? TEAMCSS[t] : '#ff6a52';
-    e.innerHTML = CUP_MINI + '<em>' + (has ? pot : '0') + '</em>';
+    e.innerHTML = CUP_MINI + '<em>' + (has ? shown : '0') + '</em>';
   }
   if(nh && CHB.n > 0 && n === 0 && SCORE[CHB.team] > CHB.score[CHB.team] && CHB.pot > 0) chalBankFly(CHB.team, SCORE[CHB.team] - CHB.score[CHB.team]);
   if(held || dropped){ CHB.n = n; CHB.pot = pot; if(CH.team >= 0) CHB.team = CH.team; } else if(n === 0) CHB.n = 0;
@@ -13137,7 +13165,7 @@ function chalNH(p, on){
   const holder = CH.holder, name = mine ? 'YOU' : (holder && holder.name ? holder.name.toUpperCase() : ours ? 'TEAMMATE' : 'ENEMY');
   line.hidden = false; line.className = ours ? '' : 'enemy'; line.style.setProperty('--who', ours ? TEAMCSS[p.team] : '#ff8a7a');
   const html = dropped ? `<b>CHALICE DROPPED</b><span class="dr2"><i style="width:${clamp(CH.drain, 0, 1)*100}%"></i></span>`
-    : `<span class="sym">${holder && NH_IC.sym[holder.clsKey] || ''}</span><b>${name}</b> ${mine ? 'CARRY' : 'CARRIES'} THE CHALICE<span class="n">+<b>${m}</b> NEXT KILL</span>`;
+    : `<span class="sym">${CUP_MINI}</span><b>${name}</b> ${mine ? 'CARRY' : 'CARRIES'} THE CHALICE<span class="n">+<b>${m}</b> NEXT KILL</span>`;
   if(line.dataset.h !== html){ line.dataset.h = html; line.innerHTML = html; }
 }
 function chalHudDraw(p, n, m){
@@ -13920,7 +13948,7 @@ const TUNES = [
   { k:'chp9', label:'Kill 9 in the cup is worth', unit:'pts', min:1, max:10, step:1, get:() => CH_PTS[8], set:v => { CH_PTS[8] = v; } },
   { k:'chp10', label:'Kill 10 in the cup is worth', unit:'pts', min:1, max:10, step:1, get:() => CH_PTS[9], set:v => { CH_PTS[9] = v; } },
   { k:'chwin',   label:'Score to win', unit:'pts', min:10, max:200, step:5, get:() => CH_WIN, set:v => { CH_WIN = v; } },
-  { k:'swordcup', label:'Carrier sword kills bank extra', unit:'pts', min:0, max:3, step:1, get:() => SWORD_CUP_BONUS, set:v => { SWORD_CUP_BONUS = v; } },
+  { k:'swordcup', label:'Sword kills bank extra (team holding the cup)', unit:'pts', min:0, max:3, step:1, get:() => SWORD_CUP_BONUS, set:v => { SWORD_CUP_BONUS = v; } },
   { k:'chdrink', label:'Drink time', unit:'s', min:0.3, max:6, step:0.1, get:() => CH_DRINK, set:v => { CH_DRINK = v; } },
   { k:'chdslow', label:'Speed while drinking', unit:'x', min:0.1, max:1, step:0.05, get:() => CH_DRINK_SLOW, set:v => { CH_DRINK_SLOW = v; } },
   { k:'chdkill', label:'Drinking kills the drinker (no enemy credit; the cup goes home)', type:'bool', get:() => CH_DRINK_KILLS, set:v => { CH_DRINK_KILLS = !!v; } },
@@ -14903,7 +14931,7 @@ const CHALICE_LESSONS = [
           <tr style="color:${CH_PLAT}"><th scope="row">FULL</th><td>–</td><td>15</td></tr>
         </tbody>
       </table>
-      <p>The carrier’s sword kills bank one point more.</p>`,
+      <p>Sword kills by the team holding the chalice bank one point more.</p>`,
     shot:'full', alt:'A full Chalice glowing sapphire, with 15 points in the HUD.',
     caption:'The seventh kill fills the cup and turns all five gems sapphire.'
   },
@@ -14921,7 +14949,7 @@ const CHALICE_LESSONS = [
   },
   {
     label:'Sword', title:'By the sword',
-    copy:'<p>Kill with the sword while you carry the chalice and that kill banks one extra point. Getting close with the cup in hand is the riskiest fight in the game, so it pays the most.</p><p>Only the carrier’s sword kills earn the extra point. Your teammates’ kills fill the cup as normal.</p>',
+    copy:'<p>While your team holds the chalice, every sword kill banks one extra point. That goes for the carrier and for everyone fighting around them.</p><p>Watch the cup box beside your score: a sword rises into it and adds the extra point as it lands. Closing in for the blade is the risky fight, so it pays the most.</p>',
     shot:'sword', alt:'A sword kill while carrying the Chalice, with +3 BY THE SWORD on screen and 6 points in the cup.',
     caption:'With three kills in the cup, this sword kill banks 3 instead of 2.'
   },
