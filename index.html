@@ -1644,7 +1644,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.373</div>
+<div id="ver">Chalice 0.374</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -14976,11 +14976,11 @@ const localMenu = (() => {
     S.ready = inMatch() && PLAYER.kickoff;
   }
 
-  function teamPanel(mine){
+  function teamPanel(mine, classOnly){
     const team = mine ? S.teamIndex : 1-S.teamIndex;
     const key = teamKey(team);
     const members = visibleRoster().filter(f => f.team === team).slice(0, S.size);
-    const rows = members.map(teamRow);
+    const rows = members.map(f => teamRow(f, classOnly));
     for(let i = members.length; i < TEAM_SIZE; i++) rows.push(openRow());
     return `<div class="tmPanel ${mine ? 'mine' : ''}" style="--tm:${teamColor(key)}">
       <div class="tmPanHead"><span class="n">${teamName(key)}</span><span class="tag">${mine ? 'YOUR TEAM' : 'ENEMY'}</span>
@@ -15204,8 +15204,18 @@ const localMenu = (() => {
       </div>
     </div>`;
   }
-  function teamRow(f){
+  function teamRow(f, classOnly){
     const c = clsByKey(f.cls);
+    if(classOnly){
+      const flag = f.you ? 'YOU' : 'BOT';
+      return `<div class="tmRow ${f.you ? 'you' : ''}">
+        <span class="tmWho">
+          <span class="em">${c ? classCrest(c.key, f.team) : ''}</span>
+          <span class="nm">${c ? c.name.toUpperCase() : ''}</span>
+        </span>
+        <span class="tmFlag ${f.you ? '' : 'bot'}">${flag}</span>
+      </div>`;
+    }
     const flag = f.you ? (S.phase === 'kick' ? (S.ready ? 'READY' : 'WAITING') : '') : 'BOT';
     const ready = flag === 'READY';
     return `<div class="tmRow ${f.you ? 'you' : ''}">
@@ -15401,7 +15411,7 @@ const localMenu = (() => {
       <div></div>
       <div class="msRight">
         <div class="msCount">1 PLAYER + ${Math.max(0, S.size*2 - 1)} BOTS <span>[${S.size*2} MAX]</span></div>
-        ${teamPanel(true)}${teamPanel(false)}
+        ${teamPanel(true, true)}${teamPanel(false, true)}
       </div>
     </div>`;
   }

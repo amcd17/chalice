@@ -359,11 +359,11 @@ function teamHtml(name, tag, cls, mine){
   const rows = [];
   if(mine){
     const c = BY_KEY[state.cls];
-    rows.push(`<div class="trow you"><span class="crest">${crest(c.colour)}</span><span class="nm">YOU<small>${state.cls.toUpperCase()}</small></span><span class="tag">—</span></div>`);
+    rows.push(`<div class="trow you"><span class="crest">${crest(c.colour)}</span><span class="nm">${state.cls.toUpperCase()}</span><span class="tag">YOU</span></div>`);
   }
   for(const b of bots){
     const c = BY_KEY[b.cls];
-    rows.push(`<div class="trow"><span class="crest">${crest(c.colour)}</span><span class="nm">${b.name.toUpperCase()}<small>${b.cls.toUpperCase()}</small></span><span class="tag">BOT</span></div>`);
+    rows.push(`<div class="trow"><span class="crest">${crest(c.colour)}</span><span class="nm">${b.cls.toUpperCase()}</span><span class="tag">BOT</span></div>`);
   }
   return `<header>${name}<span>${tag}</span></header>${rows.join('')}`;
 }
