@@ -131,10 +131,8 @@ const HEADS = {
     edge([at(.2, Math.PI - .62, -.01), at(.2, Math.PI - .2, -.012)]); edge([at(.2, Math.PI + .2, -.012), at(.2, Math.PI + .62, -.01)]);
     edge([at(.2, Math.PI - .62, -.01), at(.2, Math.PI - .62, .05)]); edge([at(.2, Math.PI + .62, -.01), at(.2, Math.PI + .62, .05)]);
     edge([at(.205, Math.PI - .2, -.012), at(.285, Math.PI - .2, -.23)]); edge([at(.205, Math.PI + .2, -.012), at(.285, Math.PI + .2, -.23)]);
-    // two faint eyes in the dark
-    for(const sx of [-1, 1]){ const e = mesh(new THREE.SphereGeometry(.012, 8, 6), new THREE.MeshBasicMaterial({ color:0x8a7a9a }), sx*.06, .02, -.19, false); head.add(e); }
     for(const sx of [-1, 1]){ const h = mesh(new THREE.CircleGeometry(.016, 10), c.dark, sx*.2, -.12, -.12, false); h.rotation.y = sx*1.0 + Math.PI; head.add(h); }   // sound holes on the sides
-    const knob = mesh(new THREE.SphereGeometry(.045, 10, 8), c.teamM, 0, .19, 0); head.add(knob);
+    const loop = mesh(new THREE.TorusGeometry(.05, .014, 8, 20), BRONZE, 0, .235, 0); head.add(loop);   // the crown loop a bell rope would run through, in the bell's own bronze
   },
   louvres(head, c){   // a hood in the team colour, a mask of wooden slats like a belfry's sound shutters
     const hood = mesh(new THREE.SphereGeometry(.205, 18, 14, 0, Math.PI*2, 0, Math.PI*.62), c.teamM, 0, .0, .02); hood.scale.set(1, 1.15, 1); head.add(hood);
