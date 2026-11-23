@@ -302,12 +302,12 @@ const MAPS = [
 const MAP_BY_KEY = Object.fromEntries(MAPS.map(m => [m.key, m]));
 
 const THISTLE_BOTS = [
-  { name:'Wren', cls:'Lampist' }, { name:'Ash', cls:'Arcanist' },
-  { name:'Gale', cls:'Skulker' }, { name:'Iris', cls:'Zealot' }
+  { name:'Rowan', cls:'Lampist' }, { name:'Gareth', cls:'Arcanist' },
+  { name:'Merrick', cls:'Skulker' }, { name:'Sable', cls:'Zealot' }
 ];
 const MARIGOLD_BOTS = [
-  { name:'Vex', cls:'Zealot' }, { name:'Moth', cls:'Skulker' },
-  { name:'Bram', cls:'Crusader' }, { name:'Hilda', cls:'Lampist' }
+  { name:'Hilda', cls:'Zealot' }, { name:'Aldric', cls:'Skulker' },
+  { name:'Cedric', cls:'Crusader' }, { name:'Bertram', cls:'Lampist' }
 ];
 
 const state = {
@@ -357,14 +357,9 @@ function renderSetup(){
 function teamHtml(name, tag, cls, mine){
   const bots = (mine ? THISTLE_BOTS : MARIGOLD_BOTS).slice(0, Math.max(0, state.size - (mine ? 1 : 0)));
   const rows = [];
-  if(mine){
-    const c = BY_KEY[state.cls];
-    rows.push(`<div class="trow you"><span class="crest">${crest(c.colour)}</span><span class="nm">${state.cls.toUpperCase()}</span><span class="tag">YOU</span></div>`);
-  }
-  for(const b of bots){
-    const c = BY_KEY[b.cls];
-    rows.push(`<div class="trow"><span class="crest">${crest(c.colour)}</span><span class="nm">${b.cls.toUpperCase()}</span><span class="tag">BOT</span></div>`);
-  }
+  if(mine) rows.push(`<div class="trow you"><span class="nm">YOU</span><span class="tag">YOU</span></div>`);
+  for(const b of bots) rows.push(`<div class="trow"><span class="nm">${b.name.toUpperCase()}</span><span class="tag">BOT</span></div>`);
+  for(let i = rows.length; i < state.size; i++) rows.push(`<div class="trow empty"><span class="nm">OPEN SLOT</span><span class="tag">—</span></div>`);
   return `<header>${name}<span>${tag}</span></header>${rows.join('')}`;
 }
 

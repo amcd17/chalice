@@ -1,6 +1,6 @@
 # Menu simplification handover
 
-23 Nov 2026. Ported into the game as v0.374.
+23 Nov 2026. Ported into the game as v0.376.
 
 ## What is in the game
 
@@ -12,7 +12,7 @@ The v0.370 Local game type page and the four-box setup are no longer on that pat
 
 ## Files
 
-- `index.html`: the game, v0.374. All of the work is here.
+- `index.html`: the game, v0.376. All of the work is here.
 - `menu-redesign-mockup.html`: the approved home and cup transition reference.
 - `match-setup-mockup.html`: the approved setup, map and options reference.
 - `class-select-mockup.html`: the approved class select reference.
@@ -26,7 +26,7 @@ The mockups remain useful as a visual reference. They are not loaded by the game
 
 - Left column: LOCAL GAME, MATCH SETUP, the mode/match/bots lines, Map and Edit Game Options rows, the real Mausoleum plate, the mode-on-map caption, the thin loading bar, Start Game.
 - Centre: the menu cup renderer.
-- Right column: player count and the Thistle and Marigold rosters. The rosters use `teamPanel(true, true)` and `teamPanel(false, true)`, enlarged. Each row is a class crest, the class name and YOU or BOT. No player or bot names. Your team is first.
+- Right column: player count and the Thistle and Marigold rosters. `namePanel()` shows YOU or the generated bot name with a YOU or BOT tag. No classes are shown; classes are picked on the class select. With bots off, only the player is listed and the other slots read OPEN. Your team is first.
 - Back returns to the home menu.
 - Map opens the new Map page. Choosing a different map reloads into `?menu=setup`, the same as the old setup did.
 - Edit Game Options opens the wide options page. The existing options are kept and laid out as rows. Bots are shown as a sub-list when on.

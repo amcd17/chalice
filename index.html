@@ -1644,7 +1644,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.374</div>
+<div id="ver">Chalice 0.376</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -14988,6 +14988,21 @@ const localMenu = (() => {
       <div class="tmRows">${rows.join('')}</div>
     </div>`;
   }
+  function namePanel(mine){
+    const team = mine ? S.teamIndex : 1-S.teamIndex;
+    const key = teamKey(team);
+    const members = visibleRoster().filter(f => f.team === team).slice(0, S.size);
+    const rows = members.map(f => `<div class="tmRow ${f.you ? 'you' : ''}">
+      <span class="tmWho"><span class="nm">${f.you ? 'YOU' : f.name.toUpperCase()}</span></span>
+      <span class="tmFlag ${f.you ? '' : 'bot'}">${f.you ? 'YOU' : 'BOT'}</span>
+    </div>`);
+    for(let i = members.length; i < S.size; i++) rows.push(openRow());
+    return `<div class="tmPanel ${mine ? 'mine' : ''}" style="--tm:${teamColor(key)}">
+      <div class="tmPanHead"><span class="n">${teamName(key)}</span><span class="tag">${mine ? 'YOUR TEAM' : 'ENEMY'}</span>
+        <span class="sc">${inMatch() ? SCORE[team] : 0}</span></div>
+      <div class="tmRows">${rows.join('')}</div>
+    </div>`;
+  }
   function readyBar(){
     if(S.phase === 'respawn') return `<div class="readyBar">
       <div class="readyState"><span class="kicker">RESPAWN</span><span class="line">${clsOf().name}</span></div>
@@ -15410,8 +15425,8 @@ const localMenu = (() => {
       </div>
       <div></div>
       <div class="msRight">
-        <div class="msCount">1 PLAYER + ${Math.max(0, S.size*2 - 1)} BOTS <span>[${S.size*2} MAX]</span></div>
-        ${teamPanel(true, true)}${teamPanel(false, true)}
+        <div class="msCount">${S.botsOn ? `1 PLAYER + ${Math.max(0, S.size*2 - 1)} BOTS` : '1 PLAYER'} <span>[${S.size*2} MAX]</span></div>
+        ${namePanel(true)}${namePanel(false)}
       </div>
     </div>`;
   }
@@ -15549,16 +15564,16 @@ const localMenu = (() => {
         else menuPrefs.divinationGoal = +v;
         syncTune(); saveTune(); saveMenuPrefs(); break;
       case 'len': MATCH_LEN = +v*60; syncTune(); saveTune(); break;
-      case 'size': TEAM_SIZE = +v; syncTune(); saveTune(); break;
+      case 'size': TEAM_SIZE = +v; syncTune(); saveTune(); if(!inMatch()) lobbyRoster = makeLobbyRoster(); break;
       case 'bots': setDiff(v); break;
-      case 'botsOn': menuPrefs.botsOn = v === 'on'; saveMenuPrefs(); break;
-      case 'dupes': menuPrefs.dupes = v === 'on'; saveMenuPrefs(); break;
-      case 'customCls': menuPrefs.customCls = v === 'on'; saveMenuPrefs(); break;
+      case 'botsOn': menuPrefs.botsOn = v === 'on'; saveMenuPrefs(); if(!inMatch()) lobbyRoster = makeLobbyRoster(); break;
+      case 'dupes': menuPrefs.dupes = v === 'on'; saveMenuPrefs(); if(!inMatch()) lobbyRoster = makeLobbyRoster(); break;
+      case 'customCls': menuPrefs.customCls = v === 'on'; saveMenuPrefs(); if(!inMatch()) lobbyRoster = makeLobbyRoster(); break;
       case 'botcls': {
         const pool = menuPrefs.botCls;
         if(!pool.includes(v)) pool.push(v);
         else if(pool.length > 1) pool.splice(pool.indexOf(v), 1);
-        saveMenuPrefs();
+        saveMenuPrefs(); if(!inMatch()) lobbyRoster = makeLobbyRoster();
         break;
       }
       case 'lesson': goToLesson(+v,'lesson'); return;
