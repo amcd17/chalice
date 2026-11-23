@@ -725,6 +725,8 @@ body.padMode .kbOnly{display:none}
 .swordrise b{color:#fff3d4}
 .cpot.bump{animation:cpotBump .45s ease-out}
 @keyframes cpotBump{0%{transform:scale(1.18);box-shadow:0 0 18px currentColor}100%{transform:scale(1)}}
+.cc.taken .ccArt,#localMenu .csCrestBtn.taken .cr{opacity:.7}
+.cc .lock.swap,#localMenu .csCrestBtn .lock.swap{color:#f1d58e}
 </style>
 
 <style id="localMenuStyle">
@@ -1375,6 +1377,7 @@ body.paused #hud{visibility:hidden}
 #menu:not(.titling) > .wrap{position:relative;z-index:2}
 #menuCupWrap{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .35s ease}
 #menuCupCv{width:100%;height:100%;display:block}
+#menu.cupFlying #titleCv{visibility:hidden}
 
 /* ---------- match setup ---------- */
 #localMenu .msGrid{display:grid;grid-template-columns:minmax(0,540px) minmax(210px,1fr) minmax(340px,430px);gap:20px;align-items:start;min-height:calc(100dvh - 84px);padding:4px 0 12px}
@@ -1651,7 +1654,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.378</div>
+<div id="ver">Chalice 0.382</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -1788,8 +1791,8 @@ const TRIAL_LOADOUT = {
 const TRIAL_SLOT = {primary:1, repeater:2, melee:3};   // v0.348: the sword moved to key 3, the Repeater to key 2
 const REP_GRIP = new V(0.29, 1.09, -0.34), REP_GRIP_AT = { goblin:new V(0.29, 0.62, -0.3) };   // where the sidearm's grip sits in the right hand
 const REPEATER_SCALE = 0.5;   // the plate at its size from the mockup: 0.85 m, scaled to fit the hand
-const TRIAL_REPEATER = { capacity:6, damage:22.5, interval:0.25, gemRecharge:3 };   // 22 Nov: 3 s a gem (was 5)   // each spent gem comes back gemRecharge seconds after it was spent
-const TRIAL_FURNACE = {capacity:6, interval:0.65, reload:3, direct:34, splash:16, radius:1.8, patchDamage:8, orbDiameter:0.58, impactScale:1.75};
+const TRIAL_REPEATER = { capacity:6, damage:22.5, interval:0.25, gemRecharge:3.75 };   // 23 Nov: 3.75 s a gem (3 made it the top killer in bot matches; was 5 before that)   // each spent gem comes back gemRecharge seconds after it was spent
+const TRIAL_FURNACE = {capacity:6, interval:0.65, reload:3, direct:40, splash:20, radius:1.8, patchDamage:8, orbDiameter:0.58, impactScale:1.75};
 const FURNACE_PRESS_BUFFER = 0.14, FURNACE_MODEL_SCALE = 1.20;
 const TRIAL_RIFLE = { capacity:15, damage:14, windup:0.10, gap:0.055, recharge:2, burstInterval:0.55 };   // 23 Nov: magazine 15 (was 24), five bursts. A clean magazine still kills every class; a miss means a reload or the sword
 const TRIAL_DAGGERS = {damage:30, interval:0.25, recallDelay:0.24, recallSpeed:48, returnDamage:10.5};
@@ -1810,7 +1813,7 @@ const TRIAL_SCALED_WEAPONS = new Set(['runic', 'splinter', 'infernal', 'bolt', '
 let TRIAL_BEAM_RANGE = 45, TRIAL_BEAM_SPEED = 70;
 const TRIAL_BEAM_DAMAGE = [1, 0.6, 0.35];
 let TRIAL_BEAM_BASE = 87.5;
-const TRIAL_SPLINTER = {max:3, duration:4, swordDamage:40, shatter:15, heal:12};
+const TRIAL_SPLINTER = {max:3, duration:6, swordDamage:40, shatter:15, heal:12};
 const TRIAL_MELEE = Object.fromEntries([
   ['knight',   2.7, 0.5,  70, 0.55, 0.95, 12],
   ['lampist',  2.3, 0.3, 140, 0.35, 0.70, 3.5],
@@ -3815,7 +3818,7 @@ const facesMe = (t, b) => { const dx = b.pos.x - t.pos.x, dz = b.pos.z - t.pos.z
 const busyElse = (t, b) => !!((t.target && t.target !== b && t.target.alive) || t.hasChalice || t.hasBall);
 const badTrade = (t, b) => t.clsKey !== 'goblin' && facesMe(t, b) && !busyElse(t, b) && t.hp > 0.35*maxHp(t);   // a fair fight from the front: he loses those
 // the lampist: a flintlock (1), a blunderbuss (2), a lantern that marks enemies for her team (right click), a leap (Shift), and she climbs twice as high
-let BB_SHOTS = 3, BB_WINDUP = 0.45;   // 22 Nov: three shots before the blessing reload (was 2)
+let BB_SHOTS = 2, BB_WINDUP = 0.45;   // 23 Nov: back to two shots (three, 22 Nov, put the Crusader on top of the class table)
 let FL_RELOAD = 2.2, BB_PELLETS = 8, BB_RELOAD = 3, BB_SPREAD = 0.11, BB_FULL = 4, BB_ZERO = 10.5;
 // the lampist's flamethrower: hold to spray; it burns only what the stream touches (and sets them burning); fuel runs down and refills
 let FLAME_DPS = 42, FLAME_RANGE = 8, FLAME_CONE = 0.2, FLAME_FUEL = 4, FLAME_REFILL = 3, FLAME_DELAY = 0.5;
@@ -12608,8 +12611,22 @@ function updateVM(dt){
 }
 
 // ---------------- Title screen: the chalice turns above the wordmark; any key, click or pad button goes on to the menu ----------------
+// the chalice gems wink slowly, each fading up and back down on its own long cycle, out of step, in blue, ruby, jade and sapphire (title and match setup)
+function winkGems(cup, t){
+  const pal = [GEM_STATES[2], GEM_STATES[3], GEM_STATES[1], GEM_STATES[4]];
+  cup.userData.progressGems.forEach((gem, i) => {
+    const st = pal[i % pal.length], ph = t/3.2 + i*0.37;
+    const k = Math.pow(Math.max(0, Math.sin(ph*Math.PI*2)), 2);   // a soft rise and fall, then a dark rest
+    gem.material.color.setHex(st.color);
+    gem.material.emissive.setHex(st.glow);
+    gem.material.emissiveIntensity = 1.6*k;
+    gem.halo.material.color.setHex(st.haloColor || st.glow);
+    gem.halo.material.opacity = 0.8*k;
+  });
+}
 function dismissTitle(){ const m = document.getElementById('menu'); if(!m || !m.classList.contains('titling')) return; m.classList.remove('titling'); m.classList.add('menuOn'); padMenuReset(); }
 function padMenuReset(){ if(padFocus) padFocus.classList.remove('padFocus'); padFocus = null; }
+const TITLE_CUP = {};   // 23 Nov: the home crest cup, read by the menu cup so the zoom into Match Setup starts where it sits
 (function titleLoop(){
   const cv = document.getElementById('titleCv'); if(!cv) return;
   let r; try{ r = new THREE.WebGLRenderer({ canvas:cv, antialias:true, alpha:true }); }catch(e){ return; }
@@ -12637,18 +12654,9 @@ function padMenuReset(){ if(padFocus) padFocus.classList.remove('padFocus'); pad
     const t = now/1000;
     cup.rotation.y = t*0.45; cup.position.y = 0;
     animChalice(cup, 0.72, -1, t, 1/60, 2);   // the ichor, the same liquid as in play
-    // gems blink slowly, each fading up and back down on its own long cycle, out of step with its neighbours, in blue, ruby, jade and sapphire
-    const pal = [GEM_STATES[2], GEM_STATES[3], GEM_STATES[1], GEM_STATES[4]];
-    cup.userData.progressGems.forEach((gem, i) => {
-      const st = pal[i % pal.length], ph = t/3.2 + i*0.37;
-      const k = Math.pow(Math.max(0, Math.sin(ph*Math.PI*2)), 2);   // a soft rise and fall, then a dark rest
-      gem.material.color.setHex(st.color);
-      gem.material.emissive.setHex(st.glow);
-      gem.material.emissiveIntensity = 1.6*k;
-      gem.halo.material.color.setHex(st.haloColor || st.glow);
-      gem.halo.material.opacity = 0.8*k;
-    });
+    winkGems(cup, t);
     r.render(sc, cam);
+    TITLE_CUP.cv = cv; TITLE_CUP.cup = cup; TITLE_CUP.cam = cam; TITLE_CUP.yaw = cup.rotation.y; TITLE_CUP.t = now;
   })(0);
 })();
 // ---------------- Input ----------------
@@ -14168,7 +14176,7 @@ const TUNES = [
   tuneNumber('runicdamage', 'Damage per shot', '', [0, 75, 0.1], () => TRIAL_REPEATER.damage*TRIAL_WEAPON_DAMAGE, v => { TRIAL_REPEATER.damage = v/TRIAL_WEAPON_DAMAGE; }),
   tuneNumber('runicammo', 'Shots per charge', '', [1, 12, 1], () => TRIAL_REPEATER.capacity, v => { TRIAL_REPEATER.capacity = v; for(const f of FIGHTERS){ if(f.trial) f.trial.repeater = Math.min(f.trial.repeater,v); }; }),
   tuneNumber('runicinterval', 'Time between shots', 's', [0.05, 1, 0.01], () => TRIAL_REPEATER.interval, v => { TRIAL_REPEATER.interval = v; }),
-  tuneNumber('runicrecharge', 'Seconds per spent gem', 's', [0.5, 30, 0.5], () => TRIAL_REPEATER.gemRecharge, v => { TRIAL_REPEATER.gemRecharge = v; }),
+  tuneNumber('runicrecharge', 'Seconds per spent gem', 's', [0.5, 30, 0.25], () => TRIAL_REPEATER.gemRecharge, v => { TRIAL_REPEATER.gemRecharge = v; }),
   tuneNumber('runicspeed', 'Projectile speed', 'm/s', [20, 180, 1], () => RANGED.runic.speed, v => { RANGED.runic.speed = v; }),
   tuneNumber('runicrange', 'Projectile range', 'm', [5, 60, 1], () => RANGED.runic.max, v => { RANGED.runic.max = v; }),
   { k:'clsspd',  label:'Classes: move speed', unit:'m/s', min:4, max:14, step:0.1, get:() => C_SPEED, set:v => { C_SPEED = v; } },
@@ -14180,7 +14188,7 @@ const TUNES = [
   { k:'tosst', label:'Throwables: time from Q to letting go', unit:'s', min:0, max:1, step:0.05, get:() => TOSS_REL, set:v => { TOSS_REL = v; TOSS_T = Math.max(TOSS_T, v + 0.1); } },
 ];
 const TUNE_DEFAULTS = {}; for(const t of TUNES) TUNE_DEFAULTS[t.k] = t.get();
-const TUNE_OLD_DEFAULTS = { rifleammo:24, bbshots:2, furnacecapacity:4, furnaceinterval:0.75, furnacepatchradius:1.25, furnacespeed:18, bbdamage:110, bbmiddamage:95, hamtap2:0.05, smkmark:2.5, fragcd:14, flaskcd:14, flmdps:40, flmrng:7, gwardcd:8, dmgham:60, dmgbb:12, bstab:1.5, flrl:1.5, chwin:60, chcup:[10, 6], chs2:0.5, chs3:0.8, dagcd:[0.4, 0.3], sheat:[0.065, 0.06], sramp:2, bfull:40, bcd:0.3, hpg:[80, 90, 100, 110, 107, 115], hps:[100, 110, 118, 126], hpk:[180, 150, 130, 139, 147], hpl:[110, 118, 126], hpbr:[115, 123, 131], shslow:0.85, lightw:2.75, lightrec:6, chdmg:[15, 40], dmgdag:25, dmgknf:[50, 40, 25], dblgap:0.13, dmgbolt:[12.5, 10, 10.5], dmgjav:[60, 75, 65], javcd:3.8, chspd:10, cht:0.6, chwind2:1, match:5, lunge:4.6, scramble:3, team:4, speed:[9.2, 8.2, 7.544], jumph:4.77, clsspd:[6.8, 6.256], clsjmp:1.8, ability:8, htkh:1, htkball:1, spk:0.88 };   // a saved value that is just an old default gives way to the new default
+const TUNE_OLD_DEFAULTS = { splintertime:4, runicrecharge:[3, 4], furnacedirect:34, furnacesplash:16, rifleammo:24, bbshots:3, furnacecapacity:4, furnaceinterval:0.75, furnacepatchradius:1.25, furnacespeed:18, bbdamage:110, bbmiddamage:95, hamtap2:0.05, smkmark:2.5, fragcd:14, flaskcd:14, flmdps:40, flmrng:7, gwardcd:8, dmgham:60, dmgbb:12, bstab:1.5, flrl:1.5, chwin:60, chcup:[10, 6], chs2:0.5, chs3:0.8, dagcd:[0.4, 0.3], sheat:[0.065, 0.06], sramp:2, bfull:40, bcd:0.3, hpg:[80, 90, 100, 110, 107, 115], hps:[100, 110, 118, 126], hpk:[180, 150, 130, 139, 147], hpl:[110, 118, 126], hpbr:[115, 123, 131], shslow:0.85, lightw:2.75, lightrec:6, chdmg:[15, 40], dmgdag:25, dmgknf:[50, 40, 25], dblgap:0.13, dmgbolt:[12.5, 10, 10.5], dmgjav:[60, 75, 65], javcd:3.8, chspd:10, cht:0.6, chwind2:1, match:5, lunge:4.6, scramble:3, team:4, speed:[9.2, 8.2, 7.544], jumph:4.77, clsspd:[6.8, 6.256], clsjmp:1.8, ability:8, htkh:1, htkball:1, spk:0.88 };   // a saved value that is just an old default gives way to the new default
 try{ const saved = JSON.parse(localStorage.getItem('chalice-class-tuning-v1') || '{}'); for(const k in TUNE_OLD_DEFAULTS) if([].concat(TUNE_OLD_DEFAULTS[k]).includes(saved[k])) delete saved[k]; for(const t of TUNES) if(typeof saved[t.k] === (t.type === 'bool' ? 'boolean' : 'number') && (t.type === 'bool' || (saved[t.k] >= t.min && saved[t.k] <= t.max))) t.set(saved[t.k]); }catch(e){}   // a saved value outside its slider's range is stale (or from an old clash of names): ignore it
 function fmtTune(t, v){
   if(t.fmt) return t.fmt(Math.round(v));
@@ -14599,6 +14607,7 @@ let menuPreviewMode = 'chalice';
       prec.rotation.y -= dt*.45;
       tilt.rotation.x = .26 + .06*Math.sin(now/1700);
       animChalice(cup,.87,Math.floor(now/6000)%2,now/1000,dt,CH_FULL_TIER-1,true);
+      winkGems(cup, now/1000);   // 23 Nov: the gems wink as on the title
     }
     if(crystal.visible){
       crystal.rotation.y += dt*.78;
@@ -15278,13 +15287,13 @@ const localMenu = (() => {
   }
   function classCard(c){
     const key = c.key;
-    const locked = !S.dupes && countOf(key) > 0 && key !== S.cls;
-    const disabled = locked || (S.phase === 'kick' && S.ready) || (inMatch() && (PLAYER.kickoff || PLAYER.alive));
-    const owner = locked ? classOwner(key) : null;
+    const taken = !S.dupes && countOf(key) > 0 && key !== S.cls;   // 23 Nov: a bot's class is never locked to you; picking it swaps with that bot
+    const disabled = (S.phase === 'kick' && S.ready) || (inMatch() && (PLAYER.kickoff || PLAYER.alive));
+    const owner = taken ? classOwner(key) : null;
     const abilities = (c.abil || []).slice(0,3).map(([kind, name, k]) =>
       `<span class="line ab"><i>${k}</i>${name}</span>`).join('');
     const primary = (TRIAL_LOADOUT[key] || [])[0] || '';
-    return `<button type="button" class="cc${key === S.cls ? ' on' : ''}${locked ? ' locked' : ''}" data-act="cls" data-v="${key}" ${disabled ? 'disabled' : ''}>
+    return `<button type="button" class="cc${key === S.cls ? ' on' : ''}${taken ? ' taken' : ''}" data-act="cls" data-v="${key}" ${disabled ? 'disabled' : ''}>
       <span class="ccArt"><canvas class="ccPortrait" data-pk="${key}" width="208" height="272" aria-hidden="true"></canvas></span>
       <span class="body">
         <span class="nm">${c.name}</span>
@@ -15292,7 +15301,7 @@ const localMenu = (() => {
         <span class="line"><b>${primary}</b></span>
         <span class="line">Runic Repeater · Bastard Sword</span>
         ${abilities}
-        ${locked ? `<span class="lock">LOCKED · ${owner ? owner.name : 'TAKEN'}</span>` : ''}
+        ${taken ? `<span class="lock swap">SWAP WITH ${owner ? owner.name : 'BOT'}</span>` : ''}
       </span></button>`;
   }
   const CS_COLOUR = { sorcerer:'#9a7bff', knight:'#e0b45a', lampist:'#ffc06a', goblin:'#6fd08a', brigand:'#d9744a' };
@@ -15321,11 +15330,11 @@ const localMenu = (() => {
       </div>`);
     }
     const crests = CLASS_PICK.map(x => {
-      const locked = !S.dupes && countOf(x.key) > 0 && x.key !== c.key;
+      const taken = !S.dupes && countOf(x.key) > 0 && x.key !== c.key;   // a bot's class: picking it swaps with that bot
       const focus = x.key === c.key;
-      return `<button type="button" class="csCrestBtn${locked ? ' locked' : ''}${focus ? ' focus' : ''}" ${locked ? 'disabled' : `data-act="cls" data-v="${x.key}"`} style="--csColour:${CS_COLOUR[x.key] || '#e0b45a'}">
+      return `<button type="button" class="csCrestBtn${taken ? ' taken' : ''}${focus ? ' focus' : ''}" data-act="cls" data-v="${x.key}" style="--csColour:${CS_COLOUR[x.key] || '#e0b45a'}">
         <span class="cr">${classCrest(x.key)}</span><span class="cn">${x.name}</span>
-        ${locked ? '<span class="lock">LOCKED</span>' : ''}${focus ? '<span class="tick">YOURS</span>' : ''}
+        ${taken ? '<span class="lock swap">SWAP</span>' : ''}${focus ? '<span class="tick">YOURS</span>' : ''}
       </button>`;
     }).join('');
     root.innerHTML = `<div class="csWrap" style="--csColour:${colour}">
@@ -15730,14 +15739,46 @@ const localMenu = (() => {
   cup.position.y = -0.225;
   pivot.add(cup);
 
-  const HOME = { s:3.0, y:1.68, x:0, z:0, rx:0, dim:.55, op:0 };
+  const HOME = { s:3.0, y:1.68, x:0, z:0, rx:.03, dim:.75, op:1, mix:0 };   // 23 Nov: refitted to the home crest each time (fitHome), so the cup flies from there instead of fading in from black
+  const CREST = ['home','local','extras'];
+  const BASE = { b:[CH_DARK.color.clone(), CH_DARK.emissive.clone(), CH_DARK.emissiveIntensity, CH_DARK.metalness, CH_DARK.roughness],
+                 t:[CH_BRIGHT.color.clone(), CH_BRIGHT.metalness, CH_BRIGHT.roughness] };
+  const GOAL = { b:[bone.color.clone(), bone.emissive.clone(), bone.emissiveIntensity, bone.metalness, bone.roughness],
+                 t:[trim.color.clone(), trim.metalness, trim.roughness] };
+  function tint(m){   // 0 = the gold crest cup, 1 = the bone setup cup
+    bone.color.copy(BASE.b[0]).lerp(GOAL.b[0], m); bone.emissive.copy(BASE.b[1]).lerp(GOAL.b[1], m);
+    bone.emissiveIntensity = BASE.b[2] + (GOAL.b[2] - BASE.b[2])*m; bone.metalness = BASE.b[3] + (GOAL.b[3] - BASE.b[3])*m; bone.roughness = BASE.b[4] + (GOAL.b[4] - BASE.b[4])*m;
+    trim.color.copy(BASE.t[0]).lerp(GOAL.t[0], m); trim.metalness = BASE.t[1] + (GOAL.t[1] - BASE.t[1])*m; trim.roughness = BASE.t[2] + (GOAL.t[2] - BASE.t[2])*m;
+  }
+  const BOX = new THREE.Box3(), PV = new THREE.Vector3();
+  const AX = (() => { const c = makeChalice(); c.updateMatrixWorld(true); BOX.setFromObject(c); return [BOX.min.y, BOX.max.y]; })();   // foot and rim heights of a bare cup
+  function screenBox(obj, camera, rect){   // the cup's foot-to-rim axis on screen, in page pixels (the ichor and smoke move, so they stay out of it)
+    obj.updateMatrixWorld(true); const pts = AX.map(y => { obj.localToWorld(PV.set(0, y, 0)).project(camera);
+      return [rect.left + (PV.x + 1)/2*rect.width, rect.top + (1 - PV.y)/2*rect.height]; });
+    return { cx:(pts[0][0] + pts[1][0])/2, cy:(pts[0][1] + pts[1][1])/2, h:Math.abs(pts[0][1] - pts[1][1]) };
+  }
+  function fitHome(){   // place the pivot so this cup covers the crest cup exactly
+    const T = TITLE_CUP; if(!T.cv || performance.now() - (T.t || 0) > 400) return false;
+    const r = T.cv.getBoundingClientRect(); if(!r.width) return false;
+    T.cam.updateMatrixWorld(); const want = screenBox(T.cup, T.cam, r);
+    const full = { left:0, top:0, width:window.innerWidth, height:window.innerHeight };
+    cup.rotation.y = T.yaw; pivot.rotation.set(HOME.rx, 0, 0);
+    for(let i = 0; i < 4; i++){
+      pivot.scale.setScalar(HOME.s); pivot.position.set(HOME.x, HOME.y, 0);
+      const got = screenBox(cup, cam, full); if(!(got.h > 1)) return false;
+      HOME.s *= want.h/got.h;
+      const wpp = 2*9*Math.tan(cam.fov*Math.PI/360)/window.innerHeight;   // world units per pixel at the cup's depth
+      HOME.x += (want.cx - got.cx)*wpp; HOME.y -= (want.cy - got.cy)*wpp;
+    }
+    yaw = T.yaw; return true;
+  }
   const TARGET = {
-    setup:   { s:8.2, y:.15,  x:.30, z:-.16, rx:.09, dim:.34, op:.72 },
-    options: { s:5.4, y:.18,  x:.28, z:-.12, rx:.06, dim:.20, op:.38 },
-    map:     { s:5.4, y:.18,  x:.28, z:-.12, rx:.06, dim:.20, op:.38 }
+    setup:   { s:8.2, y:.15,  x:.30, z:-.16, rx:.09, dim:.34, op:.72, mix:1 },
+    options: { s:5.4, y:.18,  x:.28, z:-.12, rx:.06, dim:.20, op:.38, mix:1 },
+    map:     { s:5.4, y:.18,  x:.28, z:-.12, rx:.06, dim:.20, op:.38, mix:1 }
   };
   const cur = Object.assign({}, HOME);
-  let last = performance.now(), yaw = 0, lastPage = '';
+  let last = performance.now(), yaw = 0, lastPage = '', flyHome = false;
 
   function layout(){
     renderer.setSize(window.innerWidth, window.innerHeight, false);
@@ -15748,17 +15789,23 @@ const localMenu = (() => {
 
   function frame(now){
     requestAnimationFrame(frame);
-    if(menu.hidden || menu.classList.contains('titling')){ wrap.style.opacity = '0'; return; }
-    const page = local.dataset.page;
-    const target = TARGET[page];
-    if(!target){ wrap.style.opacity = '0'; lastPage = page; return; }
     const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if(menu.hidden || menu.classList.contains('titling')){ wrap.style.opacity = '0'; menu.classList.remove('cupFlying'); lastPage = ''; return; }
+    const page = local.dataset.page;
+    let target = TARGET[page];
     if(page !== lastPage){
-      if(page === 'setup' && lastPage === 'home') Object.assign(cur, HOME);
+      if(target && CREST.includes(lastPage) && fitHome()) Object.assign(cur, HOME);   // leaving the crest: start on top of it
+      else if(!target && TARGET[lastPage] && CREST.includes(page)) flyHome = true;    // Back to the crest: fly home, then hand over
       lastPage = page;
     }
-    const k = 1 - Math.exp(-dt * 3.6);
-    for(const f of ['s','y','x','z','rx','dim','op']) cur[f] += (target[f] - cur[f]) * k;
+    if(!target && flyHome){
+      fitHome(); target = HOME; menu.classList.add('cupFlying');
+      if(Math.abs(cur.s - HOME.s) < HOME.s*.03 && Math.hypot(cur.x - HOME.x, cur.y - HOME.y) < .03){ flyHome = false; menu.classList.remove('cupFlying'); }
+    }
+    if(!target){ wrap.style.opacity = '0'; menu.classList.remove('cupFlying'); return; }
+    const k = 1 - Math.exp(-dt * (flyHome ? 6 : 3.6));
+    for(const f of ['s','y','x','z','rx','dim','op','mix']) cur[f] += (target[f] - cur[f]) * k;
+    tint(cur.mix);
     pivot.scale.setScalar(cur.s);
     pivot.position.set(cur.x, cur.y, 0);
     pivot.rotation.z = cur.z;
@@ -15770,6 +15817,7 @@ const localMenu = (() => {
     rim.intensity = 1.9 * cur.dim;
     fill.intensity = .5 * cur.dim;
     animChalice(cup, .72, -1, now / 1000, 1 / 60, 2);
+    winkGems(cup, now / 1000);
     wrap.style.opacity = cur.op.toFixed(3);
     renderer.render(scene, cam);
   }
