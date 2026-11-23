@@ -1660,7 +1660,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.397</div>
+<div id="ver">Chalice 0.398</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -7250,6 +7250,7 @@ function makeZealot(team){
 
   const skin = std(ZEALOT_SKIN, .8), hair = std(lin(0x3a2618), .9);   // one skin tone for both teams: the game's lighter SKIN
   const bone = std(0xd8c49a, .75), boneS = std(0xc09a70, .8), boneD = std(0xa88e62, .8), plateB = std(0xcbb48a, .8), plateD = std(0x9c855e, .85);
+  const vamb = std(0x7a6b5a, .7, .15);   // 24 Nov: worn leather bracers on the arms, not near-black iron
   const iron = std(0x4a4c50, .4, .75), ironD = std(0x2a2a2e, .45, .7), brass = std(0xd9a22a, .35, .7);
   const leather = std(0x5a3b22, .85), boot = std(0x3a2618, .9), rope = std(0x9a8462, .95), glove = std(0x2b211b, .75), dark = std(0x120d10, .9);
   const felt = new THREE.MeshStandardMaterial({ color:0xffffff, roughness:1, map:tex(128, 128, (x, w, h) => { x.fillStyle = feltC; x.fillRect(0, 0, w, h); speck(x, w, h, 900, '8,5,10', '120,100,130'); }, 2, 1) });
@@ -7371,7 +7372,7 @@ function makeZealot(team){
   const sw = SHARED_SWORD ? makeClassSword(team, 'brigand', SWORD_TURN, SWORD_SIZE) : makeBoneSword(); if(!SHARED_SWORD) sw.scale.setScalar(0.72); sw.position.set(0, SHARED_SWORD ? 0.02 : 0.072, 0);   // v0.347: the classic sword in the team's colour
   const swGrip = new THREE.Group(); swGrip.add(sw); g.add(swGrip); P.weapon = swGrip;
   P.armS = new THREE.Group(); P.armS.visible = false; g.add(P.armS);   // kept empty: the game's older Zealot code still toggles it
-  P.rightParts = new THREE.Group(); g.add(P.rightParts); P.rightArm = makeMovingArm(P.rightParts, 1, wool, ironD, glove, false, SHR, 1);
+  P.rightParts = new THREE.Group(); g.add(P.rightParts); P.rightArm = makeMovingArm(P.rightParts, 1, wool, wool, skin, false, SHR, 0.75);
   P.gripLow = new V(-0.33, 0.9, -0.08);   // the free left hand, at his side while the sword is out
   P.armJ = new THREE.Group(); P.armJ.visible = false; g.add(P.armJ);
   // shouldered: the bone butt sits on the right shoulder and the barrel runs forward at shoulder height
@@ -7381,7 +7382,7 @@ function makeZealot(team){
   const jH = new V(0, -.08, .17).applyMatrix4(rifle.matrix); armChain(P.armJ, SHR, jH, new V(0.12, -0.14, 0.1), 0.06, 0.05, wool, wool, skin, 0.05);
   P.foreGrip = rifle.userData.foreGrip.clone().applyMatrix4(rifle.matrix);   P.foreGrip.add(new V(-0.03, -0.07, 0.14));   // 24 Nov: third person only: the left hand grips a little lower and nearer, so the arm shows from the front and is not stretched   // the foregrip under the barrel, where the left hand goes in the firing hold
   P.armJL = new THREE.Group(); P.armJ.add(P.armJL);   // kept empty: the game's older Zealot code still toggles it
-  P.leftParts = new THREE.Group(); g.add(P.leftParts); P.leftArm = makeMovingArm(P.leftParts, -1, wool, ironD, glove, false, SHL, 1); P.leftHand = null;
+  P.leftParts = new THREE.Group(); g.add(P.leftParts); P.leftArm = makeMovingArm(P.leftParts, -1, wool, wool, skin, false, SHL, 0.75); P.leftHand = null;
   P.armR = new THREE.Group(); P.armR.visible = false; g.add(P.armR);
   const fH = new V(-0.2, 2.2, -0.02); armChain(P.armR, SHL, fH, new V(-0.18, 0.0, 0.06), 0.06, 0.05, wool, wool, skin, 0.05);   // the Rally: his left fist punched up
   add(boxM(0.1, 0.11, 0.1, skin), fH.x, fH.y + 0.03, fH.z, 0, 0, 0, P.armR);
