@@ -707,7 +707,7 @@ details.box[open] summary{margin-bottom:10px}
 #menu:not(.titling) #titleScr{display:none}
 #titleScr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(115deg,#05040a 0%,#0b1020 22%,#120a22 38%,#05040a 52%,#0a0f1e 68%,#160c26 82%,#05040a 100%);background-size:260% 260%;animation:titleShimmer 14s ease-in-out infinite;z-index:5;cursor:pointer}
 @keyframes titleShimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-#titleCv{width:min(44vh,360px);height:min(44vh,360px)}
+#titleCv{width:min(54vh,450px);height:min(54vh,450px)}
 #titleScr .titleWord{margin:2vh 0 0;font-family:Georgia,serif;font-weight:400;font-size:clamp(44px,7vw,96px);letter-spacing:.32em;text-indent:.32em;color:#f1e2b8;text-shadow:0 0 28px rgba(232,184,74,.35)}
 #titleScr .titleSub{margin:2vh 0 0;font-family:Georgia,serif;font-size:13px;letter-spacing:.42em;text-indent:.42em;color:#b9a47a}
 #titleScr .titlePrompt{position:absolute;bottom:12vh;margin:0;font-family:Georgia,serif;font-size:15px;letter-spacing:.3em;text-indent:.3em;color:#e8c78a;animation:titleBlink 1.6s ease-in-out infinite}
@@ -1660,7 +1660,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.389</div>
+<div id="ver">Chalice 0.390</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -12673,8 +12673,8 @@ const TITLE_CUP = {};   // 23 Nov: the home crest cup, read by the menu cup so t
     const menuOn = !m.classList.contains('titling');
     blend += ((menuOn ? 1 : 0) - blend)*Math.min(1, dt*4);
     const e = blend*blend*(3 - 2*blend);
-    cam.position.set(0, 2.6 + (1.25 - 2.6)*e, 2.2 + (5.2 - 2.2)*e);
-    cam.lookAt(0, 1.3 + (1.08 - 1.3)*e, 0);
+    cam.position.set(0, 3.25 + (1.25 - 3.25)*e, 3.9 + (5.2 - 3.9)*e);   // 23 Nov: the title view stands back far enough to frame the whole cup, foot to rim, with room for the smoke
+    cam.lookAt(0, 0.98 + (1.08 - 0.98)*e, 0);
     const t = now/1000;
     cup.rotation.y = t*0.45; cup.position.y = 0;
     animChalice(cup, 0.72, -1, t, 1/60, 2);   // the ichor, the same liquid as in play

@@ -1,10 +1,10 @@
 # Chalice
 (Called Dark Chalice until v0.291.)
 
-First-person medieval-fantasy class shooter against bots. One file: `index.html` (three.js r128, no build step). Notes and history: `scryball-backlog.md`.
+First-person medieval-fantasy class shooter against bots. One file: `index.html` (three.js r128, no build step). Start with `chalice-overview.md`: the whole game, current numbers, history and open work. Version-by-version history: `scryball-backlog.md`.
 
 ## Folder layout
-- Top level: the current build (`index.html`) and the notes agents use now (`scryball-backlog.md`, `codex-weapon-niches.md`, `codex-sword-handover.md`, `codex-handover-hands.md`, the menu and git handovers, `cathedral-mesh-audit.md`).
+- Top level: the current build (`index.html`), `chalice-overview.md`, and the notes agents use now (`scryball-backlog.md`, `codex-weapon-niches.md`, `codex-sword-handover.md`, `codex-handover-hands.md`, the menu and git handovers, `cathedral-mesh-audit.md`).
 - `mockups/`: mockups for work that is pending or recent, with `mock-assets/` beside them. New mockups go here.
 - `old/`: built, superseded or abandoned mockups, test pages and handovers. Reference only.
 - `_to_delete/`: safe to delete.
