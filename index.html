@@ -152,6 +152,48 @@ body.nhud #chalMeter{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 .nhs .n{position:absolute;right:3px;bottom:0;font:800 12px var(--ui);color:var(--ink);text-shadow:0 1px 3px #000}
 .nhs.low{animation:nhsP .45s ease-in-out infinite alternate}
 @keyframes nhsP{to{opacity:.4}}
+body.split #hud > :not(#topbar):not(#feed):not(#splitHud){display:none !important}
+body.split #topbar{top:50%;transform:translate(-50%,-50%) scale(.55);z-index:3}
+body.split #feed{right:auto;left:50%;top:calc(50% + 30px);transform:translateX(-50%);align-items:center;font-size:11px;z-index:3}
+#splitHud{position:absolute;inset:0;pointer-events:none}
+#splitSel{position:fixed;inset:0;z-index:60;background:radial-gradient(ellipse at 50% 30%,rgba(40,30,60,.92),rgba(6,5,10,.97));color:#fff;font-family:var(--display);display:flex;flex-direction:column;align-items:center;padding-top:6vh;gap:4vh;user-select:none}
+#splitSel[hidden]{display:none}
+#splitSel h2{margin:0;font-size:28px;letter-spacing:.22em}
+#splitSel .ssCards{display:flex;gap:1.6vw}
+#splitSel .ssCard{position:relative;width:15vw;max-width:190px;height:26vh;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.05);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+#splitSel .ssCard.hov{border-color:#fff;background:rgba(255,255,255,.12)}
+#splitSel .ssCard.dim{opacity:.35}
+#splitSel .ssSym{width:56px;height:56px;color:var(--gold)}
+#splitSel .ssSym svg{width:100%;height:100%}
+#splitSel .ssNm{font-size:18px;letter-spacing:.14em;text-transform:uppercase}
+#splitSel .ssRole{font-size:11px;letter-spacing:.16em;opacity:.6}
+#splitSel .ssToks{position:absolute;top:6px;left:6px;right:6px;display:flex;gap:4px;flex-wrap:wrap}
+#splitSel .ssToks i{font-style:normal;font-size:11px;padding:2px 6px;color:#000;font-weight:700}
+#splitSel .ssSlots{display:flex;gap:1.6vw}
+#splitSel .ssSlot{width:18vw;max-width:220px;height:13vh;border:2px solid rgba(255,255,255,.15);border-top:6px solid var(--pc);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;opacity:.55}
+#splitSel .ssSlot.in{opacity:1;background:rgba(255,255,255,.06)}
+#splitSel .ssSlot b{color:var(--pc);font-size:20px}
+#splitSel .ssSlot span{font-size:14px;letter-spacing:.14em}
+#splitSel .ssSlot span.off{font-size:11px;opacity:.7}
+#splitSel .ssSlot em{font-style:normal;font-size:11px;letter-spacing:.16em}
+#splitSel .ssHint{font-size:14px;letter-spacing:.2em;opacity:.75}
+#splitSel .ssHint.go{color:var(--gold);opacity:1}
+#splitSel .ssCur{position:absolute;width:30px;height:30px;transform:translate(-50%,-50%);background:var(--pc);border:2px solid #fff;color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.6);pointer-events:none}
+#splitHud .sp{position:absolute;box-shadow:inset 0 0 0 1px rgba(0,0,0,.75);overflow:hidden}
+#splitHud .spRet{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);color:rgba(255,255,255,.85)}
+#splitHud .spBot{position:absolute;left:12px;bottom:10px;display:flex;flex-direction:column;gap:4px;font-family:var(--display);font-size:11px;letter-spacing:.12em;color:#fff;text-shadow:0 1px 2px #000}
+#splitHud .spHp{width:150px;height:8px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.35)}
+#splitHud .spHp i{display:block;height:100%;background:#fff}
+#splitHud .spHp.low i{background:#ff5a4a}
+#splitHud .spRow{display:flex;gap:10px}
+#splitHud .spRow > span{display:flex;align-items:center;gap:5px;font-size:10px;opacity:.75}
+#splitHud .spRow b{display:block;width:34px;height:4px;background:rgba(255,255,255,.15)}
+#splitHud .spRow b i{display:block;height:100%;background:rgba(255,255,255,.7)}
+#splitHud .spRow > span.ready{opacity:1}
+#splitHud .spRow > span.ready b i{background:var(--gold)}
+#splitHud .spHeat.hot b i{background:#ff6a3a}
+#splitHud .spDead{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;font-family:var(--display);color:#fff;letter-spacing:.14em;text-shadow:0 1px 3px #000;font-size:13px}
+#splitHud .spPick{margin-top:8px;font-size:18px;color:var(--gold)}
 #topbar{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;font-family:var(--display)}
 .tscore{display:flex;align-items:baseline;gap:10px;padding:6px 14px;background:var(--panel);border:1px solid var(--line);font-family:var(--ui);font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;min-width:110px}
 .tscore.blue{color:var(--blue);justify-content:flex-start}   /* 23 Nov: both panels plain rectangles (the enemy panel used to be slanted, yours not) */
@@ -1660,7 +1702,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.399</div>
+<div id="ver">Chalice 0.406</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -1698,6 +1740,7 @@ body.paused #hud{visibility:hidden}
         <label class="sens" for="sens">Mouse sensitivity <input id="sens" type="range" min="0.4" max="2.5" step="0.05" value="1"> <span id="sensV">1.00</span></label>
         <label class="sens" for="padSens">Controller look speed <input id="padSens" type="range" min="0.4" max="2.5" step="0.05" value="1"> <span id="padSensV">1.00</span></label>
         <label class="sens"><input type="checkbox" id="padInvert"> Controller: invert look up and down</label>
+        <label class="sens" for="splitN">Split screen (up to four controllers, players join on the class select) <select id="splitN"><option value="1">Off</option><option value="4">On</option></select></label>
         <label class="sens"><input type="checkbox" id="padAssist"> Controller: aim assist</label>
         <div class="sens">Team <span class="seg teamSeg"><button data-t="0">Thistle</button><button data-t="1">Marigold</button></span></div>
         <div class="sens">Divination: pass to score <span class="seg" id="rulesSeg"><button data-r="hotpotato">Off</button><button data-r="fuse">On</button></span></div>
@@ -2162,7 +2205,7 @@ function trialTickWeapons(f, dt, fire, held, reload){
 
 function act(f, dt){
   const I = f.in, w = trialWeapon(f);
-  const fire = f.isPlayer ? mpressed.has(0) || pressed.has('KeyX') : I.fire;
+  const fire = f.isPlayer ? mpressed.has(0) || pressed.has('KeyX') : f.pad != null ? I.firePress : I.fire;
   const held = I.fire || (f.isPlayer && !!keys.KeyX);
   const reload = I.reload;
   if(reload && SHARED_SWORD && w.slot === TRIAL_SLOT.melee && canParry(f)) startParry(f);   // v0.360: reload key with the sword out is the parry
@@ -3853,8 +3896,8 @@ function pelletFall(distance){
 let JAV_WIND = 0.4, JAV_FOLLOW = 0.2, JAV_SLOW = 0.3;   // the javelin throw: wind-up and follow-through, at 30% speed
 // the crusader (14 Nov): no shield; a held-out hand raises a wall of light shaped like a big kite shield. It drains a meter while up (like flight)
 let BACKSTAB_MUL = 2.5, BACKSTAB_ALL = true, BACKSTAB_ALL_MUL = 1.5;   // the Skulker's dagger keeps its big bonus; every other melee weapon gets the smaller one when BACKSTAB_ALL is on
-let BOLT_DMG = 8, BOLT_CD = 0.36, BOLT_HOLD = 0.15, BOLT_CHARGE_T = 0.65, BOLT_FULL = 55, BOLT_HEAT_X = 4, BOLT_GAP = 0.08;   // the seeker's staff (his primary): a tapped bolt; hold past BOLT_HOLD to charge (full after BOLT_CHARGE_T). One bolt however long you charge (v0.266), its damage rising from BOLT_DMG to BOLT_FULL; a full charge costs BOLT_HEAT_X times a tap's heat
-let STAFF_HEAT = 0.05, STAFF_RAMP = 1.25, STAFF_COOL = 0.5, STAFF_COOL_DELAY = 0.4, STAFF_OVERHEAT = 3, STAFF_CHARGE_OVER = 3;
+let BOLT_DMG = 10, BOLT_CD = 0.36, BOLT_HOLD = 0.15, BOLT_CHARGE_T = 1.35, BOLT_FULL = 40, BOLT_HEAT_X = 4, BOLT_GAP = 0.08;   // the seeker's staff (his primary): a tapped bolt; hold past BOLT_HOLD to charge (full after BOLT_CHARGE_T). One bolt however long you charge (v0.266), its damage rising from BOLT_DMG to BOLT_FULL; a full charge costs BOLT_HEAT_X times a tap's heat
+let STAFF_HEAT = 0.05, STAFF_RAMP = 1.25, STAFF_COOL = 0.5, STAFF_COOL_DELAY = 0.4, STAFF_OVERHEAT = 3, STAFF_CHARGE_OVER = 2;
 let LIGHT_SIDE = 0, LIGHT_R = 6, LIGHT_PASS = false, LIGHT_RETORT = 12, LIGHT_REPEL = 9;   // v0.277: the wall is now a wide curved arc (radius LIGHT_R) standing LIGHT_DIST out; LIGHT_PASS lets enemies walk through it
 //   // the wall of light sits this far to his left, leaving his hammer side open
 let LIGHT_MAX = 4, LIGHT_RECHARGE = 18, LIGHT_DELAY = 0.6, LIGHT_DIST = 2.5, LIGHT_HW = 3.1, LIGHT_HH = 1.495, LIGHT_HP = 100, LIGHT_BREAK_CD = 18;   // LIGHT_HP: damage it can soak before it shatters; LIGHT_BREAK_CD: seconds before a spent or shattered light comes back
@@ -7377,7 +7420,7 @@ function makeZealot(team){
   P.armJ = new THREE.Group(); P.armJ.visible = false; g.add(P.armJ);
   // shouldered: the bone butt sits on the right shoulder and the barrel runs forward at shoulder height
   const rifle = makeSkeletonRifle(); for(const c of rifle.children){ if(c.position.z < -.6 && c.position.z > -.67 && c.position.y < .02) c.position.z += .3; }   // 24 Nov: third person: the foregrip post slides back to meet his left hand
-  rifle.scale.setScalar(0.66); rifle.position.set(0.10, 1.39, -0.28); P.armJ.add(rifle);   // 24 Nov: pulled in so the arms are not stretched; : smaller in third person (was 85%); the left hand follows the foregrip
+  rifle.scale.set(0.66, 0.66, 0.53); rifle.position.set(0.10, 1.39, -0.28); P.armJ.add(rifle);   // 24 Nov: third person: smaller (was 85%), 20% shorter lengthways and held at the chest so the arms are not stretched
   rifle.updateMatrix(); P.rifle = rifle; P.ribs = rifle.userData.ribs;
   P.jvHand = new THREE.Group(); P.armJ.add(P.jvHand);   // the game's javelin-hand flag; nothing is thrown now
   const jH = new V(0, -.08, .17).applyMatrix4(rifle.matrix); armChain(P.armJ, SHR, jH, new V(0.12, -0.14, 0.1), 0.06, 0.05, wool, wool, skin, 0.05);
@@ -7390,7 +7433,11 @@ function makeZealot(team){
   P.armRS = new THREE.Group(); P.armR.add(P.armRS);   // and the Bone Sword hangs from his right hand, point down
   const sH = new V(0.34, 0.92, -0.16); armChain(P.armRS, SHR, sH, new V(0.12, -0.1, 0.06), 0.06, 0.05, wool, wool, skin, 0.05);
   { const s2 = SHARED_SWORD ? makeClassSword(team, 'brigand', SWORD_TURN, SWORD_SIZE) : makeBoneSword(); if(!SHARED_SWORD) s2.scale.setScalar(0.72); s2.position.copy(sH); s2.rotation.set(-2.25, Math.PI/2, 0.1); P.armRS.add(s2); P.rallySword = s2; }
-    P.mats = { cloth:wool, skin }; P.baseScale = 1; inkOutline(g); return P;
+    P.mats = { cloth:wool, skin }; P.baseScale = 1; inkOutline(g);
+    { const cache = {};   // 24 Nov: the Zealot's bones, plates and tassels are scaled meshes, which fattened their outlines; hold the line to the same world thickness as the other classes
+      g.traverse(o => { if(!o.userData.ol) return; let sc = 1, q = o.parent; while(q && q !== g){ sc *= (Math.abs(q.scale.x) + Math.abs(q.scale.y) + Math.abs(q.scale.z)) / 3; q = q.parent; }
+        const k = Math.max(1, Math.round(sc * 40)); if(!cache[k]){ cache[k] = OUTLINE_MAT.clone(); cache[k].uniforms = { t:{ value:0.012 / Math.max(k / 40, 0.2) } }; } o.material = cache[k]; }); }
+    return P;
 }
 function buildBody(k, team, showcase){   // showcase: the menu portrait pose (gridiron knight with sword and cannon both out)
   if(k === 'brigand') return makeZealot(team);
@@ -7843,6 +7890,11 @@ function buildBody(k, team, showcase){   // showcase: the menu portrait pose (gr
 
 
 // ---------------- Fighters ----------------
+let SPLIT = 1; try{ const n = parseInt(localStorage.getItem('chalice-split')); if(n >= 1 && n <= 4) SPLIT = n; }catch(e){}
+let SEATS = null, splitDt = 0.016;   // split screen seats from the class select: { pad, cls, team } in player order
+const LOCAL = [];   // split screen: the local fighters in screen order, PLAYER first (empty or one: no split)
+const splitOn = () => LOCAL.length > 1;
+const SPLIT_CLS = ['knight', 'sorcerer', 'lampist', 'brigand', 'goblin'];
 let NEXT_ID = 0;
 const FIGHTERS = [];
 class Fighter {
@@ -7864,7 +7916,7 @@ class Fighter {
     this.clsKey = k; this.C = CLASSES[k];
     this.trial = null;   // a class change starts fresh on its primary, it never inherits the last class's slot
     if(this.P){ if(this.P.ghostOn) setGhost(this.P, false); scene.remove(this.P.root); }
-    if(!this.isPlayer){ this.P = buildBody(k, this.team); this.P.root.visible = false; scene.add(this.P.root);
+    if(!this.isPlayer || (SEATS && SEATS.length > 1)){ this.P = buildBody(k, this.team); this.P.root.visible = false; scene.add(this.P.root);
       { this.P.tag = teamTag(this); this.P.tag.position.y = (this.h + 0.55)/this.P.root.scale.y; this.P.root.add(this.P.tag); }
       if(k === 'gridiron'){
         const back = championNumber(this), front = championNumber(this);
@@ -8390,6 +8442,7 @@ function seekWardDeflect(p){   // mirror an enemy projectile off the dome: v - 2
     _wc.set(tg.pos.x, tg.pos.y, tg.pos.z); _wn.subVectors(p.pos, _wc); const dist = _wn.length();
     if(dist >= SWARD_R || _wn.y < -0.3) continue;
     if(p.owner.pos.distanceTo(_wc) < SWARD_R) continue;   // fired from inside the dome
+    if(p.orb){ orbPopWard(p, tg); return; }
     _wn.normalize(); const vn = p.vel.dot(_wn); if(vn >= 0) continue;
     p.pos.copy(_wc).addScaledVector(_wn, SWARD_R + 0.05); p.vel.addScaledVector(_wn, -2*vn);
     const gren = p.k === 'frag' || p.k === 'relic' || p.k === 'smoke' || p.k === 'markLantern' || p.k === 'cgren';
@@ -8436,6 +8489,9 @@ function staffHeat(f, c){
   f.heat = h + STAFF_HEAT*(1 + STAFF_RAMP*h)*(1 + (BOLT_HEAT_X - 1)*c);   // the hotter it runs, the faster it climbs
   if(f.heat >= 1){ f.heat = 1; f.overheat = f.overheatMax = STAFF_OVERHEAT; sfx('block', f.isPlayer ? null : f.pos); if(f.isPlayer) toast('STAFF OVERHEATED', '#ff8a4a'); }
 }
+// 24 Nov: the Arcanist's full charge is a slow plasma orb (the Halo plasma pistol's overcharge): it pops Wards and Bulwarks, takes most of a person's health but never kills, and splashes a little
+let ORB_SPEED = 20, ORB_LIFE = 1.75, ORB_HOME = 0.9, ORB_PCT = 0.7, ORB_MIN = 40, ORB_LEAVE = 10, ORB_BURST = 20, ORB_BURST_R = 3.2, ORB_HOLD_HEAT = 0.12;   // m/s, seconds of flight (35 m), lock-on turn (rad/s), share of current health taken, least taken, health always left, splash damage, splash radius, heat per second of holding a full charge
+let orbHitNow = false;
 const VMC_A = new V(), VMC_B = new V(), BOLT_LAUNCH_T = 0.15;
 function vmCrystalMuzzle(out){   // 23 Nov: where the first-person staff's crystal sits on screen, carried into the world just under a metre ahead, so your bolt is seen leaving it
   const sm = VM.staffMesh; if(!sm || !VM.staff || !VM.staff.visible) return false;
@@ -8447,7 +8503,7 @@ function vmCrystalMuzzle(out){   // 23 Nov: where the first-person staff's cryst
 }
 function fireBolt(f, c){
   c = c || 0; if(sorcKit(f)) f.lastBoltAt = clock;
-  if(sorcKit(f) && c >= 0.999){ fireTrialBeam(f); return; }
+  if(sorcKit(f) && c >= 0.999){ fireOrb(f); return; }
   const s = RANGED.bolt, eye = f.eye(new V()), look = f.look(new V());
   const sp = 0.006; look.x += (Math.random() - 0.5)*sp; look.y += (Math.random() - 0.5)*sp; look.z += (Math.random() - 0.5)*sp; look.normalize();
   const hit = raycastWorld(eye, look, 220, f, true), aim = eye.clone().addScaledVector(look, Math.max(hit.t, 4));
@@ -8460,6 +8516,49 @@ function fireBolt(f, c){
   applyTrialRecoil(f,'bolt',1+0.65*c);
   if(f.isPlayer) VM.flash = 1 + c;
   sfx(c > 0.5 ? 'thud' : 'lev', f.isPlayer ? null : f.pos);
+}
+function makeOrbMesh(team){
+  const g = new THREE.Group(), col = 0xb896ff;
+  const shell = new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 1), new THREE.MeshBasicMaterial({ color:0x8a5cf0, wireframe:true, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending, depthWrite:false })); g.add(shell);
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 9), new THREE.MeshBasicMaterial({ color:0xd9c6ff, transparent:true, opacity:0.85, blending:THREE.AdditiveBlending, depthWrite:false })); g.add(body);
+  const gl = fxSprite(FX_GLOW, col, 0.85); gl.scale.setScalar(1.9); g.add(gl);
+  const core = fxSprite(FX_GLOW, 0xffffff, 1); core.scale.setScalar(0.62); g.add(core);
+  const TN = 16; for(let i = 1; i < TN; i++){ const m = fxSprite(FX_GLOW, i < 4 ? 0xe6d8ff : col, 0.6*(1 - i/(TN + 1))); m.scale.setScalar(0.7*(1 - i/(TN + 3))); m.position.z = -0.2*i; g.add(m); }   // a long contrail
+  g.userData.base = 1; return g;
+}
+function fireOrb(f){
+  const s = RANGED.bolt, eye = f.eye(new V()), look = f.look(new V());
+  const hit = raycastWorld(eye, look, 220, f, true), aim = eye.clone().addScaledVector(look, Math.max(hit.t, 4));
+  const right = T1.set(Math.cos(f.yaw), 0, -Math.sin(f.yaw));
+  const muzzle = eye.clone().addScaledVector(look, 0.6).addScaledVector(right, 0.22); muzzle.y -= 0.15;
+  const seen = f.isPlayer && sorcKit(f) ? (() => { const c = new V(); return vmCrystalMuzzle(c) ? c.sub(camera.position).normalize() : null; })() : null;
+  const dir = aim.sub(muzzle).normalize();
+  const mesh = makeOrbMesh(f.team); mesh.position.copy(muzzle); scene.add(mesh);
+  PROJ.push({ owner:f, k:'bolt', orb:true, pos:muzzle, vel:dir.multiplyScalar(ORB_SPEED), life:ORB_LIFE, mesh, seen, born:clock, home:f.burstLock, homeY:f.burstLockY });
+  applyTrialRecoil(f, 'bolt', 1.8);
+  if(f.isPlayer) VM.flash = 2;
+  sfx('thud', f.isPlayer ? null : f.pos);
+}
+function orbDrain(e, amt){ const left = e.hp - ORB_LEAVE; return left <= 0 ? 0 : Math.min(amt, left); }
+function orbHit(p, e){   // the direct hit takes most of what they have left, never all of it; whoever stands near takes a little
+  const o = p.owner; orbHitNow = true;
+  try{
+    damage(e, Math.max(ORB_MIN, e.hp*ORB_PCT), o, 'bolt', false);
+    for(const q of FIGHTERS){ if(q === e || !q.alive || !canHurt(o, q, FF_CANNON)) continue; if(q.pos.distanceTo(p.pos) < ORB_BURST_R + q.r) damage(q, ORB_BURST, o, 'bolt', false); }
+  } finally { orbHitNow = false; }
+  orbBurstFX(p.pos);
+  if(o && o.isPlayer) shake = Math.max(shake || 0, 0.2);
+}
+function orbBurstFX(at){
+  for(let i = 0; i < 4; i++) spark(at.clone().add(new V((Math.random() - 0.5)*0.6, (Math.random() - 0.5)*0.6, (Math.random() - 0.5)*0.6)), i % 2 ? 0xffffff : 0xb896ff);
+  const g = fxSprite(FX_GLOW, 0xcdb4ff, 0.9); g.scale.setScalar(0.5); g.position.copy(at); scene.add(g);
+  FX.push({ t:0, life:0.35, up(){ const u = this.t/this.life; g.scale.setScalar(0.5 + 3.2*u); g.material.opacity = 0.9*(1 - u); }, kill(){ scene.remove(g); g.material.dispose(); } });
+  sfx('block', at);
+}
+function orbPopWard(p, tg){   // the dome goes in one hit, and the orb is spent on it
+  const caster = tg.swardBy; if(caster) endSeekWard(caster); else { tg.swardBy = null; tg.swardEnd = 0; }
+  orbBurstFX(p.pos); p.life = 0;
+  if(tg.isPlayer) toast('WARD BROKEN', '#ff9fd0'); else if(p.owner && p.owner.isPlayer) toast('WARD POPPED', '#cdb4ff');
 }
 const trialBeamGeometry = new THREE.CylinderGeometry(0.035, 0.035, 1, 8);   // unit length, stretched every frame from the crystal to the head
 const trialBeamUp = new V(0, 1, 0);
@@ -9931,12 +10030,13 @@ function damage(t, amt, a, w, head, volley, melee = false){
   if(!FF_ALL && a && a !== t && a.team === t.team && a.team !== undefined) return;   // friendly fire is off
   const shatter = melee && w === 'sword' && a && brigKit(a) && a.team !== t.team ? trialSplinterCount(t, a) : 0;
   amt += shatter*TRIAL_SPLINTER.shatter;
-  if(TRIAL_SCALED_WEAPONS.has(w) && !(w === 'hammer' && a?.swingPious)) amt *= TRIAL_WEAPON_DAMAGE;
+  if(TRIAL_SCALED_WEAPONS.has(w) && !(w === 'hammer' && a?.swingPious) && !orbHitNow) amt *= TRIAL_WEAPON_DAMAGE;
   if(a && a !== t && a.hasChalice) amt *= chEmpower(a);
   if(a && a !== t && a.ambushT > clock && a.team !== t.team){ amt *= SHROUD_AMBUSH; if(a.isPlayer && !a.ambushShown){ a.ambushShown = true; toast('AMBUSH', '#c9c9d2'); } }
 
   if(CLASS_KIT && t.markT > clock && a && a.team === t.markTeam) amt *= DART_MUL;   // a blowgun dart in them: his team hits harder   // caught in an enemy rascal's smoke: every blow lands harder
   if(t.enemyHealthUntil && t.hp >= maxHp(t)) t.enemyHealthUntil = 0;
+  if(orbHitNow) amt = Math.min(amt, Math.max(0, t.hp - ORB_LEAVE));   // the orb never kills: it always leaves a sliver
   t.hp -= amt; t.lastDmg = clock;
   if(w === 'pellet' && volley && amt > 0 && t.hp > 0 && !volley.pushed.has(t) &&
      (TRIAL_BLUNDERBUSS_PUSH > 0 || TRIAL_BLUNDERBUSS_LIFT > 0)){
@@ -10792,11 +10892,12 @@ function updateProjectiles(dt){
         homeBolt(p, Math.min(h, p.guideTime), TRIAL_DAGGER_GUIDE.rate);
         p.guideTime -= h;
         if(p.guideTime <= 0) p.home = null;
-      } else if(p.home) homeBolt(p, h);
+      } else if(p.home) homeBolt(p, h, p.orb ? ORB_HOME : HOME_RATE);
       const ox = p.pos.x, oy = p.pos.y, oz = p.pos.z;
       if(lastSlow < 1 && !trailFrom) trailFrom = p.pos.clone();
       p.pos.addScaledVector(p.vel, h);
       if(CLASS_KIT){ const kn = shieldHit(p, ox, oy, oz);
+        if(kn && p.orb){ p.pos.copy(SH_P); lightBreak(kn); orbBurstFX(p.pos); if(kn.isPlayer) shake = Math.max(shake || 0, 0.2); done = true; break; }   // the orb takes a Bulwark's light out in one hit
         if(kn){ p.pos.copy(SH_P);
           const shieldDamage = p.k === 'pellet' ? p.dmg*pelletFall(p.pos.distanceTo(p.volley.origin)) : p.dmg;
           if(p.k === 'pellet' && shieldDamage === 0){ done = true; break; }
@@ -10831,6 +10932,7 @@ function updateProjectiles(dt){
             break;
           }
           if(dres){ sfx('block', e.pos); spark(p.pos.clone(), 0xffffff); if(p.k === 'ballista') explode(p.pos, p.owner, null); }
+          else if(p.orb){ orbHit(p, e); }
           else {
             const head = p.pos.y > e.pos.y + e.h*0.8 && HEAD_MUL[p.k] > 1;   // the top fifth of the body is the head
             const hm = !head ? 1 : p.k === 'javelin' && knKit(e) ? Math.min(HEAD_MUL.javelin, 2) : HEAD_MUL[p.k];   // the crusader's helm: a javelin to the head (130) doesn't kill him from full
@@ -10871,7 +10973,7 @@ function updateProjectiles(dt){
       T5.copy(camera.position).addScaledVector(p.seen, Math.max(0.9, depth)/along); p.mesh.position.lerp(T5, 1 - u*u*(3 - 2*u)); } }
     if(p.k === 'relic'){ p.mesh.rotation.x += dt*9; }   // end over end
     else if(p.k === 'smoke' || p.k === 'flask'){ p.mesh.rotation.x += dt*6; p.mesh.userData.spark.material.opacity = 0.6 + 0.4*Math.random(); }
-    if(p.k === 'knives' || p.k === 'infernal' || p.k === 'bolt' || p.k === 'javelin' || p.k === 'dart' || p.k === 'spear'){ T1.copy(p.pos).add(p.vel); p.mesh.lookAt(T1); if(p.k === 'bolt') p.mesh.children[0].rotation.z += dt*14; }
+    if(p.k === 'knives' || p.k === 'infernal' || p.k === 'bolt' || p.k === 'javelin' || p.k === 'dart' || p.k === 'spear'){ T1.copy(p.pos).add(p.vel); p.mesh.lookAt(T1); if(p.k === 'bolt') p.mesh.children[0].rotation.z += dt*14; if(p.orb){ p.mesh.children[0].rotation.x += dt*9; p.mesh.scale.setScalar(1 + 0.1*Math.sin(clock*26)); } }
   }
 }
 function explode(p, owner, direct){
@@ -11147,7 +11249,9 @@ function actCore(f, dt){
   if(f.windup || f.parryCd > 0 || (wantBlock && !knKit(f))) return;   // mid-swing or blocking: no attacks (the crusader swings with the light up)
   if(sorcKit(f) && f.weapon === 'ranged' && !f.hasBall){   // the staff: tap for a bolt; hold to charge a heavy one, loosed on release
     if(f.swapT > 0 || f.gwardAim > 0 || f.overheat > 0){ f.boltHold = 0; f.boltCharge = 0; return; }
-    if(I.fire){ f.boltHold = (f.boltHold || 0) + aegisStaffTime(f, dt); f.boltCharge = clamp((f.boltHold - BOLT_HOLD)/BOLT_CHARGE_T, 0, 1); return; }
+    if(I.fire){ f.boltHold = (f.boltHold || 0) + aegisStaffTime(f, dt); f.boltCharge = clamp((f.boltHold - BOLT_HOLD)/BOLT_CHARGE_T, 0, 1);
+      if(f.boltCharge >= 1){ f.heat = (f.heat || 0) + dt*ORB_HOLD_HEAT; if(f.heat >= 1){ f.heat = 1; f.overheat = f.overheatMax = STAFF_OVERHEAT; f.boltHold = f.boltCharge = 0; sfx('block', f.isPlayer ? null : f.pos); if(f.isPlayer) toast('STAFF OVERHEATED', '#ff8a4a'); } }   // holding a full charge heats the staff; hold too long and it fizzles
+      return; }
     if(f.boltHold > 0){ const c = f.boltCharge || 0; f.boltHold = 0; f.boltCharge = 0; if(f.rangedCd <= 0){ f.rangedCd = BOLT_CD; f.burstLock = lockTarget(f); const n = 1; staffHeat(f, c); fireBolt(f, c); f.burstC = c; f.burstLeft = n - 1; f.burstT = BOLT_GAP; } }
     return; }
   if(!I.fire) f.hamHeld = false;
@@ -12691,7 +12795,7 @@ const TITLE_CUP = {};   // 23 Nov: the home crest cup, read by the menu cup so t
     requestAnimationFrame(frame);
     if(m.hidden) return;
     if(ts && getComputedStyle(ts).display === 'none') return;   // the setup, lobby and other sub pages carry no crest
-    const dt = Math.min(0.05, (now - last)/1000); last = now;
+    const dt = Math.min(0.05, (now - last)/1000); last = now; splitDt = dt;
     const menuOn = !m.classList.contains('titling');
     blend += ((menuOn ? 1 : 0) - blend)*Math.min(1, dt*4);
     const e = blend*blend*(3 - 2*blend);
@@ -12770,6 +12874,8 @@ function pollGamepad(p, dt){
   catch(err){ pads = []; }
   let pad = activePad != null ? pads[activePad] : null;
   if(!pad || !pad.connected){ pad = Array.from(pads).find(x => x && x.connected) || null; activePad = pad ? pad.index : null; padButtons = []; }
+  if(splitOn() && SEATS){ const mine = pads[SEATS[0].pad] || null; if(mine !== pad){ pad = mine; activePad = pad ? pad.index : null; padButtons = []; } }   // split screen: player 1 is the pad that took seat 1
+  if(splitSel.isOpen()){ padFire = false; padHeld.clear(); padPressed.clear(); padMoveX = padMoveY = padLookX = padLookY = 0; return; }   // the class select reads the pads itself
   const b = pad ? pad.buttons : [];
   const down = i => !!(b[i] && (b[i].pressed || b[i].value > 0.55));
   const edge = new Set(), wasDown = padButtons; padHeld = new Set(); padYRequest = null; padWeaponRequest = null;
@@ -12827,6 +12933,47 @@ function padMenuItems(ui){
   }
   return out;
 }
+const PAD_MAP = [[0,'Space'],[4,'ShiftLeft'],[6,'KeyQ'],[2,'KeyR'],[5,'KeyF'],[1,'KeyE'],[10,'KeyE'],[14,'KeyG']];
+function rawPads(){ try{ return navigator.getGamepads ? navigator.getGamepads() : []; }catch(e){ return []; } }
+function connectedPads(){ let a = []; try{ a = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(x => x && x.connected) : []; }catch(e){} return a; }
+// split screen: players 2 to 4, each on their own pad, through the same controls as player 1
+function padControl(f, dt){
+  const S = f.padSt, pad = rawPads()[f.pad] || null;
+  const b = pad ? pad.buttons : [], down = i => !!(b[i] && (b[i].pressed || b[i].value > 0.55));
+  const edge = new Set(); for(let i = 0; i < b.length; i++) if(down(i) && !S.b[i]) edge.add(i);
+  const was = S.b; S.b = Array.from(b, (_, i) => down(i));
+  const raw = i => pad ? (pad.axes[i] || 0) : 0;
+  const dz = (x, y, d) => { const m = Math.hypot(x, y); if(m < d) return [0, 0]; const k = Math.min(1, (m - d)/(1 - d))/m; return [x*k, y*k]; };
+  const [mx, my] = dz(raw(0), raw(1), 0.18), [lx, ly] = dz(raw(2), raw(3), 0.14);
+  const held = new Set(), just = new Set();
+  for(const [i, code] of PAD_MAP){ if(down(i)) held.add(code); if(edge.has(i)) just.add(code); }
+  let weaponReq = null, yReq = null;
+  if(edge.has(12)) weaponReq = TRIAL_SLOT.primary;
+  if(edge.has(15)) weaponReq = TRIAL_SLOT.repeater;
+  if(edge.has(13) || edge.has(11)) weaponReq = TRIAL_SLOT.melee;
+  if(edge.has(3)){ S.yAt = performance.now(); S.yDone = false; }
+  if(down(3) && !S.yDone && performance.now() - S.yAt >= 280){ yReq = 'melee'; S.yDone = true; }
+  if(was[3] && !down(3) && !S.yDone) yReq = 'toggle';
+  if(edge.has(9) && state === 'play'){ setPaused(true); return; }
+  if(f.alive){
+    const m = Math.hypot(lx, ly), c = m > 0 ? Math.pow(m, 1.8)/m : 0;
+    const keep = { id:AA.id, yaw:AA.yaw, pitch:AA.pitch }; Object.assign(AA, S.AA);   // the aim assist's lock is per player
+    const aa = aimAssist(f, m > 0.05 || Math.hypot(mx, my) > 0.1);
+    S.AA = { id:AA.id, yaw:AA.yaw, pitch:AA.pitch }; Object.assign(AA, keep);
+    f.yaw -= lx*c*dt*3.6*padSens*aa;
+    f.pitch = clamp(f.pitch - (padInvert ? -1 : 1)*ly*c*dt*2.4*padSens*aa, -1.5, 1.5);
+  }
+  controlFrom(f, dt, { p1:false, held:c => held.has(c), just:c => just.has(c), key:() => false, mv:() => [mx, -my],
+    fire:down(7), rmbHeld:false, rmbPress:false, weaponReq, yReq, wheel:false, clear:() => {} });
+  f.in.firePress = edge.has(7);
+}
+// any pad's Start unpauses in split screen
+function splitPauseTick(){
+  if(!paused || !splitOn()) return;
+  const pads = rawPads();
+  for(const f of LOCAL){ if(f.pad == null) continue; const pd = pads[f.pad], b = pd ? pd.buttons : [], st = !!(b[9] && b[9].pressed);
+    if(st && !f.padSt.b[9] && performance.now() - pausedAt > 300) setPaused(false); f.padSt.b[9] = st; }
+}
 let padUiLast = null;
 function padUiTick(ui, edge, down){
   if(ui !== padUiLast){ padUiLast = ui; if(padFocus) padFocus.classList.remove('padFocus'); padFocus = null; }   // a new screen starts at its first item
@@ -12882,6 +13029,8 @@ function setPadFocus(el){
 }
 let locked = false, fallback = false, sens = 1;
 try{ const s = parseFloat(localStorage.getItem('oddball-sens')); if(s > 0) sens = s; }catch(e){}
+$('splitN').value = SPLIT > 1 ? '4' : '1';
+$('splitN').addEventListener('change', e => { SPLIT = parseInt(e.target.value) || 1; try{ localStorage.setItem('chalice-split', String(SPLIT)); }catch(err){} });
 $('sens').value = sens; $('sensV').textContent = sens.toFixed(2);
 $('sens').addEventListener('input', e => { sens = parseFloat(e.target.value); $('sensV').textContent = sens.toFixed(2); try{ localStorage.setItem('oddball-sens', String(sens)); }catch(err){} });
 addEventListener('keydown', e => {
@@ -12941,27 +13090,36 @@ document.addEventListener('pointerlockchange', () => {
 });
 document.addEventListener('pointerlockerror', () => { if(state === 'play' && performance.now() - softAt > 1000) enableFallback(); });
 
-function playerControl(dt){
-  const p = PLAYER, I = p.in;
-  const held = code => !!keys[code] || padHeld.has(code), just = code => pressed.has(code) || padPressed.has(code);
+const P1C = { p1:true, held:code => !!keys[code] || padHeld.has(code), just:code => pressed.has(code) || padPressed.has(code), key:code => pressed.has(code),
+  mv:() => [(keys.KeyD||keys.ArrowRight ? 1 : 0) - (keys.KeyA||keys.ArrowLeft ? 1 : 0) + padMoveX, (keys.KeyW||keys.ArrowUp ? 1 : 0) - (keys.KeyS||keys.ArrowDown ? 1 : 0) - padMoveY],
+  get fire(){ return mouse[0] || padFire; }, get rmbHeld(){ return !!mouse[2]; }, get rmbPress(){ return mpressed.has(2); },
+  get weaponReq(){ return padWeaponRequest; }, get yReq(){ return padYRequest; }, get wheel(){ return wheelSwap; }, clear:() => padPressed.clear() };
+function playerControl(dt){ controlFrom(PLAYER, dt, P1C); }
+function controlFrom(p, dt, C){
+  const I = p.in;
+  const held = C.held, just = C.just;
   I.move.set(0,0,0); I.jump = I.fire = I.melee = I.ability = I.abilityHeld = I.parry = I.block = I.shield = I.pass = I.reload = I.ward = I.throwL = I.drink = I.passChalice = I.throwChalice = I.lamp = I.aegis = I.dart = I.dartHold = I.shroud = I.rally = false; I.swapTo = null;
   if(!p.alive){
     p.charging = false; p.charge = 0;
+    if(splitOn()){   // split screen: D-pad left and right pick the next class
+      const d = (just('KeyG') ? -1 : 0) + (C.weaponReq === TRIAL_SLOT.repeater ? 1 : 0);
+      if(d && CLASS_KIT && !isClassic() && !oneClass()){ const n = SPLIT_CLS.length, cur = SPLIT_CLS.indexOf(p.nextCls || p.clsKey); const k = SPLIT_CLS[((cur < 0 ? 0 : cur) + d + n) % n]; p.nextCls = k === p.clsKey ? null : k; }
+      C.clear(); return;
+    }
     if(isClassic()){ if(pressed.has('Digit1')) chooseMove('dash'); if(pressed.has('Digit2')) chooseMove('fly'); }
     else if(!managedMatch){ for(const [code, k] of [['Digit1','goblin'],['Digit2','knight'],['Digit3','sorcerer'],['Digit4','lampist'],['Digit5','brigand']]) if(pressed.has(code)) chooseNextClass(k);
       if(locked && mpressed.has(0) && PK.hov) pickAct(PK.hov); }
-    padPressed.clear(); return;
+    C.clear(); return;
   }
-  const fz = Math.max(-1,Math.min(1,(keys.KeyW||keys.ArrowUp ? 1 : 0) - (keys.KeyS||keys.ArrowDown ? 1 : 0) - padMoveY));
-  const fx = Math.max(-1,Math.min(1,(keys.KeyD||keys.ArrowRight ? 1 : 0) - (keys.KeyA||keys.ArrowLeft ? 1 : 0) + padMoveX));
+  const mv = C.mv(), fz = clamp(mv[1], -1, 1), fx = clamp(mv[0], -1, 1);
   const sy = Math.sin(p.yaw), cy = Math.cos(p.yaw);
   I.move.set(-sy*fz + cy*fx, 0, -cy*fz - sy*fx); if(I.move.lengthSq() > 1) I.move.normalize();
   I.jump = held('Space');
-  I.fire = mouse[0] || padFire;
+  I.fire = C.fire;
   // F doubles as right click (for trackpads)
   const fRmb = !(isChal() && p.hasChalice);   // while carrying the cup F drinks, so it stops being a right-click alias
-  const rmb = !!mouse[2] || (fRmb && held('KeyF'));
-  const rmbPress = mpressed.has(2) || (fRmb && just('KeyF'));
+  const rmb = C.rmbHeld || (fRmb && held('KeyF'));
+  const rmbPress = C.rmbPress || (fRmb && just('KeyF'));
   const knight = p.clsKey === 'knight';
   I.melee = rmbPress && !p.hasBall && p.weapon === 'ranged' && !kitTwo(p);   // right click with the cannon out: bash
   I.aegis = rmbPress && !p.hasBall && sorcKit(p);
@@ -12972,29 +13130,29 @@ function playerControl(dt){
   I.lamp = rmb && lampKit(p);   // lampist: hold to raise the lantern (with the flintlock out)   // the left hand works with the primary out; the crusader's shield is strapped on, so it works with either
   I.throwL = just('KeyQ') && !p.hasBall && (gobKit(p) || knKit(p) || lampKit(p) || brigKit(p) || sorcKit(p));
   I.throwHeld = held('KeyQ');
-  if(CLASS_KIT && p.hasChalice){ if(rmbPress) nhNope('f'); if(just('ShiftLeft') || pressed.has('ShiftRight')) nhNope('s');
-    const first = pressed.has('Digit1'), second = pressed.has('Digit2'), wheelHeavy = wheelSwap && heavyW(p, otherW(p.weapon));
+  if(CLASS_KIT && p.hasChalice && C.p1){ if(rmbPress) nhNope('f'); if(just('ShiftLeft') || pressed.has('ShiftRight')) nhNope('s');
+    const first = C.key('Digit1'), second = C.key('Digit2'), wheelHeavy = C.wheel && heavyW(p, otherW(p.weapon));
     if((first && heavyW(p, primW(p))) || (second && heavyW(p, otherW(primW(p)))) || wheelHeavy) nhNope('w'); }   // the HUD flashes a locked heavy weapon when it is selected
   const current = trialWeapon(p).slot;
   I.trialSlot = 0;
-  if(padWeaponRequest === 'cycle'){
+  if(C.weaponReq === 'cycle'){
     const slots = p.hasChalice ? [TRIAL_SLOT.repeater, TRIAL_SLOT.melee] : [TRIAL_SLOT.primary, TRIAL_SLOT.repeater, TRIAL_SLOT.melee];
     I.trialSlot = slots[(slots.indexOf(current) + 1 + slots.length) % slots.length];
-  } else if(padWeaponRequest) I.trialSlot = p.hasChalice && padWeaponRequest === TRIAL_SLOT.primary ? TRIAL_SLOT.repeater : padWeaponRequest;
-  if(padYRequest === 'melee') I.trialSlot = TRIAL_SLOT.melee;
-  else if(padYRequest === 'toggle'){
+  } else if(C.weaponReq) I.trialSlot = p.hasChalice && C.weaponReq === TRIAL_SLOT.primary ? TRIAL_SLOT.repeater : C.weaponReq;
+  if(C.yReq === 'melee') I.trialSlot = TRIAL_SLOT.melee;
+  else if(C.yReq === 'toggle'){
     if(p.hasChalice) I.trialSlot = current === TRIAL_SLOT.melee ? TRIAL_SLOT.repeater : TRIAL_SLOT.melee;
     else I.trialSlot = current === TRIAL_SLOT.primary ? TRIAL_SLOT.repeater : TRIAL_SLOT.primary;
   }
-  if(wheelSwap){
+  if(C.wheel){
     I.trialSlot = p.hasChalice
       ? (current === TRIAL_SLOT.melee ? TRIAL_SLOT.repeater : TRIAL_SLOT.melee)
       : current % 3 + 1;
   }
-  if(pressed.has('Digit1')) I.trialSlot = TRIAL_SLOT.primary;
-  if(pressed.has('Digit2')) I.trialSlot = TRIAL_SLOT.repeater;
-  if(pressed.has('Digit3')) I.trialSlot = TRIAL_SLOT.melee;
-  wheelSwap = false;
+  if(C.key('Digit1')) I.trialSlot = TRIAL_SLOT.primary;
+  if(C.key('Digit2')) I.trialSlot = TRIAL_SLOT.repeater;
+  if(C.key('Digit3')) I.trialSlot = TRIAL_SLOT.melee;
+  if(C.p1) wheelSwap = false;
   // with the ball, hold E to charge a pass, release to throw (a fresh press: the E that picked it up doesn't throw it)
   const holding = p.hasBall && held('KeyE') && (p.charging || just('KeyE'));
   if(holding){ p.charge = Math.min(1, (p.charging ? p.charge : 0) + dt/CHARGE_T); p.charging = true; }
@@ -13008,7 +13166,7 @@ function playerControl(dt){
     else if(p.chThrowHeld){ p.chThrowHeld = false; p.chAim = false; I.throwChalice = true; } }
   else { p.chThrowHeld = false; p.chAim = false; if(just('KeyG')) callForPass(p); }
   if(just('KeyE')) p.grabT = 0.3; else p.grabT = Math.max(0, (p.grabT || 0) - dt);   // a short buffer so pressing E just before reaching the ball still works
-  padPressed.clear();
+  C.clear();
 }
 const ARC_N = 60;
 const arcGeo = new THREE.BufferGeometry(); arcGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ARC_N*3), 3));
@@ -13879,6 +14037,26 @@ function newMatch(){
     for(const k of comp) FIGHTERS.push(new Fighter({name:names.pop(), team:T, cls:k, num:nums?.[T].pop()}));
     for(const k of shuffle([cls, ...comp])) FIGHTERS.push(new Fighter({name:names.pop(), team:O, cls:k, num:nums?.[O].pop()}));
   }
+  LOCAL.length = 0;
+  if(SEATS && SEATS.length > 1){
+    PLAYER.pad = null; LOCAL.push(PLAYER);
+    SEATS.forEach((seat, i) => { if(i === 0) return;
+      const bot = FIGHTERS.find(f => !f.isPlayer && f.pad == null && f.team === seat.team) || FIGHTERS.find(f => !f.isPlayer && f.pad == null);
+      if(bot){ FIGHTERS.splice(FIGHTERS.indexOf(bot), 1); if(bot.P) scene.remove(bot.P.root); }
+      const k = isClassic() ? 'gridiron' : oneClass() ? CLASS_MODE : seat.cls || (bot ? bot.clsKey : cls);
+      const f = new Fighter({ name:'P' + (i + 1), team:seat.team, cls:k, num:bot ? bot.num : 0 });
+      f.pad = seat.pad; f.padSt = { b:[], yAt:0, yDone:false, AA:{ id:null, yaw:0, pitch:0 } };
+      FIGHTERS.push(f); LOCAL.push(f);
+    });
+    // even the teams back up by moving bots across
+    for(let n = 0; n < 8; n++){
+      const c = [0, 1].map(t => FIGHTERS.filter(f => f.team === t).length), big = c[0] > c[1] ? 0 : 1;
+      if(Math.abs(c[0] - c[1]) <= 1) break;
+      const bot = FIGHTERS.find(f => !f.isPlayer && f.pad == null && f.team === big); if(!bot) break;
+      bot.team = 1 - big; bot.setClass(bot.clsKey);
+    }
+  }
+  document.body.classList.toggle('split', splitOn()); if(splitOn()) buildSplitHud();
   for(const f of FIGHTERS) f.move = f.isPlayer ? MOVE_PICK : (Math.random() < 0.5 ? 'dash' : 'fly');   // gridiron movement: the player's last pick, bots a mix
   buildVM(cls);
   SCORE = [0,0]; matchT = MATCH_LEN; clock = 0; TEAMST = [{ bank:0, kill:0, lost:0 }, { bank:0, kill:0, lost:0 }];
@@ -13938,7 +14116,7 @@ function setPaused(v){
 function quitToMenu(){
   state = 'menu'; paused = false; managedMatch = false; lobbyRoster = null;
   if(document.exitPointerLock && locked) document.exitPointerLock();
-  clearMatch(); PLAYER = null; resetBall();
+  clearMatch(); PLAYER = null; resetBall(); LOCAL.length = 0; document.body.classList.remove('split');
   $('pause').hidden = true; $('hud').hidden = true; $('end').hidden = true; $('menu').hidden = false; showPage('pgMain'); localMenu.go('home');
 }
 
@@ -14119,6 +14297,10 @@ const TUNES = [
   { k:'scool',   label:'Arcanist staff: cooling per second', unit:'', min:0.05, max:2, step:0.05, get:() => STAFF_COOL, set:v => { STAFF_COOL = v; } },
   tuneNumber('scooldelay', 'Delay before staff starts cooling', 's', [0, 3, 0.05], () => STAFF_COOL_DELAY, v => { STAFF_COOL_DELAY = v; }),
   { k:'sover',   label:'Arcanist staff: overheat lockout', unit:'s', min:0, max:8, step:0.5, get:() => STAFF_OVERHEAT, set:v => { STAFF_OVERHEAT = v; } },
+  tuneNumber('orbspeed', 'Arcanist orb: speed', 'm/s', [5, 60, 1], () => ORB_SPEED, v => { ORB_SPEED = v; }),
+  tuneNumber('orbhome', 'Arcanist orb: lock-on turn', 'rad/s', [0, 3, 0.05], () => ORB_HOME, v => { ORB_HOME = v; }),
+  tuneNumber('orbpct', 'Arcanist orb: share of health taken', 'x', [0.1, 1, 0.05], () => ORB_PCT, v => { ORB_PCT = v; }),
+  tuneNumber('orbleave', 'Arcanist orb: health always left', 'hp', [0, 40, 1], () => ORB_LEAVE, v => { ORB_LEAVE = v; }),
   { k:'sfullov', label:'Arcanist staff: cool-down after a full charge', unit:'s', min:0, max:5, step:0.1, get:() => STAFF_CHARGE_OVER, set:v => { STAFF_CHARGE_OVER = v; } },
   { k:'pdmg', label:'Spear damage before combat scaling', unit:'', min:5, max:100, step:1, get:() => PIKE_DMG, set:v => { PIKE_DMG = v; } },
   { k:'pikehead', label:'Diamond spear: headshot multiplier', unit:'×', min:1, max:3, step:0.05, get:() => PIKE_HEAD, set:v => { PIKE_HEAD = v; } },
@@ -14235,7 +14417,7 @@ const TUNES = [
   { k:'tosst', label:'Throwables: time from Q to letting go', unit:'s', min:0, max:1, step:0.05, get:() => TOSS_REL, set:v => { TOSS_REL = v; TOSS_T = Math.max(TOSS_T, v + 0.1); } },
 ];
 const TUNE_DEFAULTS = {}; for(const t of TUNES) TUNE_DEFAULTS[t.k] = t.get();
-const TUNE_OLD_DEFAULTS = { relcd:20, cgrencd:20, smkcd:20, ralcd:20, lightbrk:20, shrt:5, shrcd:15, shrsp:1.15, ralsp:1, ralcdr:1.5, splintertime:4, runicrecharge:[3, 4], furnacedirect:34, furnacesplash:16, rifleammo:24, bbshots:3, furnacecapacity:4, furnaceinterval:0.75, furnacepatchradius:1.25, furnacespeed:18, bbdamage:110, bbmiddamage:95, hamtap2:0.05, smkmark:2.5, fragcd:[14, 20], flaskcd:[14, 20], flmdps:40, flmrng:7, gwardcd:8, dmgham:60, dmgbb:12, bstab:1.5, flrl:1.5, chwin:60, chcup:[10, 6], chs2:0.5, chs3:0.8, dagcd:[0.4, 0.3], sheat:[0.065, 0.06], sramp:2, bfull:40, bcd:0.3, hpg:[80, 90, 100, 110, 107, 115], hps:[100, 110, 118, 126], hpk:[180, 150, 130, 139, 147], hpl:[110, 118, 126], hpbr:[115, 123, 131], shslow:0.85, lightw:2.75, lightrec:[6, 20], chdmg:[15, 40], dmgdag:25, dmgknf:[50, 40, 25], dblgap:0.13, dmgbolt:[12.5, 10, 10.5], dmgjav:[60, 75, 65], javcd:3.8, chspd:10, cht:0.6, chwind2:1, match:5, lunge:4.6, scramble:3, team:4, speed:[9.2, 8.2, 7.544], jumph:4.77, clsspd:[6.8, 6.256], clsjmp:1.8, ability:8, htkh:1, htkball:1, spk:0.88 };   // a saved value that is just an old default gives way to the new default
+const TUNE_OLD_DEFAULTS = { bcht:[0.65, 1.05], sfullov:3, relcd:20, cgrencd:20, smkcd:20, ralcd:20, lightbrk:20, shrt:5, shrcd:15, shrsp:1.15, ralsp:1, ralcdr:1.5, splintertime:4, runicrecharge:[3, 4], furnacedirect:34, furnacesplash:16, rifleammo:24, bbshots:3, furnacecapacity:4, furnaceinterval:0.75, furnacepatchradius:1.25, furnacespeed:18, bbdamage:110, bbmiddamage:95, hamtap2:0.05, smkmark:2.5, fragcd:[14, 20], flaskcd:[14, 20], flmdps:40, flmrng:7, gwardcd:8, dmgham:60, dmgbb:12, bstab:1.5, flrl:1.5, chwin:60, chcup:[10, 6], chs2:0.5, chs3:0.8, dagcd:[0.4, 0.3], sheat:[0.065, 0.06], sramp:2, bfull:[40, 55], bdmg:8, bcd:0.3, hpg:[80, 90, 100, 110, 107, 115], hps:[100, 110, 118, 126], hpk:[180, 150, 130, 139, 147], hpl:[110, 118, 126], hpbr:[115, 123, 131], shslow:0.85, lightw:2.75, lightrec:[6, 20], chdmg:[15, 40], dmgdag:25, dmgknf:[50, 40, 25], dblgap:0.13, dmgbolt:[12.5, 10, 10.5], dmgjav:[60, 75, 65], javcd:3.8, chspd:10, cht:0.6, chwind2:1, match:5, lunge:4.6, scramble:3, team:4, speed:[9.2, 8.2, 7.544], jumph:4.77, clsspd:[6.8, 6.256], clsjmp:1.8, ability:8, htkh:1, htkball:1, spk:0.88 };   // a saved value that is just an old default gives way to the new default
 try{ const saved = JSON.parse(localStorage.getItem('chalice-class-tuning-v1') || '{}'); for(const k in TUNE_OLD_DEFAULTS) if([].concat(TUNE_OLD_DEFAULTS[k]).includes(saved[k])) delete saved[k]; for(const t of TUNES) if(typeof saved[t.k] === (t.type === 'bool' ? 'boolean' : 'number') && (t.type === 'bool' || (saved[t.k] >= t.min && saved[t.k] <= t.max))) t.set(saved[t.k]); }catch(e){}   // a saved value outside its slider's range is stale (or from an old clash of names): ignore it
 function fmtTune(t, v){
   if(t.fmt) return t.fmt(Math.round(v));
@@ -14677,7 +14859,7 @@ function setMode(m){ GAME_MODE = 'classes'; try{ localStorage.setItem('scryball-
 const CTL = {
   knight:[['1', 'Flail. Sweeping overhead strikes can hit several nearby enemies.'], ['RIGHT CLICK', 'Bulwark: plant a wide wall of light. It stays put while you move and fight. Allies can fire through it.'], ['2', 'Warhammer. Knocks enemies back. Hold after striking to wind up a heavier smash. Unavailable while carrying the chalice.'], ['SHIFT', 'Pious Charge: hold the cross out, then charge, knocking aside and hurting everyone in your path'], ['Q', 'Holy Book: opens and sends out three shockwaves over 3 s, pushing enemies back']],
   goblin:[['LEFT CLICK', 'Slash with the dagger'], ['RIGHT CLICK / F', 'Shroud: you and nearby teammates become hard to see for a few seconds and run faster. Attacking or using a skill breaks it for that fighter'], ['Q', 'Poison Smoke blocks sight, slows enemies and poisons them'], ['2', 'Throwing daggers. Click to throw, right then left'], ['SHIFT', 'Hold to reach out and mark a spot, let go to blink there in smoke']],
-  sorcerer:[['LEFT CLICK', 'Crystal staff: tap for a bolt. Release a full charge to send a piercing pulse down the lane'], ['2', 'Diamond spear: quick long jabs, no use up close'], ['RIGHT CLICK / F', 'Ward: a glass dome on the ally under your crosshair for 12 s. It mirrors every projectile back'], ['SHIFT', 'Float: hold to rise and drift'], ['Q', 'Crystal Grenade: it sticks to surfaces and enemies and bursts in shrapnel after 2 s. Stuck to an enemy, it kills them']],
+  sorcerer:[['LEFT CLICK', 'Crystal staff: tap for a bolt. Release a full charge to send a slow plasma orb that pops Wards and Bulwarks and leaves flesh near death'], ['2', 'Diamond spear: quick long jabs, no use up close'], ['RIGHT CLICK / F', 'Ward: a glass dome on the ally under your crosshair for 12 s. It mirrors every projectile back'], ['SHIFT', 'Float: hold to rise and drift'], ['Q', 'Crystal Grenade: it sticks to surfaces and enemies and bursts in shrapnel after 2 s. Stuck to an enemy, it kills them']],
   brigand:[['LEFT CLICK', 'Greatsword: a wide, long sweep'], ['RIGHT CLICK / F', 'Rally: fist up, a shockwave that speeds up teammates around you for 6 s'], ['2', 'Javelins: throw one, walk over it to take it back'], ['SHIFT', 'Hold Shift while moving forward to sprint. It recharges when idle.'], ['Q', 'Powder grenade']],
   lampist:[['LEFT CLICK', 'Furnace Lantern: launch a fireball. R to reload'], ['RIGHT CLICK / F', 'Lightbath: raise the lantern, then a field of light heals you and nearby teammates for 12 s'], ['Q', 'Tap to throw the Marking Lantern or hold to preview its landing point']],
   gridiron:[['LEFT CLICK', 'Swing the sword, or fire the cannon'], ['RIGHT CLICK / F', 'Block. Tap just in time to bat a cannonball away'], ['2', 'Cannon. R to reload'], ['SHIFT', 'Dash or Levitate, picked before each spawn']] };
@@ -14729,7 +14911,7 @@ const KIT = {
     ['F', 1, 'Holy Book', 'Throws a holy book that opens and sends out three shockwaves over 3 s, pushing nearby enemies back.'],
     ['SHIFT', 2, 'Pious Charge', 'He raises the cross for 0.40 s, then charges through enemies.'] ] },
   sorcerer:{ role:'The controller. Shapes the fight from range: slows the enemy down and armours a teammate.', rows:[
-    ['1', 1, 'Crystal staff', 'Tap for a light bolt. Hold to charge: half charge looses two heavier bolts, full charge three. Overheats if pushed.'],
+    ['1', 1, 'Crystal staff', 'Tap for a light bolt. Hold to charge a heavier one. A full charge sends a slow plasma orb that pops Wards and Bulwarks and takes most of a person\'s health, but never kills. The staff then overheats.'],
     ['2', 2, 'Diamond spear', 'Two-handed jabs at long reach. Switch to the staff up close or while carrying the chalice.'],
     ['RIGHT CLICK', 0, 'Ward', 'A glass dome on one ally (never yourself) for 12 s. It travels with them and mirrors every enemy projectile, grenades included. The cooldown starts when it ends.'],
     ['Q', 1, 'Crystal Grenade', 'Thrown on a true arc. It sticks to surfaces and enemies, chimes faster as it primes, and bursts after 2 s into crystal shrapnel. Stuck to an enemy, it kills them. One charge, 12 s to recharge.'],
@@ -14797,7 +14979,9 @@ for(const b of document.querySelectorAll('#compSeg button')) b.addEventListener(
 for(const b of document.querySelectorAll('#sizeSeg button')) b.addEventListener('click', () => { TEAM_SIZE = +b.dataset.n; if(typeof saveTune === 'function') saveTune(); renderClassPage(); });
 renderClassPage(); window.__clsPage = true;
 
-function startGame(){ for(const el of document.querySelectorAll('.nameIn, .numIn')) if(el === document.activeElement) el.blur();   // commit a half-typed name or number
+function startGame(){ if(SPLIT > 1 && !splitSel.take()){ splitSel.open(); return; }
+  if(SPLIT <= 1) SEATS = null;
+  for(const el of document.querySelectorAll('.nameIn, .numIn')) if(el === document.activeElement) el.blur();   // commit a half-typed name or number
   initAudio(); newMatch(); if(!TEST) lock(); }
 for(const b of document.querySelectorAll('[data-play]')) b.addEventListener('click', () => { setMode(b.dataset.play); startGame(); });
 for(const b of document.querySelectorAll('#gameSeg button')) b.addEventListener('click', () => setGameType(b.dataset.g));
@@ -14858,6 +15042,78 @@ const MENU_CLASSES = [
       ['MOVEMENT','Sprint','SHIFT','Hold Shift while moving forward to sprint 30% faster for up to 1.75 s. It recharges after a brief pause.']] }
 ];
 const CLASS_PICK = [...MENU_CLASSES].sort((a, b) => a.name.localeCompare(b.name));
+// split screen class select: press A to join, move your square onto a class, A to pick, X to change team, Start to play
+const splitSel = (() => {
+  const COL = ['#e0443c', '#3c7ce0', '#e8c23a', '#3cbf5a'];
+  let el = null, open = false, go = false, seats = [], prev = {}, last = 0;
+  const isOpen = () => open;
+  function build(){
+    el = document.createElement('div'); el.id = 'splitSel'; el.hidden = true; document.body.appendChild(el);
+    el.innerHTML = `<h2>CHOOSE YOUR FIGHTERS</h2><div class="ssCards">${CLASS_PICK.map(c => `<div class="ssCard" data-k="${c.key}"><div class="ssSym">${NH_IC.sym[c.key] || ''}</div><div class="ssNm">${c.name}</div><div class="ssRole">${c.role}</div><div class="ssToks"></div></div>`).join('')}</div>
+      <div class="ssSlots">${[0, 1, 2, 3].map(i => `<div class="ssSlot" style="--pc:${COL[i]}"></div>`).join('')}</div><div class="ssHint"></div><div class="ssCurs"></div>`;
+  }
+  function openSel(){
+    if(!el) build();
+    open = true; go = false; el.hidden = false; prev = {}; last = performance.now();
+    for(const p of rawPads()) if(p) prev[p.index] = Array.from(p.buttons, b => b.pressed || b.value > 0.55);   // the press that opened it doesn't join
+    for(const s of seats) s.cls = isClassic() || oneClass() ? s.cls : s.cls;
+    if(document.exitPointerLock && locked) document.exitPointerLock();
+    draw();
+  }
+  function close(){ open = false; if(el) el.hidden = true; }
+  const ready = () => seats.length > 0 && seats.every(s => s.cls || isClassic() || oneClass());
+  function start(){
+    const order = [...seats].sort((a, b) => a.slot - b.slot);
+    SEATS = order.length > 1 ? order.map(s => ({ pad:s.pad, cls:s.cls, team:s.team })) : null;
+    if(order[0].cls && !isClassic()) selectedClass = order[0].cls;
+    MY_TEAM = order[0].team;
+    close(); go = true; startGame();
+  }
+  function cardAt(x, y){ for(const c of el.querySelectorAll('.ssCard')){ const r = c.getBoundingClientRect(); if(x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return c; } return null; }
+  function tick(){
+    if(!open) return;
+    const now = performance.now(), dt = Math.min(0.05, (now - last)/1000); last = now;
+    const W = innerWidth, H = innerHeight;
+    for(const p of rawPads()){
+      if(!p || !p.connected) continue;
+      const b = p.buttons, down = i => !!(b[i] && (b[i].pressed || b[i].value > 0.55)), was = prev[p.index] || [], edge = i => down(i) && !was[i];
+      let s = seats.find(x => x.pad === p.index);
+      if(!s){
+        if(edge(0) && seats.length < 4){ const slot = [0, 1, 2, 3].find(i => !seats.some(x => x.slot === i));
+          s = { pad:p.index, slot, cls:null, team:slot % 2 ? 1 - MY_TEAM : MY_TEAM, x:W*(0.2 + slot*0.2), y:H*0.62 }; seats.push(s); }
+        else if(edge(1) && !seats.length){ close(); }
+      } else {
+        let ax = p.axes[0] || 0, ay = p.axes[1] || 0; if(Math.hypot(ax, ay) < 0.2) ax = ay = 0;
+        ax += (down(15) ? 1 : 0) - (down(14) ? 1 : 0); ay += (down(13) ? 1 : 0) - (down(12) ? 1 : 0);
+        s.x = clamp(s.x + ax*dt*W*0.7, 0, W); s.y = clamp(s.y + ay*dt*H*0.9, 0, H);
+        if(edge(0)){ const c = cardAt(s.x, s.y); if(c) s.cls = c.dataset.k; }
+        if(edge(2)) s.team = 1 - s.team;
+        if(edge(1)){ if(s.cls) s.cls = null; else seats.splice(seats.indexOf(s), 1); }
+        if(edge(9) && ready()){ prev[p.index] = Array.from(b, x => x.pressed || x.value > 0.55); start(); return; }
+      }
+      prev[p.index] = Array.from(b, x => x.pressed || x.value > 0.55);
+    }
+    draw();
+  }
+  function draw(){
+    if(!el) return;
+    const nm = k => { const c = CLASS_PICK.find(c => c.key === k); return c ? c.name : ''; };
+    el.querySelectorAll('.ssCard').forEach(c => { c.classList.toggle('dim', isClassic() || oneClass());
+      const html = seats.filter(s => s.cls === c.dataset.k).sort((a, b) => a.slot - b.slot).map(s => `<i style="background:${COL[s.slot]}">P${s.slot + 1}</i>`).join('');
+      const t = c.querySelector('.ssToks'); if(t.innerHTML !== html) t.innerHTML = html;
+      c.classList.toggle('hov', seats.some(s => !s.cls && cardAt(s.x, s.y) === c)); });
+    el.querySelectorAll('.ssSlot').forEach((d, i) => { const s = seats.find(x => x.slot === i);
+      const html = s ? `<b>P${i + 1}</b><span>${s.cls ? nm(s.cls).toUpperCase() : isClassic() || oneClass() ? 'READY' : 'PICK A CLASS'}</span><em style="color:${TEAMCSS[s.team]}">${TEAMNAME[s.team]}</em>` : `<b>P${i + 1}</b><span class="off">PRESS A TO JOIN</span>`;
+      if(d.innerHTML !== html) d.innerHTML = html; d.classList.toggle('in', !!s); });
+    const hint = ready() ? 'PRESS START TO PLAY' : seats.length ? 'A PICK · X CHANGE TEAM · B BACK' : 'PRESS A ON EACH CONTROLLER TO JOIN · B TO GO BACK';
+    const h = el.querySelector('.ssHint'); if(h.textContent !== hint) h.textContent = hint; h.classList.toggle('go', ready());
+    const curs = el.querySelector('.ssCurs'), html = seats.map(s => `<div class="ssCur" style="--pc:${COL[s.slot]};left:${s.x}px;top:${s.y}px">P${s.slot + 1}</div>`).join('');
+    curs.innerHTML = html;
+  }
+  addEventListener('keydown', e => { if(open && e.code === 'Escape') close(); });
+  return { open:openSel, close, isOpen, tick, take:() => { const g = go; go = false; return g; }, get seats(){ return seats; } };
+})();
+window.__splitSel = splitSel;
 
 const MENU_MAPS = [
   { key:'basilica', name:'Basilica',
@@ -15244,7 +15500,7 @@ const localMenu = (() => {
     const primary = {
       knight:'Each press winds up for 0.45 s and then fires eight pellets. A full hit deals 88 damage within 2 m and 73 at 4 m. The first damaging pellet knocks the target back. Two shots, then a 3 s reload.',
       lampist:'Click to launch an arcing fireball: 40 damage on a direct hit and up to 20 splash. It leaves brief surface fire that burns anyone standing in it. Six shots, then a 3 s reload.',
-      sorcerer:'Tap for a quick bolt. Release at full charge for a travelling pulse that pierces up to three enemies.',
+      sorcerer:'Tap for a quick bolt. Release at full charge for a slow plasma orb: it pops Wards and Bulwarks and leaves flesh near death.',
       goblin:'Daggers stick to enemies. They return after the third throw or when you press R.',
       brigand:'15 rounds, five three-shot bursts. Each hit lodges a bone splinter (up to 3, for 6 s). A hit from your Bone Sword shatters them all for extra damage and heals you.'
     };
@@ -15715,6 +15971,7 @@ const localMenu = (() => {
       return;
     }
     if(trialInDeathView(PLAYER)) return;
+    if(splitOn()) return;   // split screen: no kick-off or death menu, each player picks a class on the D-pad
     if($('menu').hidden){
       S.page = 'lobby';
       S.phase = PLAYER.kickoff ? 'kick' : 'dead';
@@ -15886,9 +16143,9 @@ function step(dt){
   if(kickT > 0){ kickT -= dt; if(kickT <= 0) kickToast(); } else matchT -= dt;   // the match clock starts at kick-off
   if(matchT <= 0 || isBallGameScoreFinal() || (isDM() && Math.max(SCORE[0], SCORE[1]) >= DM_LIMIT) || (isChal() && Math.max(SCORE[0], SCORE[1]) >= CH_WIN)){ endMatch(); return; }
   playerControl(dt);
-  for(const f of FIGHTERS) if(!f.isPlayer) botControl(f, dt);
+  for(const f of FIGHTERS){ if(f.pad != null) padControl(f, dt); else if(!f.isPlayer) botControl(f, dt); }
   for(const f of FIGHTERS){
-    if(!f.alive){ f.respawnT = Math.max(0, f.respawnT - dt); if(f.respawnT <= 0 && (!managedMatch || !f.isPlayer || f.kickoff)) respawn(f, !!f.kickoff); continue; }
+    if(!f.alive){ f.respawnT = Math.max(0, f.respawnT - dt); if(f.respawnT <= 0 && (!managedMatch || !f.isPlayer || f.kickoff || splitOn())) respawn(f, !!f.kickoff); continue; }
     act(f, dt);
     physics(f, dt);
   }
@@ -16596,6 +16853,93 @@ function edFrame(dt){
   edSyncLines();
 }
 
+// ---- split screen: one quarter (or half) of the screen per local player ----
+const SPLIT_SAVE = { p:new V(), q:new THREE.Quaternion(), fov:80, aspect:1 };
+function splitRects(n){ return n === 2 ? [[0, .5, 1, .5], [0, 0, 1, .5]] : [[0, .5, .5, .5], [.5, .5, .5, .5], [0, 0, .5, .5], [.5, 0, .5, .5]]; }   // x, y from the bottom, w, h
+function splitCam(f){
+  if(f.alive){ camera.position.set(f.pos.x, f.pos.y + f.C.eye, f.pos.z); camera.rotation.set(f.aimPitch(), f.yaw, 0); camera.fov = 80; }
+  else { camera.position.set(f.pos.x, f.pos.y + 6, f.pos.z + 3); camera.lookAt(f.pos.x, f.pos.y, f.pos.z); camera.fov = 70; }   // waiting to respawn: above where you fell
+}
+function vmSwap(c){
+  const out = { VM, kids:[...vmRoot.children], p:PLAYER, g:[bobT, lookDX, lookDY, swayK, swaySide] };
+  while(vmRoot.children.length) vmRoot.remove(vmRoot.children[0]);
+  for(const k of c.kids) vmRoot.add(k);
+  VM = c.VM; PLAYER = c.p; [bobT, lookDX, lookDY, swayK, swaySide] = c.g;
+  return out;
+}
+function vmFor(f){
+  if(!f.vmc || f.vmc.k !== f.clsKey){
+    const back = vmSwap({ VM:{ recoil:0 }, kids:[], p:f, g:[0, 0, 0, 0, 0] });
+    buildVM(f.clsKey);
+    f.vmc = { k:f.clsKey, VM, kids:[...vmRoot.children], p:f, g:[0, 0, 0, 0, 0] };
+    vmSwap(back);
+  }
+  return f.vmc;
+}
+function renderSplit(){
+  const W = rt.width, H = rt.height, rects = splitRects(LOCAL.length);
+  SPLIT_SAVE.p.copy(camera.position); SPLIT_SAVE.q.copy(camera.quaternion); SPLIT_SAVE.fov = camera.fov; SPLIT_SAVE.aspect = camera.aspect;
+  const vmA = vmCam.aspect;
+  rt.scissorTest = true;
+  LOCAL.forEach((f, i) => {
+    const [x, y, w, h] = rects[i], px = Math.round(x*W), py = Math.round(y*H), pw = Math.round(w*W), ph = Math.round(h*H);
+    rt.viewport.set(px, py, pw, ph); rt.scissor.set(px, py, pw, ph);
+    renderer.setRenderTarget(rt);
+    if(i === 0){ camera.position.copy(SPLIT_SAVE.p); camera.quaternion.copy(SPLIT_SAVE.q); camera.fov = SPLIT_SAVE.fov; } else splitCam(f);
+    camera.aspect = pw/ph; camera.updateProjectionMatrix();
+    const own = f.P && f.alive ? f.P.root : null; if(own) own.visible = false;   // you don't see the inside of your own head
+    renderer.render(scene, camera);
+    if(own) own.visible = true;
+    if(f.alive){ vmCam.aspect = pw/ph; vmCam.updateProjectionMatrix(); renderer.clearDepth();
+      if(i === 0) renderer.render(vmScene, vmCam);
+      else { const c = vmFor(f), back = vmSwap(c); camera.updateMatrixWorld(); try{ updateVM(splitDt); }catch(err){ reportError(err); } renderer.render(vmScene, vmCam);
+        c.g = [bobT, lookDX, lookDY, swayK, swaySide]; vmSwap(back); } }
+  });
+  rt.scissorTest = false; rt.viewport.set(0, 0, W, H); rt.scissor.set(0, 0, W, H); renderer.setRenderTarget(rt);
+  camera.position.copy(SPLIT_SAVE.p); camera.quaternion.copy(SPLIT_SAVE.q); camera.fov = SPLIT_SAVE.fov; camera.aspect = SPLIT_SAVE.aspect; camera.updateProjectionMatrix();
+  vmCam.aspect = vmA; vmCam.updateProjectionMatrix();
+}
+const SPLIT_RET = '<svg class="spRet" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="22" cy="22" r="12" stroke-dasharray="14 4.85" transform="rotate(-38 22 22)"/><circle cx="22" cy="22" r="1.8" fill="currentColor" stroke="none"/></svg>';
+function buildSplitHud(){
+  let box = document.getElementById('splitHud');
+  if(!box){ box = document.createElement('div'); box.id = 'splitHud'; $('hud').appendChild(box); }
+  const rects = splitRects(LOCAL.length);
+  box.innerHTML = LOCAL.map((f, i) => { const [x, y, w, h] = rects[i];
+    return `<div class="sp" style="left:${x*100}%;top:${(1 - y - h)*100}%;width:${w*100}%;height:${h*100}%">${SPLIT_RET}<div class="spDead"></div><div class="spToast"></div>
+      <div class="spBot"><div class="spName"></div><div class="spHp"><i></i></div><div class="spRow"><span class="spAb">ABILITY<b><i></i></b></span><span class="spQ">Q<b><i></i></b></span><span class="spHeat">HEAT<b><i></i></b></span></div></div></div>`; }).join('');
+}
+function splitAbil(p){
+  if(brigKit(p)) return p.sprintCharge/ZEALOT_SPRINT_TIME;
+  if(canFly(p) || (p.clsKey === 'knight' && !KNIGHT_SHOCK)) return p.flyCharge/FLY_MAX;
+  return 1 - p.abilityCd/(p.clsKey === 'gridiron' ? DASH_CD : p.clsKey === 'goblin' && RASCAL_DASH && CLASS_KIT ? RASCAL_DASH_CD : blinkKit(p) ? BLINK_CD : lampKit(p) ? LAMP_DASH_CD : ABILITY_CD);
+}
+function splitQ(p){ const cd = gobKit(p) ? SMOKE_CD : knKit(p) ? RELIC_CD : sorcKit(p) ? CGREN_CD : FLASK_CD; return 1 - Math.max(0, p.smokeCd || 0)/cd; }
+function updateSplitHud(){
+  const box = document.getElementById('splitHud'); if(!box) return;
+  const bar = (el, v) => { el.style.width = clamp(v, 0, 1)*100 + '%'; el.parentElement.parentElement.classList.toggle('ready', v >= 0.999); };
+  LOCAL.forEach((f, i) => {
+    const el = box.children[i]; if(!el) return;
+    const q = s => el.querySelector(s);
+    const alive = f.alive && !f.kickoff;
+    q('.spRet').style.display = alive ? '' : 'none'; q('.spBot').style.display = alive ? '' : 'none';
+    const dead = q('.spDead');
+    if(!alive){
+      const k = f.nextCls || f.clsKey, nm = (CLASSES[k] && CLASSES[k].name || k).toUpperCase();
+      const t = f.kickoff ? 'GET READY' : 'RESPAWN ' + Math.max(0, Math.ceil(f.respawnT));
+      const html = `<div>${t}</div><div class="spPick">${CLASS_KIT && !isClassic() && !oneClass() ? '&#9664; ' + nm + ' &#9654;' : nm}</div>`;
+      if(dead.innerHTML !== html) dead.innerHTML = html; dead.style.display = '';
+      return;
+    }
+    dead.style.display = 'none';
+    const nm = 'P' + (i + 1) + ' · ' + (f.C.name || f.clsKey).toUpperCase();
+    if(q('.spName').textContent !== nm) q('.spName').textContent = nm;
+    q('.spHp i').style.width = clamp(f.hp/maxHp(f), 0, 1)*100 + '%'; q('.spHp').classList.toggle('low', f.hp < 0.4*maxHp(f));
+    bar(q('.spAb i'), splitAbil(f));
+    const hasQ = CLASS_KIT && (gobKit(f) || knKit(f) || lampKit(f) || sorcKit(f)); q('.spQ').style.display = hasQ ? '' : 'none'; if(hasQ) bar(q('.spQ i'), splitQ(f));
+    q('.spHeat').style.display = sorcKit(f) ? '' : 'none'; if(sorcKit(f)){ q('.spHeat i').style.width = clamp(f.heat || 0, 0, 1)*100 + '%'; q('.spHeat').classList.toggle('hot', f.overheat > 0); }
+  });
+}
+
 let trialManual = false;
 function frame(now){
   requestAnimationFrame(frame);
@@ -16611,12 +16955,16 @@ function frame(now){
   for(const fl of FLAMES){ fl.scale.y = 0.8 + Math.random()*0.4; fl.scale.x = fl.scale.z = 0.9 + Math.random()*0.2; }
   updateBodies(); updateHolyFx();
   if(state === 'edit') edFrame(dt); else updateCamera(dt);
-  if(state === 'play' && PLAYER){ updateVM(dt); trialView(PLAYER, dt); updateHUD(dt); updateTrialDeathFeedback(PLAYER, now); drawRadar(dt); localMenu.matchFrame(); }
+  if(state === 'play' && PLAYER){ updateVM(dt); trialView(PLAYER, dt); updateHUD(dt); updateTrialDeathFeedback(PLAYER, now); drawRadar(dt); localMenu.matchFrame(); if(splitOn()) updateSplitHud(); }
+  splitPauseTick(); splitSel.tick();
   }catch(err){ reportError(err); }
   renderer.setRenderTarget(rt);
   renderer.clear();
+  if(state === 'play' && splitOn()){ renderSplit(); postMat.uniforms.uHurt.value = postMat.uniforms.uPulse.value = postMat.uniforms.uDeath.value = postMat.uniforms.uSpawnFade.value = 0; }
+  else {
   renderer.render(scene, camera);
   if(state === 'play' && PLAYER && PLAYER.alive){ renderer.clearDepth(); renderer.render(vmScene, vmCam); }
+  }
   renderer.setRenderTarget(null);
   renderer.render(postScene, postCam);
 }
