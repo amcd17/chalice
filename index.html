@@ -192,6 +192,16 @@ body.split #feed{right:auto;left:50%;top:calc(50% + 30px);transform:translateX(-
 #splitHud .spRow > span.ready{opacity:1}
 #splitHud .spRow > span.ready b i{background:var(--gold)}
 #splitHud .spHeat.hot b i{background:#ff6a3a}
+#splitHud .spHurt{position:absolute;inset:0;opacity:0;box-shadow:inset 0 0 60px 18px rgba(200,20,20,.75)}
+#splitHud .spDir{position:absolute;left:50%;top:50%;width:150px;height:150px;opacity:0}
+#splitHud .spDir i{position:absolute;left:50%;top:0;width:0;height:0;margin-left:-14px;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:16px solid rgba(255,60,50,.9)}
+#splitHud .spHit{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%) rotate(45deg);opacity:0}
+#splitHud .spHit::before,#splitHud .spHit::after{content:"";position:absolute;background:#fff}
+#splitHud .spHit::before{left:50%;top:0;bottom:0;width:2px;margin-left:-1px;clip-path:polygon(0 0,100% 0,100% 35%,0 35%,0 65%,100% 65%,100% 100%,0 100%)}
+#splitHud .spHit::after{top:50%;left:0;right:0;height:2px;margin-top:-1px;clip-path:polygon(0 0,35% 0,35% 100%,0 100%,0 0,65% 0,100% 0,100% 100%,65% 100%)}
+#splitHud .spHit.head::before,#splitHud .spHit.head::after{background:#ffd34a}
+#splitHud .spHit.kill::before,#splitHud .spHit.kill::after{background:var(--red)}
+#splitHud .spToast{position:absolute;left:50%;top:30%;transform:translateX(-50%);font-family:var(--display);font-size:13px;letter-spacing:.14em;text-shadow:0 1px 3px #000;white-space:nowrap;opacity:0}
 #splitHud .spDead{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;font-family:var(--display);color:#fff;letter-spacing:.14em;text-shadow:0 1px 3px #000;font-size:13px}
 #splitHud .spPick{margin-top:8px;font-size:18px;color:var(--gold)}
 #topbar{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;font-family:var(--display)}
@@ -1702,7 +1712,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.406</div>
+<div id="ver">Chalice 0.407</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -1921,7 +1931,7 @@ function trialEquip(f, slot, forced = false){
   const w = trialWeapon(f);
   if(!forced && (f.sparry || f.lockUntil > clock)) return;   // v0.360: no swapping mid-parry
   if(f.hasChalice && slot === TRIAL_SLOT.primary){
-    if(f.isPlayer) toast('PRIMARY LOCKED WHILE CARRYING', '#ffd36a');
+    if(fb(f)) toast('PRIMARY LOCKED WHILE CARRYING', '#ffd36a');
     return;
   }
   if(w.slot === slot || (!forced && (f.swapT > 0 || f.windup || (w.slot === TRIAL_SLOT.melee && f.meleeCd > 0)))) return;
@@ -1945,11 +1955,11 @@ function trialRecoilPitch(f){
 }
 
 function applyTrialRecoil(f, kind, strength = 1){
-  if(!f.isPlayer) return;
+  if(!isLocal(f)) return;
   const recoil = TRIAL_RECOIL[kind];
   const pitch = Math.min(3.5*Math.PI/180, trialRecoilPitch(f)+recoil.degrees*strength*Math.PI/180);
   trialWeapon(f).shotKick = {pitch, at:clock, settle:recoil.settle};
-  VM.recoil = Math.max(VM.recoil, recoil.model*strength);
+  { const vm = vmOf(f); vm.recoil = Math.max(vm.recoil || 0, recoil.model*strength); }
 }
 
 function trialProjectile(f, kind, amount){
@@ -1972,7 +1982,7 @@ function trialProjectile(f, kind, amount){
   if(kind === 'infernal') trialDaggerLock(projectile, eye, look);
   PROJ.push(projectile);
   applyTrialRecoil(f,kind);
-  sfx(kind === 'runic' ? 'lev' : 'knife', f.isPlayer ? null : f.pos);
+  sfx(kind === 'runic' ? 'lev' : 'knife', isLocal(f) ? null : f.pos);
 }
 
 function trialDaggerVisible(owner, target, origin, point){
@@ -2169,7 +2179,7 @@ function trialTickWeapons(f, dt, fire, held, reload){
       if(reload && f.bbAmmo < BB_SHOTS && !f.bbReload) f.bbReload = f.lastBbRL = BB_RELOAD;
       if(fire && f.bbAmmo && !f.bbReload){
         w.blunderAt = clock + BB_WINDUP;
-        sfx('blunderWindup', f.isPlayer ? null : f.pos);
+        sfx('blunderWindup', isLocal(f) ? null : f.pos);
       }
     }
   }
@@ -3105,7 +3115,7 @@ function trialMeleeImpact(attacker, target, kind){
     kit.lastImpactLethal = lethal;
     kit.impactKick = {at:clock, weight:(swordHit ? Math.max(feel.kick, 0.9) : feel.kick)*(blocked ? 0.3 : lethal ? 1.25 : 1)};
     if(swordHit && !blocked) kit.impactKick.roll = 0.03*(SWCUTS[(attacker.swing.cut || 0) % SWCUTS.length].rs);   // the view rolls a hair along the cut
-    sfx(blocked ? 'block' : feel.sound, attacker.isPlayer || target?.isPlayer ? null : attacker.pos);
+    sfx(blocked ? 'block' : feel.sound, isLocal(attacker) || isLocal(target) ? null : attacker.pos);
   }
 }
 
@@ -3163,7 +3173,7 @@ function startParry(f){
   const w = trialWeapon(f);
   swordCancel(f, w); w.swordArm = false; w.swordPend = null;
   f.swing = null; f.lunge = null; f.sparry = { t:0 }; f.meleeCd = Math.max(f.meleeCd, PARRY.total); f.parryHeld = false;
-  sfx('parryRaise', f.isPlayer ? null : f.pos);
+  sfx('parryRaise', isLocal(f) ? null : f.pos);
 }
 function parrySpeed(f){ return f.sparry ? (f.sparry.t < PARRY.start + PARRY.active ? 0 : PARRY.slow) : (f.openUntil > clock ? 0.6 : 1); }
 function parryAmt(f){   // how far into the raised-blade pose a fighter is (0..1), and how much it sags when nothing was caught
@@ -3198,8 +3208,8 @@ function parrySuccess(att, tgt, heavy){
   spark(at, 0xffffff); spark(at, 0xbfe6ff); burst(at, 0xdff2ff, 14);
   const glint = fxSprite(FX_GLOW, 0xffffff, 1); glint.position.copy(at); glint.scale.setScalar(0.5); scene.add(glint);
   FX.push({ t:0, life:0.28, up(){ const k = this.t/this.life; glint.scale.setScalar(0.5 + 1.6*k); glint.material.opacity = 1 - k; }, kill(){ scene.remove(glint); glint.material.dispose(); } });
-  sfx('parry', tgt.isPlayer || att.isPlayer ? null : at);
-  if(tgt.isPlayer){ toast('PARRIED', '#bfe6ff'); parryFlash(); } else if(att.isPlayer){ toast('PARRIED, YOU ARE OPEN', '#ff9a8a'); parryFlash(); }
+  sfx('parry', tgt.isPlayer || isLocal(att) ? null : at);
+  if(fb(tgt)){ toast('PARRIED', '#bfe6ff'); parryFlash(); } else if(fb(att)){ toast('PARRIED, YOU ARE OPEN', '#ff9a8a'); parryFlash(); }
 }
 function botParry(b, target, d){
   if(!SHARED_SWORD || !canParry(b)) return false;
@@ -3911,7 +3921,7 @@ function bulwarkTopAt(x, margin = 0){
 }
 // the light soaks a hit: it drains by the damage, and cracks; 100 damage (LIGHT_HP) breaks it
 function lightSoak(k, dmg){ k.light = Math.max(0, k.light - LIGHT_MAX*dmg/LIGHT_HP); k.lightHurt = (k.lightHurt || 0) + dmg; if(k.light <= 0) lightBreak(k); }
-function lightBreak(k){ if(k.lightLock > 0) return; k.light = 0; k.lightEmpty = true; k.lightDeployed = false; k.lightLock = LIGHT_BREAK_CD; k.shieldUp = false; if(k.lightMesh){ spark(k.lightMesh.position.clone(), TEAMGLOW[k.team]); spark(k.lightMesh.position.clone().add(new V(0, 0.8, 0)), 0xffffff); } sfx('block', k.pos); if(k.isPlayer) toast('BULWARK SHATTERED', '#ffc070'); }
+function lightBreak(k){ if(k.lightLock > 0) return; k.light = 0; k.lightEmpty = true; k.lightDeployed = false; k.lightLock = LIGHT_BREAK_CD; k.shieldUp = false; if(k.lightMesh){ spark(k.lightMesh.position.clone(), TEAMGLOW[k.team]); spark(k.lightMesh.position.clone().add(new V(0, 0.8, 0)), 0xffffff); } sfx('block', k.pos); if(fb(k)) toast('BULWARK SHATTERED', '#ffc070'); }
 let SC_WIND = 0.40, SC_WIND_SLOW = 0.5;   // Pious Charge: he raises the cross and it builds to a blaze for SC_WIND seconds, walking at half speed, before he goes
 let SC_DIST = 8.85, SC_T = 0.4, SC_DMG = 35, SC_KNOCK = 13, SC_STUN = 0.5, JAV_STICK = 10;
 const scSpeed = () => SC_DIST/(SC_T*0.613);   // peak speed that covers SC_DIST over SC_T (the burst bleeds off to a quarter)
@@ -8309,7 +8319,7 @@ function startLampistDash(f){
       glint.material.opacity = 0.84*(1-k);
     }, kill(){ scene.remove(glint); glint.material.dispose(); }});
   }
-  sfx('swing', f.isPlayer ? null : f.pos);
+  sfx('swing', isLocal(f) ? null : f.pos);
 }
 function moveLampistDash(f, dt, slow){
   const dash = f.lampDash, direction = dash.direction;
@@ -8362,7 +8372,7 @@ function wardHit(t, amt){
   t.wardHp = 0; t.wardBroken = WARD_RECHARGE; t.shieldUp = false; t.guardT = 0; t.stun = Math.max(t.stun, 0.35);
   const c = t.center(new V()); t.fwd(T4); c.addScaledVector(T4, 0.7);
   burst(c, TEAMGLOW[t.team], 14); spark(c.clone(), 0xffffff); sfx('block', t.pos);
-  if(t.isPlayer) toast('WARD BROKEN', '#ff6b6b');
+  if(fb(t)) toast('WARD BROKEN', '#ff6b6b');
 }
 // ---------------- Sorcerer: bursts and the ground ward ----------------
 // the staff: one click (or a held button) fires a burst; the bolts leave a beat apart and curve gently toward the enemy nearest the crosshair
@@ -8374,11 +8384,11 @@ function castAegis(f, forced){   // v0.348: casts the Ward; the name stays for t
   if(!tg){ const eye = f.eye(new V()), look = f.look(new V()); let bd = 0.94;
     for(const m of FIGHTERS){ if(m === f || !m.alive || m.team !== f.team) continue; const c = m.center(T1).sub(eye), L = c.length(); if(L > AEGIS_RANGE) continue;
       const d = c.dot(look)/L; if(d > bd && los(eye, m.center(T2))){ bd = d; tg = m; } } }
-  if(!tg){ if(f.isPlayer && clock - (f.aegisMiss || -9) > 1){ f.aegisMiss = clock; toast('NO TEAMMATE IN SIGHT', '#9fd0ff'); } return; }
-  if(wardOn(tg)){ if(f.isPlayer && clock - (f.aegisMiss || -9) > 1){ f.aegisMiss = clock; toast('ALREADY WARDED', '#9fd0ff'); } return; }
+  if(!tg){ if(fb(f) && clock - (f.aegisMiss || -9) > 1){ f.aegisMiss = clock; toast('NO TEAMMATE IN SIGHT', '#9fd0ff'); } return; }
+  if(wardOn(tg)){ if(fb(f) && clock - (f.aegisMiss || -9) > 1){ f.aegisMiss = clock; toast('ALREADY WARDED', '#9fd0ff'); } return; }
   tg.swardBy = f; tg.swardEnd = clock + SWARD_T; tg.swardPulse = -9; f.swardTarget = tg; f.aegisCastAt = clock;
-  sfx('lev', tg.isPlayer || f.isPlayer ? null : tg.pos);
-  if(tg.isPlayer) toast('WARD FROM ' + f.name, '#9fd0ff'); else if(f.isPlayer) toast('WARD ON ' + tg.name, '#9fd0ff');
+  sfx('lev', tg.isPlayer || isLocal(f) ? null : tg.pos);
+  if(fb(tg)) toast('WARD FROM ' + f.name, '#9fd0ff'); else if(fb(f)) toast('WARD ON ' + tg.name, '#9fd0ff');
 }
 function endSeekWard(f){   // f: the caster; the cooldown starts now
   const tg = f.swardTarget; if(tg){ tg.swardBy = null; tg.swardEnd = 0; } f.swardTarget = null; f.aegisCd = SWARD_CD;
@@ -8419,7 +8429,7 @@ function makeSeekWard(team){
 function updateSeekWards(dt){
   for(const f of FIGHTERS){   // each caster: the ward ends when its time runs out, the ally falls, or the caster does
     const tg = f.swardTarget; if(!tg) continue;
-    if(!f.alive || !tg.alive || !(tg.swardEnd > clock) || tg.swardBy !== f){ endSeekWard(f); if(tg.isPlayer) toast('WARD ENDED', '#9fd0ff'); }
+    if(!f.alive || !tg.alive || !(tg.swardEnd > clock) || tg.swardBy !== f){ endSeekWard(f); if(fb(tg)) toast('WARD ENDED', '#9fd0ff'); }
   }
   for(const [tg, g] of SWARDS){ if(!wardOn(tg) || !tg.alive){ scene.remove(g); SWARDS.delete(tg); } }
   for(const tg of FIGHTERS){
@@ -8485,9 +8495,9 @@ function lockTarget(f){
 // one release of the staff heats it once, however many bolts it looses
 function staffHeat(f, c){
   const h = f.heat || 0; f.lastBoltAt = clock;
-  if(c >= 0.999){ f.heat = 1; f.overheat = f.overheatMax = STAFF_CHARGE_OVER; sfx('block', f.isPlayer ? null : f.pos); return; }   // a full charge vents everything: it needs a moment to cool
+  if(c >= 0.999){ f.heat = 1; f.overheat = f.overheatMax = STAFF_CHARGE_OVER; sfx('block', isLocal(f) ? null : f.pos); return; }   // a full charge vents everything: it needs a moment to cool
   f.heat = h + STAFF_HEAT*(1 + STAFF_RAMP*h)*(1 + (BOLT_HEAT_X - 1)*c);   // the hotter it runs, the faster it climbs
-  if(f.heat >= 1){ f.heat = 1; f.overheat = f.overheatMax = STAFF_OVERHEAT; sfx('block', f.isPlayer ? null : f.pos); if(f.isPlayer) toast('STAFF OVERHEATED', '#ff8a4a'); }
+  if(f.heat >= 1){ f.heat = 1; f.overheat = f.overheatMax = STAFF_OVERHEAT; sfx('block', fb(f) ? null : f.pos); if(fb(f)) toast('STAFF OVERHEATED', '#ff8a4a'); }
 }
 // 24 Nov: the Arcanist's full charge is a slow plasma orb (the Halo plasma pistol's overcharge): it pops Wards and Bulwarks, takes most of a person's health but never kills, and splashes a little
 let ORB_SPEED = 20, ORB_LIFE = 1.75, ORB_HOME = 0.9, ORB_PCT = 0.7, ORB_MIN = 40, ORB_LEAVE = 10, ORB_BURST = 20, ORB_BURST_R = 3.2, ORB_HOLD_HEAT = 0.12;   // m/s, seconds of flight (35 m), lock-on turn (rad/s), share of current health taken, least taken, health always left, splash damage, splash radius, heat per second of holding a full charge
@@ -8514,8 +8524,8 @@ function fireBolt(f, c){
   const mesh = makeBoltMesh(f.team, c); mesh.scale.setScalar(0.8*(1 + 1.4*c)); mesh.position.copy(muzzle); scene.add(mesh);   // a charged bolt is one big sizzling ball (23 Nov: the add sat inside this comment, so no bolt was ever drawn)
   PROJ.push({ owner:f, k:'bolt', pos:muzzle, vel:dir.multiplyScalar(s.speed*(1 + 0.25*c)), life:2.5, mesh, seen, born:clock, home:f.burstLock, homeY:f.burstLockY, dmg:sorcKit(f) ? BOLT_DMG + (BOLT_FULL - BOLT_DMG)*c : undefined });
   applyTrialRecoil(f,'bolt',1+0.65*c);
-  if(f.isPlayer) VM.flash = 1 + c;
-  sfx(c > 0.5 ? 'thud' : 'lev', f.isPlayer ? null : f.pos);
+  if(isLocal(f)) vmOf(f).flash = 1 + c;
+  sfx(c > 0.5 ? 'thud' : 'lev', isLocal(f) ? null : f.pos);
 }
 function makeOrbMesh(team){
   const g = new THREE.Group(), col = 0xb896ff;
@@ -8536,8 +8546,8 @@ function fireOrb(f){
   const mesh = makeOrbMesh(f.team); mesh.position.copy(muzzle); scene.add(mesh);
   PROJ.push({ owner:f, k:'bolt', orb:true, pos:muzzle, vel:dir.multiplyScalar(ORB_SPEED), life:ORB_LIFE, mesh, seen, born:clock, home:f.burstLock, homeY:f.burstLockY });
   applyTrialRecoil(f, 'bolt', 1.8);
-  if(f.isPlayer) VM.flash = 2;
-  sfx('thud', f.isPlayer ? null : f.pos);
+  if(isLocal(f)) vmOf(f).flash = 2;
+  sfx('thud', isLocal(f) ? null : f.pos);
 }
 function orbDrain(e, amt){ const left = e.hp - ORB_LEAVE; return left <= 0 ? 0 : Math.min(amt, left); }
 function orbHit(p, e){   // the direct hit takes most of what they have left, never all of it; whoever stands near takes a little
@@ -8547,7 +8557,7 @@ function orbHit(p, e){   // the direct hit takes most of what they have left, ne
     for(const q of FIGHTERS){ if(q === e || !q.alive || !canHurt(o, q, FF_CANNON)) continue; if(q.pos.distanceTo(p.pos) < ORB_BURST_R + q.r) damage(q, ORB_BURST, o, 'bolt', false); }
   } finally { orbHitNow = false; }
   orbBurstFX(p.pos);
-  if(o && o.isPlayer) shake = Math.max(shake || 0, 0.2);
+  if(isLocal(o)) shakeOn(o, 0.2);
 }
 function orbBurstFX(at){
   for(let i = 0; i < 4; i++) spark(at.clone().add(new V((Math.random() - 0.5)*0.6, (Math.random() - 0.5)*0.6, (Math.random() - 0.5)*0.6)), i % 2 ? 0xffffff : 0xb896ff);
@@ -8558,7 +8568,7 @@ function orbBurstFX(at){
 function orbPopWard(p, tg){   // the dome goes in one hit, and the orb is spent on it
   const caster = tg.swardBy; if(caster) endSeekWard(caster); else { tg.swardBy = null; tg.swardEnd = 0; }
   orbBurstFX(p.pos); p.life = 0;
-  if(tg.isPlayer) toast('WARD BROKEN', '#ff9fd0'); else if(p.owner && p.owner.isPlayer) toast('WARD POPPED', '#cdb4ff');
+  if(fb(tg)) toast('WARD BROKEN', '#ff9fd0'); else if(p.owner && fb(p.owner)) toast('WARD POPPED', '#cdb4ff');
 }
 const trialBeamGeometry = new THREE.CylinderGeometry(0.035, 0.035, 1, 8);   // unit length, stretched every frame from the crystal to the head
 const trialBeamUp = new V(0, 1, 0);
@@ -8572,8 +8582,8 @@ function fireTrialBeam(f){
   scene.add(mesh);
   PROJ.push({owner:f, k:'beam', pos, muzzle, direction, mesh, remaining:TRIAL_BEAM_RANGE, hit:new Set()});
   applyTrialRecoil(f,'beam');
-  if(f.isPlayer) VM.flash = 2;
-  sfx('thud', f.isPlayer ? null : f.pos);
+  if(isLocal(f)) vmOf(f).flash = 2;
+  sfx('thud', isLocal(f) ? null : f.pos);
 }
 // the white beam runs from the crystal's tip to where it has reached, so every player sees the line it is cutting
 function trialBeamDraw(p){
@@ -8729,8 +8739,8 @@ function castWard(f, at){
   w.mesh.position.copy(w.pos); scene.add(w.mesh); WARDS.push(w);
   f.gwardCd = GWARD_CD;
   burst(w.pos.clone().setY(w.pos.y + 0.3), TEAMGLOW[f.team], 16);
-  sfx('lev', f.isPlayer ? null : w.pos);
-  if(f.isPlayer) VM.flash = 1.4;
+  sfx('lev', isLocal(f) ? null : w.pos);
+  if(isLocal(f)) vmOf(f).flash = 1.4;
 }
 function updateWards(dt){
   for(let i=WARDS.length-1;i>=0;i--){
@@ -8842,12 +8852,12 @@ function castShroud(f){
   f.shroudCastAt = clock; f.ambushShown = false;
   f.shroudT = clock + SHROUD_T; f.shroudOn = true; f.shroudBy = f;   // 23 Nov: the Skulker's alone now
   if(!f.isPlayer) shroudPuff(f);
-  sfx('thud', f.isPlayer ? null : f.pos);
+  sfx('thud', isLocal(f) ? null : f.pos);
 }
 function breakShroud(f){
   if(!f.shroudOn) return; f.shroudOn = false; f.shroudRevealT = clock + SHROUD_REVEAL;
   if(f.shroudT > clock) f.ambushT = clock + SHROUD_AMBUSH_T;   // broken by his own attack (not run out): that attack lands harder
-  if(f.isPlayer) toast('REVEALED', '#c9c9d2');
+  if(fb(f)) toast('REVEALED', '#c9c9d2');
   else shroudPuff(f);
 }
 function throwSmoke(f){
@@ -8859,7 +8869,7 @@ function throwSmoke(f){
   PROJ.push({ owner:f, k:'smoke', pos:muzzle, vel:dir.multiplyScalar(SMOKE_SPEED*Math.sqrt(wG()/G)).addScaledVector(f.vel, 0.3), life:4, mesh });
   if(!f.isPlayer && f.target){ f.smokedTarget = f.target; f.smokedUntil = clock + SMOKE_T + 1; }   // he knows where the one he smoked is
   f.smokeCd = SMOKE_CD;   // thrown with the left hand, the dagger stays in the right
-  sfx('swing', f.isPlayer ? null : f.pos);
+  sfx('swing', isLocal(f) ? null : f.pos);
 }
 function makeDartMesh(){
   const g = new THREE.Group();
@@ -8873,8 +8883,8 @@ function fireDart(f){
   const muzzle = eye.clone().addScaledVector(look, 0.4); muzzle.y -= 0.05;
   const mesh = makeDartMesh(); mesh.position.copy(muzzle); scene.add(mesh);
   PROJ.push({ owner:f, k:'dart', pos:muzzle, vel:aim.sub(muzzle).normalize().multiplyScalar(RANGED.dart.speed), life:2, mesh, dmg:0 });
-  f.dartCd = DART_CD; if(f.isPlayer) VM.blowT = 0.45;
-  sfx('swing', f.isPlayer ? null : f.pos);
+  f.dartCd = DART_CD; if(isLocal(f)) vmOf(f).blowT = 0.45;
+  sfx('swing', isLocal(f) ? null : f.pos);
 }
 // the blessed book: leather in a quiet version of the team colour, gold corners, clasps and cross, light leaking from the pages.
 // The front cover (with half the pages) hangs on a hinge at the spine so it can fall open
@@ -8904,7 +8914,7 @@ function throwRelic(f){
   const dir = look.clone(); dir.y += 0.2; dir.normalize();
   const mesh = makeHolyBook(f.team); mesh.scale.setScalar(1.6); mesh.position.copy(muzzle); scene.add(mesh);
   PROJ.push({ owner:f, k:'relic', pos:muzzle, vel:dir.multiplyScalar(RELIC_SPEED*Math.sqrt(wG()/G)).addScaledVector(f.vel, 0.3), life:4, mesh });
-  f.smokeCd = RELIC_CD; sfx('swing', f.isPlayer ? null : f.pos);
+  f.smokeCd = RELIC_CD; sfx('swing', isLocal(f) ? null : f.pos);
 }
 // it lands and lies there; the cover falls open; then the burst
 const RELICS = [];
@@ -8923,7 +8933,7 @@ function relicBurst(c, force=RELIC_PULSE_FORCE){
     const k = 1 - d/RELIC_R; T3.set(ec.x - p.x, 0, ec.z - p.z); if(T3.lengthSq() < 0.001) T3.set(1, 0, 0); T3.normalize();
     e.vel.addScaledVector(T3, force*RELIC_PUSH*(0.45 + 0.55*k)); e.vel.y += force*(4 + 3*k); e.onGround = false;
     damage(e, force*(RELIC_MIN + (RELIC_DMG - RELIC_MIN)*k), owner, 'relic');
-    if(e.isPlayer) shake = Math.max(shake || 0, 0.2);
+    if(isLocal(e)) shakeOn(e, 0.2);
   }
   const tgl = TEAMGLOW[owner ? owner.team : 2] ?? 0xffe6a0, tpale = new THREE.Color(tgl).lerp(new THREE.Color(0xffffff), 0.6);   // v0.279: the ring and the pages take the team colour
   if(!c.ring){ c.ring = new THREE.Mesh(new THREE.RingGeometry(0.95, 1, 72), new THREE.MeshBasicMaterial({ color:tgl, transparent:true, opacity:0.85, depthWrite:false, side:THREE.DoubleSide, blending:THREE.AdditiveBlending })); c.ring.rotation.x = -Math.PI/2; c.ring.position.set(p.x, p.y + 0.06, p.z); scene.add(c.ring); }
@@ -8960,7 +8970,7 @@ function throwFrag(f){
   const dir = look.clone(); dir.y += 0.22; dir.normalize();
   const mesh = makeBombMesh(0x2a2c30); mesh.position.copy(muzzle); scene.add(mesh);
   PROJ.push({ owner:f, k:'frag', pos:muzzle, vel:dir.multiplyScalar(FRAG_SPEED*Math.sqrt(wG()/G)).addScaledVector(f.vel, 0.3), life:FRAG_FUSE + 1, fuse:FRAG_FUSE, mesh });
-  f.smokeCd = FRAG_CD; sfx('swing', f.isPlayer ? null : f.pos);
+  f.smokeCd = FRAG_CD; sfx('swing', isLocal(f) ? null : f.pos);
 }
 // v0.348: the Arcanist's Crystal Grenade (Q). A faceted stone that flies a true arc (no aim assist), sticks to whatever it touches, rings brighter and faster through its fuse, and bursts into crystal shrapnel. Stuck to an enemy, it kills them outright
 let CGREN_CD = 12, CGREN_FUSE = 2, CGREN_SPEED = 17, CGREN_R = 5, CGREN_SHARDS = 10, CGREN_SHARD_DMG = 16;
@@ -8983,7 +8993,7 @@ function throwCrystal(f){
   const pos = new V(), vel = new V(); tossFrom(f, vel, pos);
   const mesh = makeCrystalGrenade(f.team); mesh.position.copy(pos); scene.add(mesh);
   PROJ.push({ owner:f, k:'cgren', pos, vel, life:9, fuse:CGREN_FUSE, mesh, stuck:null, chime:0 });
-  f.smokeCd = CGREN_CD; sfx('swing', f.isPlayer ? null : f.pos);
+  f.smokeCd = CGREN_CD; sfx('swing', isLocal(f) ? null : f.pos);
 }
 function crystalStep(p, dt){   // true when it is spent
   const u = p.mesh.userData, k = clamp(1 - p.fuse/CGREN_FUSE, 0, 1);
@@ -9003,7 +9013,7 @@ function crystalStep(p, dt){   // true when it is spent
       if(pointSolid(p.pos)){ p.pos.set(ox, oy, oz); p.stuck = { e:null }; }
       else if(p.pos.y < gy + 0.12 && p.vel.y < 0){ p.pos.y = gy + 0.12; p.stuck = { e:null }; }
     }
-    if(p.stuck){ p.vel.set(0, 0, 0); sfx('block', p.pos); if(p.stuck.e && p.owner.isPlayer) toast('STUCK', '#ffd36a'); }
+    if(p.stuck){ p.vel.set(0, 0, 0); sfx('block', p.pos); if(p.stuck.e && fb(p.owner)) toast('STUCK', '#ffd36a'); }
     else { p.mesh.rotation.x += dt*9; p.mesh.rotation.z += dt*4; }
     if(p.pos.y < -8) return true;
   } else if(p.stuck.e){ const e = p.stuck.e; if(e.alive) p.pos.copy(e.pos).add(p.stuck.off); }
@@ -9037,7 +9047,7 @@ function crystalBurst(p){
     const hits = Math.max(1, Math.round(CGREN_SHARDS*0.9*(1 - d/CGREN_R)));
     T3.subVectors(ec, c).normalize(); e.vel.addScaledVector(T3, 4); e.vel.y += 2;
     damage(e, hits*CGREN_SHARD_DMG, owner, 'cgren');
-    if(e.isPlayer) shake = Math.max(shake || 0, 0.25);
+    if(isLocal(e)) shakeOn(e, 0.25);
   }
 }
 // The thrown lantern reveals targets without changing their damage taken.
@@ -9049,7 +9059,7 @@ function throwMarkingLantern(f){
   scene.add(mesh);
   PROJ.push({owner:f, k:'markLantern', pos, vel, life:4, flightTime:0, mesh});
   f.smokeCd = FLASK_CD;
-  sfx('swing', f.isPlayer ? null : f.pos);
+  sfx('swing', isLocal(f) ? null : f.pos);
 }
 let TRIAL_LANTERN_RADIUS = 10, LANTERN_MARK_T = 5;
 const LANTERN_FLIGHT_STEP = 1/60;
@@ -9087,10 +9097,10 @@ function markingLanternReveal(p){
     enemy.lanternMarkT = p.revealUntil;
     enemy.lanternMarkTeam = p.owner.team;
     if(alreadyVisible) continue;
-    if(enemy.isPlayer) toast('REVEALED BY A LANTERN', '#ffd384');
+    if(fb(enemy)) toast('REVEALED BY A LANTERN', '#ffd384');
     count++;
   }
-  if(p.owner.isPlayer && count) toast(count + (count === 1 ? ' ENEMY REVEALED' : ' ENEMIES REVEALED'), '#ffd384');
+  if(fb(p.owner) && count) toast(count + (count === 1 ? ' ENEMY REVEALED' : ' ENEMIES REVEALED'), '#ffd384');
 }
 function popMarkingLantern(p){
   const at = p.pos;
@@ -9176,7 +9186,7 @@ function fragBoom(p, owner){
     T3.subVectors(c, p); if(T3.lengthSq() < 0.001) T3.set(0, 1, 0); T3.normalize();
     e.vel.addScaledVector(T3, 7*k); e.vel.y += 3*k;
     damage(e, FRAG_MIN + (FRAG_DMG - FRAG_MIN)*k, owner, 'frag');
-    if(e.isPlayer) shake = Math.max(shake || 0, 0.25*k + 0.05);
+    if(isLocal(e)) shakeOn(e, 0.25*k + 0.05);
   }
 }
 // fire on the ground
@@ -9740,7 +9750,7 @@ function chTake(f){
     f.swapAt = clock;
   }
   if(PLAYER && stolen) toast(f.team === PLAYER.team ? 'INTERCEPTED' : 'CHALICE STOLEN', TEAMCSS[f.team]);
-  sfx('pickup', f.isPlayer ? null : f.pos);
+  sfx('pickup', isLocal(f) ? null : f.pos);
 }
 function chDrop(f, vel){
   if(!f.hasChalice) return;
@@ -9761,10 +9771,10 @@ function chPassTarget(f){
 }
 function chPass(f){
   if(!f.hasChalice) return;
-  const t = chPassTarget(f); if(!t){ if(f.isPlayer) toast('NO ONE IN RANGE', '#ffffff'); return; }
+  const t = chPassTarget(f); if(!t){ if(fb(f)) toast('NO ONE IN RANGE', '#ffffff'); return; }
   f.hasChalice = false; CH.holder = null; CH.state = 'flight'; CH.thrower = f; CH.target = t; CH.team = f.team; CH.flightT = 0; CH.drink = 0;
   CH.pos.set(f.pos.x, f.pos.y + 1.1, f.pos.z); CH.noCatch = 0.25;
-  sfx('pass', f.isPlayer ? null : f.pos);
+  sfx('pass', isLocal(f) ? null : f.pos);
 }
 // the free throw (hold Q to aim, let go to throw): a lob to wherever the arc ends, landing loose for anyone to pick up
 let CH_THROW_SPD = 20; const CH_AIM_T = 0.22;
@@ -9775,7 +9785,7 @@ function chThrow(f){
   const v = chThrowVel(f, new V()), from = chThrowFrom(f, new V());
   f.hasChalice = false; CH.holder = null; CH.state = 'loose'; CH.team = -1; CH.drink = 0; CH.drain = 0;
   CH.pos.copy(from); CH.vel.copy(v); CH.noCatch = 0.5; CH.thrower = f;
-  sfx('pass', f.isPlayer ? null : f.pos);
+  sfx('pass', isLocal(f) ? null : f.pos);
 }
 // the goblin's grapple can hook a loose chalice (or one in the air) and yank it back to him
 function chGrapple(f, eye, look, worldT){
@@ -9784,7 +9794,7 @@ function chGrapple(f, eye, look, worldT){
   T2.copy(eye).addScaledVector(look, t); if(T2.distanceTo(CH.pos) > 1.0) return false;
   CH.homeUnclaimed = false;
   CH.state = 'flight'; CH.thrower = null; CH.target = f; CH.team = f.team; CH.flightT = 0; CH.noCatch = 0; CH.yank = true;
-  sfx('grapple', f.isPlayer ? null : f.pos); return true;
+  sfx('grapple', isLocal(f) ? null : f.pos); return true;
 }
 // the knight's shield charge knocks a loose chalice (or one in the air) away; never out of someone's hand
 function chCharge(f){
@@ -9833,13 +9843,13 @@ function swapHolderWeapon(f, I){
 function chScoreKill(a, t, w){
   if(!isChal() || !a || a === t || a.team === t.team) return;
   if(CH.team !== a.team || CH.state === 'loose') return;
-  if(CH.kills.length >= CH_CUP){ if(a.isPlayer || (CH.holder && CH.holder.isPlayer)) toast('CUP FULL: DRINK IT', TEAMCSS[a.team]); return; }
+  if(CH.kills.length >= CH_CUP){ if(fb(a) || (CH.holder && fb(CH.holder))) toast('CUP FULL: DRINK IT', TEAMCSS[a.team]); return; }
   let m = chMult(CH.kills.length);
   const blade = SWORD_CUP_BONUS > 0 && w === 'sword';   // a sword kill by anyone on the cup's team banks the bonus
   if(blade) m += SWORD_CUP_BONUS;
   CH.kills.push(m);
   if(blade) chalSwordRise(a.team, SWORD_CUP_BONUS);
-  if((CH.holder && CH.holder.isPlayer) || a.isPlayer) toast(blade ? '+' + m + '  ·  BY THE SWORD' + (CH.kills.length >= CH_CUP ? '  ·  LAST KILL' : '') : CH.kills.length >= CH_CUP ? 'LAST KILL  +' + m : '+' + m + (m > 1 ? '  (x' + m + ')' : ''), TEAMCSS[a.team]);
+  if((CH.holder && fb(CH.holder)) || fb(a)) toast(blade ? '+' + m + '  ·  BY THE SWORD' + (CH.kills.length >= CH_CUP ? '  ·  LAST KILL' : '') : CH.kills.length >= CH_CUP ? 'LAST KILL  +' + m : '+' + m + (m > 1 ? '  (x' + m + ')' : ''), TEAMCSS[a.team]);
 }
 let chHi = [];
 function updateChalice(dt){
@@ -10017,7 +10027,7 @@ function drinkRefresh(f){
     w.furnace = TRIAL_FURNACE.capacity;
     w.furnaceAt = w.furnaceReloadAt = 0;
   }
-  if(f.isPlayer) toast('COOLDOWNS RESET', '#ffe6a0');
+  if(fb(f)) toast('COOLDOWNS RESET', '#ffe6a0');
 }
 function smokeChoke(dt){
   if(!CLASS_KIT || !SMOKES.length && !FIGHTERS.some(f => f.chokeT > 0)) return;
@@ -10032,7 +10042,7 @@ function damage(t, amt, a, w, head, volley, melee = false){
   amt += shatter*TRIAL_SPLINTER.shatter;
   if(TRIAL_SCALED_WEAPONS.has(w) && !(w === 'hammer' && a?.swingPious) && !orbHitNow) amt *= TRIAL_WEAPON_DAMAGE;
   if(a && a !== t && a.hasChalice) amt *= chEmpower(a);
-  if(a && a !== t && a.ambushT > clock && a.team !== t.team){ amt *= SHROUD_AMBUSH; if(a.isPlayer && !a.ambushShown){ a.ambushShown = true; toast('AMBUSH', '#c9c9d2'); } }
+  if(a && a !== t && a.ambushT > clock && a.team !== t.team){ amt *= SHROUD_AMBUSH; if(fb(a) && !a.ambushShown){ a.ambushShown = true; toast('AMBUSH', '#c9c9d2'); } }
 
   if(CLASS_KIT && t.markT > clock && a && a.team === t.markTeam) amt *= DART_MUL;   // a blowgun dart in them: his team hits harder   // caught in an enemy rascal's smoke: every blow lands harder
   if(t.enemyHealthUntil && t.hp >= maxHp(t)) t.enemyHealthUntil = 0;
@@ -10060,13 +10070,13 @@ function damage(t, amt, a, w, head, volley, melee = false){
     const at = t.center(new V());
     burst(at, 0xfff1d6, 16);
     spark(at, 0xffffff);
-    sfx('boneShatter', a.isPlayer || t.isPlayer ? null : at);
+    sfx('boneShatter', a.isPlayer || isLocal(t) ? null : at);
     const kit = trialWeapon(a);
     kit.hitstopUntil = Math.max(kit.hitstopUntil || 0, clock+0.11);
   }
   if(t.hamCharge > 0){ t.hamCharge = 0; t.hamEff = 0; t.hamRaised = false; }   // a hit knocks the charge out
   let finalHit = null;
-  if(t.isPlayer){
+  if(isLocal(t)){
     const source = volley?.origin || (a && a !== t ? a.pos : null);
     let damageShown = amt;
     if(volley){
@@ -10075,11 +10085,11 @@ function damage(t, amt, a, w, head, volley, melee = false){
     }
     if(source) t.hitDirection = {position:source.clone(), at:performance.now()};
     finalHit = {source, damage:damageShown};
-    hurtFlash(); padBuzz(140 + Math.min(220, amt*3), Math.min(1, 0.25 + amt/90), 0.35);
+    if(t.isPlayer) hurtFlash(); t.hurtT = 0.4; buzzFor(t, 140 + Math.min(220, amt*3), Math.min(1, 0.25 + amt/90), 0.35);
     if(t.hp > 0) sfx('hurt');
   }
   if(melee) trialMeleeImpact(a, t, t.hp <= 0 ? 'kill' : 'hit');
-  if(a && a.isPlayer && a !== t) hitMarker(t.hp <= 0, head);
+  if(a && isLocal(a) && a !== t) hitMarkerFor(a, t.hp <= 0, head);
   if(t.hp <= 0) kill(t, a, w, finalHit);
 }
 // deaths: vaporise (a glowing flash of the body that breaks into rising motes) or ragdoll bodies
@@ -10137,13 +10147,13 @@ function updateCorpses(dt){
     if(c.t > 6.2){ scene.remove(c.pivot); CORPSES.splice(i, 1); }
   }
 }
-function kill(t, a, w, hit){
+function kill(t, a, w, hit){ t.killedBy = a && a !== t ? a.name : null;
   t.splinters = null;
   if(t.P?.splinterIndicator) t.P.splinterIndicator.visible = false;
   t.alive = false; t.hp = 0; t.deaths++; t.diedAt = clock; t.respawnT = RESPAWN_WAVE > 0 ? Math.ceil((clock + RESPAWN)/RESPAWN_WAVE)*RESPAWN_WAVE - clock : RESPAWN;   // wait at least RESPAWN, then come back on the next wave
   cancelMobility(t); t.windup = null; t.shieldUp = false; t.swing = null;
   const wasHolder = t.hasChalice;
-  if(t.hasChalice){ chDrop(t); if(w !== 'drink') sfx('cupDrop', t.isPlayer ? null : t.pos); }
+  if(t.hasChalice){ chDrop(t); if(w !== 'drink') sfx('cupDrop', isLocal(t) ? null : t.pos); }
   chScoreKill(a, t, w);
   const wasCarrier = t.hasBall;
   if(wasCarrier) dropBall(t);
@@ -10151,15 +10161,15 @@ function kill(t, a, w, hit){
   if(t.line) t.line.visible = false;
   t.grapAim = 0; t.javWind = 0; t.javFollow = 0; t.scWind = 0; t.spears = SPEAR_MAX; t.spearAcc = 0; t.spearWind = 0; t.rallyCd = 0; t.rallyT = 0; t.rallyAnim = 0; t.light = LIGHT_MAX; t.lightEmpty = false; t.lightLock = 0; t.lightHurt = 0; t.gunT = 0; t.blinkAim = false; t.ramFx = 0; t.lunge = null; t.holy = false; t.guardT = 0; t.shieldUp = false;
   if(RAGDOLLS) burst(t.center(new V()), TEAMCOL[t.team], 16);
-  if(a === t && t.isPlayer && w !== 'fuse') toast('SELF-DESTRUCT', '#ff4d6d');
-  if(w === 'drink' && t.isPlayer) toast('YOU DRANK THE CHALICE', '#ffd36a');
+  if(a === t && fb(t) && w !== 'fuse') toast('SELF-DESTRUCT', '#ff4d6d');
+  if(w === 'drink' && fb(t)) toast('YOU DRANK THE CHALICE', '#ffd36a');
   if(a && a !== t && a.team === t.team){
     a.st.betrayals = (a.st.betrayals || 0) + 1;
-    if(a.isPlayer) toast('BETRAYAL', '#ff4d6d');
-    if(t.isPlayer) toast('BETRAYED BY ' + a.name.toUpperCase(), '#ff4d6d');
+    if(fb(a)) toast('BETRAYAL', '#ff4d6d');
+    if(fb(t)) toast('BETRAYED BY ' + a.name.toUpperCase(), '#ff4d6d');
   }
   if(a && a !== t && a.team !== t.team){
-    a.kills++; if(wasHolder) a.st.holderKills++; if(a === PLAYER) padBuzz(90, 0.15, 0.7);
+    a.kills++; if(wasHolder) a.st.holderKills++; if(isLocal(a)) buzzFor(a, 90, 0.15, 0.7);
     if(isDM()) addScore(a.team, 1, a, 'kill');   // deathmatch: a point a kill
     if(w === 'ball'){ a.st.ballKills++; if(BALLKILL_PTS > 0){ addScore(a.team, BALLKILL_PTS, a, 'kill'); teamToast(a.team, `BALL KILL +${BALLKILL_PTS}`); } }
     if(wasCarrier){ a.st.carrierKills++; if(CARRIER_PTS > 0){ addScore(a.team, CARRIER_PTS, a, 'kill'); teamToast(a.team, `CARRIER DOWN +${CARRIER_PTS}`); } }
@@ -10246,7 +10256,7 @@ function startMelee(f, w, charged, heavy){
       const travel = SHARED_SWORD ? clamp(nearest - s.range*0.55, 0.2, s.lunge) : s.lunge;
       kit.meleeLunge = {direction, remaining:travel, speed:travel/(s.windup*0.5), delay:tele};
     }
-    sfx('swing', f.isPlayer ? null : f.pos);
+    sfx('swing', isLocal(f) ? null : f.pos);
     return;
   }
   f.meleeCd = s.cd; f.windup = { t:s.windup, w }; f.swing = { t:0, dur:s.windup + SWING_STRIKE + SWING_RECOVER, w };
@@ -10259,7 +10269,7 @@ function startMelee(f, w, charged, heavy){
   // Halo-style lunge: lock onto an enemy in range and carry the swing to them
   const best = (w === 'sword' && !(CLASS_KIT && f.clsKey === 'sorcerer')) || w === 'dagger' || w === 'hammer' || w === 'gsword' ? lungeTarget(f, s) : null;
   if(best){ f.lunge = { target:best, t:0.42, stop:Math.min(MELEE.sword.range*0.65, s.range*0.8) }; }   // stop short enough that the swing connects
-  sfx('swing', f.isPlayer ? null : f.pos);
+  sfx('swing', isLocal(f) ? null : f.pos);
 }
 // a charged smash bursts outward where it lands: a small blast that hurts, throws people and the ball back
 function hammerBlast(f, at){
@@ -10286,7 +10296,7 @@ function gsCleave(f, first, s){
   spark(best.center(new V()), 0xffffff); damage(best, DMG.gsword*GS_CLEAVE, f, 'gsword');
 }
 // a diamond spear jab that lands on the top fifth of the body, judged by where the crosshair meets them
-function pikeHead(f, e){ const eye = f.eye(new V()), look = f.look(new V()), d = e.center(new V()).distanceTo(eye), y = eye.y + look.y*d; if(y > e.pos.y + e.h*0.8){ if(f.isPlayer) toast('HEADSHOT', '#ffd27a'); return PIKE_HEAD; } return 1; }
+function pikeHead(f, e){ const eye = f.eye(new V()), look = f.look(new V()), d = e.center(new V()).distanceTo(eye), y = eye.y + look.y*d; if(y > e.pos.y + e.h*0.8){ if(fb(f)) toast('HEADSHOT', '#ffd27a'); return PIKE_HEAD; } return 1; }
 function resolveFlailSweep(f, stats){
   const eye = f.eye(new V());
   const forward = f.fwd(new V());
@@ -10365,8 +10375,8 @@ function bladeClash(a, w, b, hitAt){
   }
   const at = ac.lerp(bc, 0.5).add(T3.set(0, 0.28, 0));
   spark(at, 0xffdaa2);
-  sfx('clash', a.isPlayer || b.isPlayer ? null : at);
-  if(a.isPlayer || b.isPlayer) toast('BLADE CLASH', '#ffd7a1');
+  sfx('clash', a.isPlayer || isLocal(b) ? null : at);
+  if(fb(a) || fb(b)) toast('BLADE CLASH', '#ffd7a1');
   return true;
 }
 function resolveMelee(f, w, hitAt){
@@ -10383,7 +10393,7 @@ function resolveMelee(f, w, hitAt){
   { const lk = lightBetween(f, best);   // a wall of light between them: the blow stops on it (a full charged smash shatters it)
     if(lk){ if(s.trial) trialMeleeImpact(f, null, 'block'); else sfx('block', lk.pos); spark(SH_P.clone(), TEAMGLOW[lk.team]);
       if(w === 'hammer' && f.swingCharged) lightBreak(lk);
-      else { lightSoak(lk, dmgFor(w, lk.clsKey)); f.stun = Math.max(f.stun, 0.35); f.lunge = null; f.vel.x *= -0.3; f.vel.z *= -0.3; if(f.isPlayer || lk.isPlayer) toast('BLOCKED', '#ffffff');
+      else { lightSoak(lk, dmgFor(w, lk.clsKey)); f.stun = Math.max(f.stun, 0.35); f.lunge = null; f.vel.x *= -0.3; f.vel.z *= -0.3; if(fb(f) || fb(lk)) toast('BLOCKED', '#ffffff');
         T4.subVectors(f.pos, lk.pos).setY(0); if(T4.lengthSq() < 1e-4) lk.fwd(T4).negate(); T4.normalize(); f.vel.addScaledVector(T4, LIGHT_REPEL); f.vel.y += 2; f.onGround = false; spark(SH_P.clone(), 0xfff0c0);   // v0.279: the light throws a close attacker back and stings them
         if(LIGHT_RETORT > 0) damage(f, LIGHT_RETORT, lk, 'relic'); }
       return; } }
@@ -10394,12 +10404,12 @@ function resolveMelee(f, w, hitAt){
       // iron beats a guard: the block breaks, the blocker reels, and the bash still lands
       best.shieldUp = false; best.guardT = 0; best.guardBreak = 0.6; best.stun = Math.max(best.stun, 0.45);
       sfx('block', best.pos); spark(best.center(new V()), 0xffc070);
-      if(f.isPlayer || best.isPlayer) toast('GUARD BROKEN', '#ffc070');
+      if(fb(f) || fb(best)) toast('GUARD BROKEN', '#ffc070');
     } else {
       // a sword on a block staggers the attacker
       if(s.trial) trialMeleeImpact(f, best, 'block'); else sfx('block', best.pos); spark(best.center(new V()), 0xffffff);
       f.stun = 0.75; f.windup = null; f.lunge = null; f.vel.x *= -0.3; f.vel.z *= -0.3;
-      if(f.isPlayer || best.isPlayer) toast('BLOCKED', '#ffffff');
+      if(fb(f) || fb(best)) toast('BLOCKED', '#ffffff');
       return;
     }
   }
@@ -10408,7 +10418,7 @@ function resolveMelee(f, w, hitAt){
   best.vel.addScaledVector(T4, s.knock); best.vel.y += s.knock*0.35;
   if(!s.trial){ spark(best.center(new V()), w === 'staff' ? 0xff5aa8 : 0xffffff); sfx('thud', best.pos); }
   // the rascal's dagger in the back: 1.5x when he strikes from behind (more than about 110 degrees off where they're facing)
-  let stab = 1; if(CLASS_KIT && (w === 'dagger' || BACKSTAB_ALL)){ const bf = best.fwd(new V()).setY(0).normalize(), to = new V().subVectors(f.pos, best.pos).setY(0).normalize(); if(bf.dot(to) < -0.35){ stab = w === 'dagger' ? BACKSTAB_MUL : BACKSTAB_ALL_MUL; f.backstabs = (f.backstabs || 0) + 1; if(f.isPlayer) toast('BACKSTAB', '#ffd27a'); else if(best.isPlayer) toast('BACKSTABBED', '#ff6b6b'); } }
+  let stab = 1; if(CLASS_KIT && (w === 'dagger' || BACKSTAB_ALL)){ const bf = best.fwd(new V()).setY(0).normalize(), to = new V().subVectors(f.pos, best.pos).setY(0).normalize(); if(bf.dot(to) < -0.35){ stab = w === 'dagger' ? BACKSTAB_MUL : BACKSTAB_ALL_MUL; f.backstabs = (f.backstabs || 0) + 1; if(fb(f)) toast('BACKSTAB', '#ffd27a'); else if(fb(best)) toast('BACKSTABBED', '#ff6b6b'); } }
   let baseDamage = dmgFor(w, best.clsKey);
   if(sh) baseDamage = DMG.sword*(heavy ? SWORD_HEAVY.dmgMul : 1)*(best.openUntil > clock ? PARRY.openMul : 1);   // v0.360: a parried enemy takes 1.35x
   else if(w === 'hammer'){
@@ -10446,7 +10456,7 @@ function throwKnife(f){
   const mesh = makeKnifeMesh(); mesh.position.copy(muzzle); scene.add(mesh);
   PROJ.push({ owner:f, k:'knives', pos:muzzle, vel:dir.multiplyScalar(s.speed), life:2.2, mesh });
   f.knifeCd = KNIFE_DRAW; f.meleeCd = Math.max(f.meleeCd, 0.2);
-  sfx('swing', f.isPlayer ? null : f.pos);
+  sfx('swing', isLocal(f) ? null : f.pos);
 }
 // a thrown dagger: a narrow steel blade with a dark grip, flying point first
 function makeKnifeMesh(){
@@ -10461,8 +10471,8 @@ function lampistTick(f, I, dt){
   const press = !!I.lamp && !f.lbHeld; f.lbHeld = !!I.lamp;
   if(!f.alive){ f.lbOn = false; }
   if(press && !f.lbOn && !(f.lbCd > 0) && !f.hasChalice && !f.toss && !f.lampDash && f.swapT <= 0 && f.stun <= 0){
-    f.lbOn = true; f.lbEnd = clock + LB_T; f.lbRaiseEnd = clock + LB_RAISE; sfx('lev', f.isPlayer ? null : f.pos);
-    if(f.isPlayer) toast('LIGHTBATH', '#ffc860');
+    f.lbOn = true; f.lbEnd = clock + LB_T; f.lbRaiseEnd = clock + LB_RAISE; sfx('lev', isLocal(f) ? null : f.pos);
+    if(fb(f)) toast('LIGHTBATH', '#ffc860');
   }
   if(f.lbOn && clock >= f.lbEnd){ f.lbOn = false; }
   if(!f.lbOn && f.lbWas){ f.lbCd = LB_CD; }   // the cooldown starts when it ends
@@ -10599,7 +10609,7 @@ function fireFurnaceOrb(f){
   scene.add(mesh);
   PROJ.push({owner:f,k:'furnace',pos,vel:direction.multiplyScalar(spec.speed),mesh,glow,remaining:spec.max,trail:0});
   applyTrialRecoil(f,'furnace');
-  sfx('flint', f.isPlayer ? null : f.pos);
+  sfx('flint', isLocal(f) ? null : f.pos);
 }
 
 function removeFurnaceOrb(p){
@@ -10740,7 +10750,7 @@ function blinkTo(f, p){
   smokePuff(a.clone()); smokePuff(a.clone().add(T7.set(0, 0.6, 0)));
   if(BLINK_CLOUD && CLASS_KIT) popSmoke({ pos:f.pos.clone(), vel:new V(), owner:f, r:BLINK_CLOUD_R, life:BLINK_CLOUD_T, mini:true });   // a small cloud where he was, to cover the getaway
   f.blinkTravel = { from:f.pos.clone(), to:p.clone(), t:0, puff:0 }; f.vel.set(0, 0, 0); f.dashT = 0;
-  f.abilityCd = BLINK_CD; sfx('swing', f.isPlayer ? null : f.pos);
+  f.abilityCd = BLINK_CD; sfx('swing', isLocal(f) ? null : f.pos);
 }
 // the trip itself: a streak of smoke from here to there, then she reforms out of a puff
 function blinkTick(f, dt){
@@ -10769,7 +10779,7 @@ function lampLeap(f){
   const d = f.isPlayer || f.in.move.lengthSq() < 0.01 ? f.fwd(T4) : T4.set(f.in.move.x, 0, f.in.move.z); d.y = 0; d.normalize();
   f.vel.x = d.x*LEAP_FWD; f.vel.z = d.z*LEAP_FWD; f.vel.y = LEAP_UP; f.onGround = false;
   f.dashT = LEAP_UP/fGrav(f)*0.9;   // no braking in the air while she rises
-  f.abilityCd = LEAP_CD; sfx('jump', f.isPlayer ? null : f.pos); if(f.isPlayer) sfx('swing');
+  f.abilityCd = LEAP_CD; sfx('jump', isLocal(f) ? null : f.pos); if(f.isPlayer) sfx('swing');
 }
 // the lantern: she and her teammates in its light (within LAMP_HEAL_R, in sight of her) heal while it burns
 function lampHeal(f, dt){
@@ -10779,7 +10789,7 @@ function lampHeal(f, dt){
     const c = e.center(T7); if(e !== f && (c.distanceTo(eye) > LAMP_HEAL_R || !los(eye, c))) continue;
     const mx = maxHp(e); if(e.hp >= mx) continue;
     e.hp = Math.min(mx, e.hp + LAMP_HPS*dt); e.healT = clock + 0.2; e.healBy = f;
-    if(e.isPlayer && e !== f && clock - (e.healToast || -9) > 5){ e.healToast = clock; toast('HEALED BY ' + f.name, '#ffc860'); }
+    if(fb(e) && e !== f && clock - (e.healToast || -9) > 5){ e.healToast = clock; toast('HEALED BY ' + f.name, '#ffc860'); }
   }
 }
 const SHOT_GEO = new THREE.SphereGeometry(0.035, 8, 6), SHOT_MAT = new THREE.MeshBasicMaterial({ color:0xffe0a0 }), PELLET_GEO = new THREE.SphereGeometry(0.025, 6, 4);
@@ -10805,11 +10815,11 @@ function lampFire(f, k){
   const fl = fxSprite(FX_GLOW, 0xffc060, 1); fl.position.copy(muzzle).addScaledVector(look, 0.3); fl.scale.setScalar(k === 'shot' ? 0.5 : 0.9); scene.add(fl);
   FX.push({ t:0, life:0.08, up(){ fl.material.opacity = 1 - this.t/this.life; }, kill(){ scene.remove(fl); fl.material.dispose(); } });
   if(k === 'pellet') applyTrialRecoil(f,k);
-  if(f.isPlayer){
-    VM.flashT = 0.07;
-    if(k === 'shot'){ VM.recoil = 1; shake = Math.max(shake,0.05); }
+  if(isLocal(f)){
+    vmOf(f).flashT = 0.07;
+    if(k === 'shot'){ vmOf(f).recoil = 1; shakeOn(f, 0.05); }
   }
-  sfx(k === 'shot' ? 'flint' : 'blunder', f.isPlayer ? null : f.pos);
+  sfx(k === 'shot' ? 'flint' : 'blunder', isLocal(f) ? null : f.pos);
 }
 function fireRanged(f){
   const k = f.C.ranged, s = RANGED[k];
@@ -10830,10 +10840,10 @@ function fireRanged(f){
   if(k === 'ballista') smokePuff(muzzle.clone().addScaledVector(look, f.isPlayer ? 2.2 : 0.4));
   const dir = aim.sub(muzzle).normalize();
   const mesh = k === 'bolt' ? makeBoltMesh(f.team) : k === 'javelin' ? makeQuarrelMesh() : k === 'knives' ? makeKnifeMesh() : new THREE.Mesh(projGeo[k], projMat[k]); mesh.position.copy(muzzle); scene.add(mesh);
-  if(k === 'javelin'){ if(f.isPlayer) VM.recoil = 0.2; }
+  if(k === 'javelin'){ if(isLocal(f)) vmOf(f).recoil = 0.2; }
   PROJ.push({ owner:f, k, pos:muzzle, vel:dir.multiplyScalar(s.speed), life:2.5, mesh });
-  if(f.isPlayer){ VM.recoil = 1; }
-  sfx(k === 'knives' ? 'knife' : k === 'bolt' ? 'lev' : k === 'javelin' ? 'knife' : k, f.isPlayer ? null : f.pos);
+  if(isLocal(f)){ vmOf(f).recoil = 1; }
+  sfx(k === 'knives' ? 'knife' : k === 'bolt' ? 'lev' : k === 'javelin' ? 'knife' : k, isLocal(f) ? null : f.pos);
 }
 function updateProjectiles(dt){
   for(let i=PROJ.length-1;i>=0;i--){
@@ -10897,7 +10907,7 @@ function updateProjectiles(dt){
       if(lastSlow < 1 && !trailFrom) trailFrom = p.pos.clone();
       p.pos.addScaledVector(p.vel, h);
       if(CLASS_KIT){ const kn = shieldHit(p, ox, oy, oz);
-        if(kn && p.orb){ p.pos.copy(SH_P); lightBreak(kn); orbBurstFX(p.pos); if(kn.isPlayer) shake = Math.max(shake || 0, 0.2); done = true; break; }   // the orb takes a Bulwark's light out in one hit
+        if(kn && p.orb){ p.pos.copy(SH_P); lightBreak(kn); orbBurstFX(p.pos); if(isLocal(kn)) shakeOn(kn, 0.2); done = true; break; }   // the orb takes a Bulwark's light out in one hit
         if(kn){ p.pos.copy(SH_P);
           const shieldDamage = p.k === 'pellet' ? p.dmg*pelletFall(p.pos.distanceTo(p.volley.origin)) : p.dmg;
           if(p.k === 'pellet' && shieldDamage === 0){ done = true; break; }
@@ -10908,7 +10918,7 @@ function updateProjectiles(dt){
             p.owner = kn; p.home = null; p.pos.addScaledVector(p.vel, 0.05); sfx('block', kn.pos); spark(p.pos.clone(), 0xffffff); continue; }
           sfx('block', kn.pos); spark(p.pos.clone(), 0xffffff); if(p.k !== 'smoke' && p.k !== 'flask' && p.k !== 'relic') lightSoak(kn, shieldDamage ?? dmgFor(p.k, kn.clsKey));   // the light soaks it, and cracks
           if(p.k === 'ballista') explode(p.pos, p.owner, null);
-          if(kn.isPlayer) shake = Math.max(shake || 0, 0.15);
+          if(isLocal(kn)) shakeOn(kn, 0.15);
           done = true; break; } }
       for(const e of FIGHTERS){
         if(!e.alive || !canHurt(p.owner, e, FF_CANNON)) continue;
@@ -10918,7 +10928,7 @@ function updateProjectiles(dt){
           if(falloff === 0){ done = true; break; }
           if(p.k === 'flask'){ damage(e, FLASK_HIT, p.owner, 'fire'); if(e.alive) igniteF(e, p.owner); }   // a flask to the face
           if(p.k === 'smoke' || p.k === 'flask' || p.k === 'relic'){ done = true; break; }   // a bomb that hits someone bursts there
-          if(p.k === 'dart'){ if(!(e.markT > clock) && e.isPlayer) toast('MARKED', '#ff5050'); e.markT = clock + DART_T; e.markTeam = p.owner.team; e.markBy = p.owner; if(p.owner.isPlayer) toast('MARKED ' + e.name, '#9dff7a'); spark(p.pos.clone(), 0x9dff7a); done = true; break; }   // the dart: no damage, a mark
+          if(p.k === 'dart'){ if(!(e.markT > clock) && fb(e)) toast('MARKED', '#ff5050'); e.markT = clock + DART_T; e.markTeam = p.owner.team; e.markBy = p.owner; if(fb(p.owner)) toast('MARKED ' + e.name, '#9dff7a'); spark(p.pos.clone(), 0x9dff7a); done = true; break; }   // the dart: no damage, a mark
           T1.copy(p.pos).addScaledVector(p.vel, -0.05);
           const dres = defends(e, p.k === 'infernal' ? 'knives' : p.k, T1);
           if(dres === 'deflect'){
@@ -10928,7 +10938,7 @@ function updateProjectiles(dt){
             if(p.k === 'infernal'){ done = true; break; }
             p.owner = e; p.home = null; p.pos.addScaledVector(p.vel, 0.05); sfx('block', e.pos); spark(p.pos.clone(), 0xffffff);
             e.deflectAt = clock; e.deflectSide = side;   // the dagger flicks out to bat it away
-            if(e.isPlayer) toast('DEFLECTED', '#ffffff');
+            if(fb(e)) toast('DEFLECTED', '#ffffff');
             break;
           }
           if(dres){ sfx('block', e.pos); spark(p.pos.clone(), 0xffffff); if(p.k === 'ballista') explode(p.pos, p.owner, null); }
@@ -11028,11 +11038,11 @@ function useAbility(f){
       f.line = new THREE.Group(); f.line.add(rope, hook); f.line.userData = { rope, hook }; rope.frustumCulled = false; scene.add(f.line);
     }
     f.line.visible = true;
-    sfx('grapple', f.isPlayer ? null : f.pos);
+    sfx('grapple', isLocal(f) ? null : f.pos);
   } else if(f.clsKey === 'knight'){
     f.grapple = null; f.javWind = 0;
     if(CLASS_KIT){ f.scWind = SC_WIND; f.shieldUp = false; }   // Pious Charge: he holds the cross out, it blazes, then he goes (with either weapon in his right hand)
-    else { f.ram = { t:RAM_T, dir:f.fwd(new V()), hit:new Set(), x0:f.pos.x, z0:f.pos.z }; f.ramFx = RAM_T + 0.3; f.shieldUp = false; sfx('ram', f.isPlayer ? null : f.pos); if(f.isPlayer) shake = 0.25; }
+    else { f.ram = { t:RAM_T, dir:f.fwd(new V()), hit:new Set(), x0:f.pos.x, z0:f.pos.z }; f.ramFx = RAM_T + 0.3; f.shieldUp = false; sfx('ram', isLocal(f) ? null : f.pos); if(isLocal(f)) shakeOn(f, 0.25); }
   } else return false;
   f.abilityCd = ABILITY_CD;
   return true;
@@ -11051,14 +11061,14 @@ function ramHits(f){
       cancelMobility(e); e.windup = null; e.shieldUp = false;
       if(CLASS_KIT){   // the shield charge: knocked back and staggered, a little damage, and the charge ends
         if(SC_DMG > 0) damage(e, SC_DMG, f, 'ram'); if(e.alive){ if(SC_SWING) e.vel.set(dir.x*2, e.vel.y, dir.z*2); else { e.vel.set(dir.x*SC_KNOCK, 4, dir.z*SC_KNOCK); e.onGround = false; } e.stun = Math.max(e.stun, SC_STUN); }   // with the swing on, he stops them in front of him for it
-        sfx('thud', e.pos); sfx('block', e.pos); spark(e.center(new V()), TEAMCOL[f.team]); spark(e.center(new V()), 0xfff0c0); if(e.isPlayer || f.isPlayer) shake = Math.max(shake, 0.6); continue;   // v0.280: a proper crunch on impact
+        sfx('thud', e.pos); sfx('block', e.pos); spark(e.center(new V()), TEAMCOL[f.team]); spark(e.center(new V()), 0xfff0c0); if(isLocal(e)) shakeOn(e, 0.6); if(isLocal(f)) shakeOn(f, 0.6); continue;   // v0.280: a proper crunch on impact
       }
       // dead centre of the shield kills; a glancing hit only staggers
       const side = Math.abs(dx*dir.z - dz*dir.x);
       if(side < 0.55 + e.r*0.5){ damage(e, 999, f, 'ram'); if(!e.alive){ sfx('thud', e.pos); spark(e.center(new V()), TEAMCOL[f.team]); continue; } }
       e.vel.set(dir.x*12, 6, dir.z*12); e.stun = 0.25; e.onGround = false;
       sfx('thud', e.pos); spark(e.center(new V()), TEAMCOL[f.team]);
-      if(e.isPlayer) shake = 0.4;
+      if(isLocal(e)) shakeOn(e, 0.4);
     }
   }
 }
@@ -11075,9 +11085,9 @@ function fireSpear(f){
   const dir = aim.sub(muzzle).normalize(); dir.y += 0.03; dir.normalize();   // a touch of loft
   const mesh = makeJavelinMesh(); mesh.scale.setScalar(0.75); mesh.position.copy(muzzle); scene.add(mesh);
   PROJ.push({ owner:f, k:'spear', pos:muzzle, vel:dir.multiplyScalar(SPEAR_SPEED).addScaledVector(f.vel, 0.2), life:3, mesh });
-  if(f.isPlayer){ VM.spearT = 0.35; VM.recoil = 0.5; }
+  if(isLocal(f)){ vmOf(f).spearT = 0.35; vmOf(f).recoil = 0.5; }
   f.spearThrowAt = clock;
-  sfx('knife', f.isPlayer ? null : f.pos);
+  sfx('knife', isLocal(f) ? null : f.pos);
 }
 // Rally: he lifts the greatsword flat over his head and roars; teammates near him (and he) move and attack faster for RALLY_T, and any slow on them lifts
 // how far up the Rally fist is (0 to 1): punched up by RALLY_AT, held there, dropped over the last 0.6 s
@@ -11096,9 +11106,9 @@ function rallyCry(f){
   let n = 0;
   for(const m of FIGHTERS){ if(!m.alive || m.team !== f.team || m.pos.distanceTo(f.pos) > RALLY_R) continue;
     m.rallyT = clock + RALLY_T; m.rallyBy = f; m.slowed = false; n++;
-    if(m.isPlayer) toast(m === f ? 'RALLY' : 'RALLIED BY ' + f.name, '#ffd27a'); }
-  if(f.isPlayer && n > 1) toast('RALLIED ' + (n - 1), '#ffd27a');
-  sfx('ram', f.isPlayer ? null : f.pos);
+    if(fb(m)) toast(m === f ? 'RALLY' : 'RALLIED BY ' + f.name, '#ffd27a'); }
+  if(fb(f) && n > 1) toast('RALLIED ' + (n - 1), '#ffd27a');
+  sfx('ram', isLocal(f) ? null : f.pos);
 }
 // each tick: javelins back, the Rally, and his javelin throws. Returns true when it has handled the attack this tick
 function brigandTick(f, I, dt){
@@ -11106,7 +11116,7 @@ function brigandTick(f, I, dt){
   if(f.rallyCd > 0) f.rallyCd -= dt;
   if(f.spears < SPEAR_MAX){ f.spearAcc = (f.spearAcc || 0) + dt*(f.rallyT > clock ? RALLY_CDR : 1); if(f.spearAcc >= SPEAR_REFILL){ f.spearAcc = 0; f.spears++; } } else f.spearAcc = 0;
   if(f.spears < SPEAR_MAX && STUCK.length){ for(let i=STUCK.length-1;i>=0;i--){ const s = STUCK[i]; if(!s.spear || f.spears >= SPEAR_MAX) continue;   // walk over a javelin to take it back
-    const p = s.m.position; if(Math.hypot(p.x - f.pos.x, p.z - f.pos.z) < 1.3 && p.y > f.pos.y - 0.8 && p.y < f.pos.y + 2.2){ if(s.m.parent) s.m.parent.remove(s.m); STUCK.splice(i, 1); f.spears++; if(f.isPlayer) toast('+1 JAVELIN', '#e8dcc0'); } } }
+    const p = s.m.position; if(Math.hypot(p.x - f.pos.x, p.z - f.pos.z) < 1.3 && p.y > f.pos.y - 0.8 && p.y < f.pos.y + 2.2){ if(s.m.parent) s.m.parent.remove(s.m); STUCK.splice(i, 1); f.spears++; if(fb(f)) toast('+1 JAVELIN', '#e8dcc0'); } } }
   if(f.rallyAnim > 0){ const was = f.rallyAnim; f.rallyAnim -= dt; if(was > RALLY_ANIM - RALLY_AT && f.rallyAnim <= RALLY_ANIM - RALLY_AT) rallyCry(f); if(f.rallyAnim <= 0) f.rallyAnim = 0; if(f.weapon !== 'ranged') return true; }   // arm up: no swinging until it's back down
   if(I.rally && (f.rallyCd || 0) <= 0 && f.swapT <= 0 && !(f.spearWind > 0) && !f.hasChalice && !f.windup && !f.swing && f.stun <= 0){ f.rallyAnim = RALLY_ANIM; f.rallyCd = RALLY_CD; return true; }
   if(f.weapon === 'ranged' && !f.hasBall){
@@ -11123,7 +11133,7 @@ function actCore(f, dt){
   if(!shootingOnly) swapHolderWeapon(f, I); else I.swapTo = null;
   if(shootingOnly){ I.swapTo = null; I.melee = false; f.weapon = 'ranged'; f.swapT = 0; }
   if(CLASS_KIT) toolHand(f, I);
-  if(f.scWind > 0){ f.scWind -= dt; if(f.scWind <= 0){ f.scWind = 0; if(f.alive && f.stun <= 0 && !f.hasChalice){ f.ram = { t:SC_T, dir:f.fwd(new V()), hit:new Set(), x0:f.pos.x, z0:f.pos.z }; f.ramFx = SC_T + 0.3; sfx('ram', f.isPlayer ? null : f.pos); if(f.isPlayer) shake = 0.25; } } }
+  if(f.scWind > 0){ f.scWind -= dt; if(f.scWind <= 0){ f.scWind = 0; if(f.alive && f.stun <= 0 && !f.hasChalice){ f.ram = { t:SC_T, dir:f.fwd(new V()), hit:new Set(), x0:f.pos.x, z0:f.pos.z }; f.ramFx = SC_T + 0.3; sfx('ram', isLocal(f) ? null : f.pos); if(isLocal(f)) shakeOn(f, 0.25); } } }
   const haste = (f.rallyT > clock ? RALLY_HASTE : 1)*chBurden(f);
   const rk = f.rallyT > clock ? RALLY_HASTE : 1;   // 23 Nov: the Rally speeds the shared sword too
   f.meleeCd -= dt*(f.swing?.trial ? rk : haste);
@@ -11208,7 +11218,7 @@ function actCore(f, dt){
   // block: hold right click with the sword out. Up after a short raise, covers the front 90 degrees, no attacking while it's up
   if(f.guardBreak > 0) f.guardBreak -= dt;
   const cutting = f.swing && f.swing.t < MELEE[f.swing.w].windup + SWING_STRIKE;
-  if(f.wardBroken > 0){ f.wardBroken -= dt; if(f.wardBroken <= 0){ f.wardBroken = 0; f.wardHp = WARD_HP; if(f.isPlayer) toast('WARD READY', TEAMCSS[f.team]); } }
+  if(f.wardBroken > 0){ f.wardBroken -= dt; if(f.wardBroken <= 0){ f.wardBroken = 0; f.wardHp = WARD_HP; if(fb(f)) toast('WARD READY', TEAMCSS[f.team]); } }
   else if(f.wardHp !== undefined && f.wardHp < WARD_HP && clock - (f.wardHitT || 0) > 1.5) f.wardHp = Math.min(WARD_HP, f.wardHp + WARD_HP/WARD_RECHARGE*dt);   // a dented ward mends when left alone
   const wardDown = CLASS_KIT && f.clsKey === 'sorcerer' && f.wardBroken > 0;
   const wantBlock = !gobKit(f) && !brigKit(f) && !((f.hamCharge || 0) > 0) && !(f.knifeCd > 0) && !((f.knifeHold || 0) > 0) && I.block && (f.weapon === 'melee' || knKit(f)) && !f.hasBall && f.swapT <= 0 && !f.windup && !cutting && !(f.guardBreak > 0) && !wardDown;
@@ -11250,7 +11260,7 @@ function actCore(f, dt){
   if(sorcKit(f) && f.weapon === 'ranged' && !f.hasBall){   // the staff: tap for a bolt; hold to charge a heavy one, loosed on release
     if(f.swapT > 0 || f.gwardAim > 0 || f.overheat > 0){ f.boltHold = 0; f.boltCharge = 0; return; }
     if(I.fire){ f.boltHold = (f.boltHold || 0) + aegisStaffTime(f, dt); f.boltCharge = clamp((f.boltHold - BOLT_HOLD)/BOLT_CHARGE_T, 0, 1);
-      if(f.boltCharge >= 1){ f.heat = (f.heat || 0) + dt*ORB_HOLD_HEAT; if(f.heat >= 1){ f.heat = 1; f.overheat = f.overheatMax = STAFF_OVERHEAT; f.boltHold = f.boltCharge = 0; sfx('block', f.isPlayer ? null : f.pos); if(f.isPlayer) toast('STAFF OVERHEATED', '#ff8a4a'); } }   // holding a full charge heats the staff; hold too long and it fizzles
+      if(f.boltCharge >= 1){ f.heat = (f.heat || 0) + dt*ORB_HOLD_HEAT; if(f.heat >= 1){ f.heat = 1; f.overheat = f.overheatMax = STAFF_OVERHEAT; f.boltHold = f.boltCharge = 0; sfx('block', fb(f) ? null : f.pos); if(fb(f)) toast('STAFF OVERHEATED', '#ff8a4a'); } }   // holding a full charge heats the staff; hold too long and it fizzles
       return; }
     if(f.boltHold > 0){ const c = f.boltCharge || 0; f.boltHold = 0; f.boltCharge = 0; if(f.rangedCd <= 0){ f.rangedCd = BOLT_CD; f.burstLock = lockTarget(f); const n = 1; staffHeat(f, c); fireBolt(f, c); f.burstC = c; f.burstLeft = n - 1; f.burstT = BOLT_GAP; } }
     return; }
@@ -11349,7 +11359,7 @@ function throwBall(f, target, power){
   if(target){ solvePass(BALL.pos, target, BALL.vel); target.passReceiver = true; }
   else throwVel(look, f.vel, power || 0, BALL.vel);
   f.meleeCd = 0.4;
-  sfx('pass', f.isPlayer ? null : f.pos);
+  sfx('pass', isLocal(f) ? null : f.pos);
 }
 function throwVel(look, carrierVel, power, out){
   out.copy(look).multiplyScalar(9 + clamp(power, 0, 1)*25); out.y += 2; out.addScaledVector(carrierVel, 0.4); return out;
@@ -11499,7 +11509,7 @@ function updateBall(dt){
     const c = b.carrier;
     if(state === 'play') c.st.held += dt;
     if(HOT_POTATO) b.pot = 0; else b.pot = POT_LIMIT && RULES !== 'fuse' ? Math.min(POT_CAP, b.pot + dt) : b.pot + dt;
-    if(POT_LIMIT && RULES !== 'fuse' && b.pot >= POT_CAP && !b.warned){ b.warned = true; if(c.isPlayer){ toast('OVERHEATED · PASS TO BANK', '#ff7a3d'); sfx('warn'); } }
+    if(POT_LIMIT && RULES !== 'fuse' && b.pot >= POT_CAP && !b.warned){ b.warned = true; if(fb(c)){ toast('OVERHEATED · PASS TO BANK', '#ff7a3d'); sfx('warn'); } }
     c.fwd(T1); c.center(b.pos).addScaledVector(T1, c.r + 0.35); b.pos.y += 0.2;
     b.pos.x += Math.cos(c.yaw)*0.25; b.pos.z -= Math.sin(c.yaw)*0.25;
   } else if(b.state === 'neutral'){
@@ -11579,7 +11589,7 @@ function callForPass(f){
   if(!f.alive || f.hasBall || (f.callCd || 0) > 0) return;
   f.callT = CALL_T; f.callCd = 1.0; f.callDecided = false;
   const c = BALL.state === 'carried' ? BALL.carrier : null;
-  if(f.isPlayer){ toast(isChal() ? 'CHALICE REQUESTED' : 'BALL REQUESTED', TEAMCSS[f.team]); sfx('pickup'); }
+  if(fb(f)){ toast(isChal() ? 'CHALICE REQUESTED' : 'BALL REQUESTED', TEAMCSS[f.team]); sfx('pickup'); }
 }
 // is this teammate open for a pass from b? a clear line, no enemy across it, nobody right on top of them
 function openFor(b, m, enemies){
@@ -13253,8 +13263,23 @@ const hud = { sBlue:$('sBlue'), sRed:$('sRed'), timer:$('timer'), shield:$('shie
 const rctx = hud.radar.getContext('2d');
 let hitT = 0, hurtT = 0, shake = 0;
 function hitMarker(isKill, head){ hud.hit.style.opacity = 1; hud.hit.classList.toggle('kill', !!isKill); hud.hit.classList.toggle('head', !!head); hitT = isKill ? 0.35 : head ? 0.28 : 0.18; sfx('hit'); if(head) sfx('block'); }
+let FB_TO = null;   // split screen: the local player the next toast is for
+function isLocal(f){ return !!f && (f.isPlayer || f.pad != null); }
+function fb(f){ if(isLocal(f)){ FB_TO = f; return true; } return false; }
+const VM_NONE = {};
+function vmOf(f){ return f && f.pad != null ? (f.vmc ? f.vmc.VM : VM_NONE) : VM; }
+function shakeOn(f, v){ if(f.pad != null) f.shake = Math.max(f.shake || 0, v); else shake = Math.max(shake || 0, v); }
+function buzzFor(f, ms, a, b){ if(f.pad != null){ const p = rawPads()[f.pad]; if(p) padRumble(p, ms, a, b); } else padBuzz(ms, a, b); }
+function hitMarkerFor(a, isKill, head){
+  if(!splitOn()){ hitMarker(isKill, head); return; }
+  a.hitT = isKill ? 0.35 : head ? 0.28 : 0.18; a.hitK = isKill ? 'kill' : head ? 'head' : ''; sfx('hit'); if(head) sfx('block');
+}
 function hurtFlash(){ hurtT = 0.4; }
 function toast(text, color){
+  if(splitOn()){ const to = FB_TO; FB_TO = null;
+    for(const f of to ? [to] : LOCAL) if(LOCAL.includes(f)){ f.toastTx = text; f.toastCol = color || '#fff'; f.toastT = 2.2; }
+    return; }
+  FB_TO = null;
   const d = document.createElement('div'); d.className = 'toast'; d.textContent = text; d.style.color = color || '#fff';
   hud.toasts.prepend(d); while(hud.toasts.children.length > 4) hud.toasts.lastChild.remove();
   setTimeout(() => d.remove(), 2600);
@@ -16857,7 +16882,8 @@ function edFrame(dt){
 const SPLIT_SAVE = { p:new V(), q:new THREE.Quaternion(), fov:80, aspect:1 };
 function splitRects(n){ return n === 2 ? [[0, .5, 1, .5], [0, 0, 1, .5]] : [[0, .5, .5, .5], [.5, .5, .5, .5], [0, 0, .5, .5], [.5, 0, .5, .5]]; }   // x, y from the bottom, w, h
 function splitCam(f){
-  if(f.alive){ camera.position.set(f.pos.x, f.pos.y + f.C.eye, f.pos.z); camera.rotation.set(f.aimPitch(), f.yaw, 0); camera.fov = 80; }
+  if(f.alive){ camera.position.set(f.pos.x, f.pos.y + f.C.eye, f.pos.z); camera.rotation.set(f.aimPitch(), f.yaw, 0); camera.fov = 80;
+    if(f.shake > 0){ camera.position.x += rand(-1, 1)*f.shake*0.15; camera.position.y += rand(-1, 1)*f.shake*0.15; } }
   else { camera.position.set(f.pos.x, f.pos.y + 6, f.pos.z + 3); camera.lookAt(f.pos.x, f.pos.y, f.pos.z); camera.fov = 70; }   // waiting to respawn: above where you fell
 }
 function vmSwap(c){
@@ -16892,9 +16918,16 @@ function renderSplit(){
     if(own) own.visible = true;
     if(f.alive){ vmCam.aspect = pw/ph; vmCam.updateProjectionMatrix(); renderer.clearDepth();
       if(i === 0) renderer.render(vmScene, vmCam);
-      else { const c = vmFor(f), back = vmSwap(c); camera.updateMatrixWorld(); try{ updateVM(splitDt); }catch(err){ reportError(err); } renderer.render(vmScene, vmCam);
+      else { const c = vmFor(f), back = vmSwap(c); camera.updateMatrixWorld(); try{ updateVM(splitDt); trialView(f, splitDt); }catch(err){ reportError(err); } renderer.render(vmScene, vmCam); c.kids = [...vmRoot.children];
         c.g = [bobT, lookDX, lookDY, swayK, swaySide]; vmSwap(back); } }
   });
+  if(LOCAL.length === 3){   // three players: the spare quarter shows the whole fight from above
+    const px = Math.round(W/2), pw = W - px, ph = Math.round(H/2);
+    rt.viewport.set(px, 0, pw, ph); rt.scissor.set(px, 0, pw, ph); renderer.setRenderTarget(rt);
+    const t = performance.now()/1000*0.06, mc = MENU_CAM[MAP_ID] || MENU_CAM.basilica;
+    camera.position.set(Math.cos(t)*mc[0], mc[2], Math.sin(t)*mc[1]); camera.lookAt(0, mc[3], 0); camera.fov = 80; camera.aspect = pw/ph; camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+  }
   rt.scissorTest = false; rt.viewport.set(0, 0, W, H); rt.scissor.set(0, 0, W, H); renderer.setRenderTarget(rt);
   camera.position.copy(SPLIT_SAVE.p); camera.quaternion.copy(SPLIT_SAVE.q); camera.fov = SPLIT_SAVE.fov; camera.aspect = SPLIT_SAVE.aspect; camera.updateProjectionMatrix();
   vmCam.aspect = vmA; vmCam.updateProjectionMatrix();
@@ -16905,7 +16938,7 @@ function buildSplitHud(){
   if(!box){ box = document.createElement('div'); box.id = 'splitHud'; $('hud').appendChild(box); }
   const rects = splitRects(LOCAL.length);
   box.innerHTML = LOCAL.map((f, i) => { const [x, y, w, h] = rects[i];
-    return `<div class="sp" style="left:${x*100}%;top:${(1 - y - h)*100}%;width:${w*100}%;height:${h*100}%">${SPLIT_RET}<div class="spDead"></div><div class="spToast"></div>
+    return `<div class="sp" style="left:${x*100}%;top:${(1 - y - h)*100}%;width:${w*100}%;height:${h*100}%"><div class="spHurt"></div><div class="spDir"><i></i></div>${SPLIT_RET}<div class="spHit"></div><div class="spDead"></div><div class="spToast"></div>
       <div class="spBot"><div class="spName"></div><div class="spHp"><i></i></div><div class="spRow"><span class="spAb">ABILITY<b><i></i></b></span><span class="spQ">Q<b><i></i></b></span><span class="spHeat">HEAT<b><i></i></b></span></div></div></div>`; }).join('');
 }
 function splitAbil(p){
@@ -16916,16 +16949,23 @@ function splitAbil(p){
 function splitQ(p){ const cd = gobKit(p) ? SMOKE_CD : knKit(p) ? RELIC_CD : sorcKit(p) ? CGREN_CD : FLASK_CD; return 1 - Math.max(0, p.smokeCd || 0)/cd; }
 function updateSplitHud(){
   const box = document.getElementById('splitHud'); if(!box) return;
+  for(const f of LOCAL){ for(const k of ['hitT', 'hurtT', 'toastT', 'shake']) if(f[k] > 0) f[k] = Math.max(0, f[k] - splitDt); }
   const bar = (el, v) => { el.style.width = clamp(v, 0, 1)*100 + '%'; el.parentElement.parentElement.classList.toggle('ready', v >= 0.999); };
   LOCAL.forEach((f, i) => {
     const el = box.children[i]; if(!el) return;
     const q = s => el.querySelector(s);
     const alive = f.alive && !f.kickoff;
+    const hm = q('.spHit'); hm.style.opacity = f.hitT > 0 ? 1 : 0; hm.className = 'spHit ' + (f.hitK || '');
+    q('.spHurt').style.opacity = clamp((f.hurtT || 0)/0.4, 0, 1)*0.9;
+    const tw = q('.spToast'); if(f.toastT > 0){ if(tw.textContent !== f.toastTx) tw.textContent = f.toastTx; tw.style.color = f.toastCol; tw.style.opacity = Math.min(1, f.toastT/0.4); } else tw.style.opacity = 0;
+    const dir = q('.spDir'), hd = f.hitDirection, age = hd ? (performance.now() - hd.at)/1000 : 9;
+    if(alive && age < 1.2){ const dx = hd.position.x - f.pos.x, dz = hd.position.z - f.pos.z, ang = Math.atan2(-dx, -dz) - f.yaw;
+      dir.style.opacity = 1 - age/1.2; dir.style.transform = `translate(-50%, -50%) rotate(${-ang}rad)`; } else dir.style.opacity = 0;
     q('.spRet').style.display = alive ? '' : 'none'; q('.spBot').style.display = alive ? '' : 'none';
     const dead = q('.spDead');
     if(!alive){
       const k = f.nextCls || f.clsKey, nm = (CLASSES[k] && CLASSES[k].name || k).toUpperCase();
-      const t = f.kickoff ? 'GET READY' : 'RESPAWN ' + Math.max(0, Math.ceil(f.respawnT));
+      const t = f.kickoff ? 'GET READY' : (f.killedBy ? 'KILLED BY ' + String(f.killedBy).toUpperCase() + '<br>' : '') + 'RESPAWN ' + Math.max(0, Math.ceil(f.respawnT));
       const html = `<div>${t}</div><div class="spPick">${CLASS_KIT && !isClassic() && !oneClass() ? '&#9664; ' + nm + ' &#9654;' : nm}</div>`;
       if(dead.innerHTML !== html) dead.innerHTML = html; dead.style.display = '';
       return;
