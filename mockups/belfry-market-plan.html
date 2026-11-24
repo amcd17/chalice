@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chalice · Belfry Market, a plan for approval</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+:root{ --ink:#efe6d2; --dim:#a2947b; --brass:#d8b45a; --hair:rgba(216,180,90,.18); --thistle:#a98cff; --mari:#ff7048; }
+*{ box-sizing:border-box; }
+body{ margin:0; background:#0b0a10; color:var(--ink); font-family:'Barlow Condensed',system-ui,sans-serif; padding:20px 18px 40px; }
+header{ border-bottom:1px solid var(--hair); padding-bottom:10px; }
+.kicker{ font:600 10px 'Barlow Condensed'; letter-spacing:.32em; color:var(--brass); text-transform:uppercase; }
+h1{ margin:6px 0 2px; font:500 26px 'Cinzel',serif; letter-spacing:.04em; color:#f6e9cf; }
+.sub{ font-size:12px; letter-spacing:.12em; color:var(--dim); text-transform:uppercase; }
+.controls{ display:flex; gap:6px; margin:14px 0 10px; flex-wrap:wrap; }
+button{ all:unset; cursor:pointer; padding:7px 12px; border:1px solid rgba(216,180,90,.24); color:#d9cfb8; font:600 11px 'Barlow Condensed'; letter-spacing:.14em; text-transform:uppercase; }
+button.on{ background:rgba(216,180,90,.15); border-color:var(--brass); color:#ffeec2; }
+.wrap{ display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:18px; align-items:start; }
+@media (max-width:900px){ .wrap{ grid-template-columns:1fr; } }
+svg{ width:100%; height:auto; display:block; background:#120f18; border:1px solid var(--hair); }
+svg text{ font-family:'Barlow Condensed',sans-serif; }
+.notes h3{ font:600 13px 'Cinzel',serif; color:#f6e9cf; margin:14px 0 6px; letter-spacing:.06em; }
+.notes p,.notes li{ font-size:14px; line-height:1.4; color:#d8ccb4; margin:0 0 6px; }
+.notes ul{ padding-left:16px; margin:0; }
+.t0{ color:var(--thistle); } .t1{ color:var(--mari); } .g{ color:var(--brass); }
+.legend{ display:flex; flex-wrap:wrap; gap:10px 14px; margin-top:10px; font-size:12px; color:var(--dim); letter-spacing:.06em; }
+.legend i{ display:inline-block; width:14px; height:10px; vertical-align:middle; margin-right:5px; border:1px solid rgba(255,255,255,.25); }
+.layer{ transition:opacity .25s; }
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">New map · 3v3 · asymmetric · plan v6, cult chamber and market grate</div>
+  <h1>Belfry Market</h1>
+  <div class="sub">A village square with a fallen bell tower, a night market, and a catacomb under both · about 96 × 68 m</div>
+</header>
+
+<div class="controls">
+  <button class="on" data-l="street">Street level</button>
+  <button data-l="under">Catacomb (below)</button>
+  <button data-l="both">Both</button>
+</div>
+
+<div class="wrap">
+<svg viewBox="0 0 700 500" id="plan" aria-label="Top-down plan of Belfry Market">
+  <defs>
+    <pattern id="cob" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#2a2330"/><path d="M0 5H10M5 0V5M0 10H10" stroke="#231d29" stroke-width="1"/></pattern>
+    <pattern id="grass" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#1d2620"/><path d="M2 6l1-3M6 7l1-3" stroke="#26332a" stroke-width="1"/></pattern>
+    <pattern id="awn" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#3a2a22"/><rect width="5" height="10" fill="#4a3324"/></pattern>
+    <pattern id="bone" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="#1a1712"/><circle cx="3" cy="3" r="1.6" fill="#3b3428"/><circle cx="9" cy="9" r="1.6" fill="#3b3428"/></pattern>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#d8b45a"/></marker>
+  </defs>
+
+  <!-- ===== STREET LEVEL ===== -->
+  <g class="layer" id="street">
+    <!-- outer walls -->
+    <rect x="14" y="14" width="672" height="472" fill="#0d0b12" stroke="#3a3244" stroke-width="3"/>
+
+    <!-- WEST: churchyard (Thistle) -->
+    <rect x="18" y="18" width="190" height="464" fill="url(#grass)"/>
+    <rect x="26" y="108" width="140" height="284" fill="#2e2838"/>  <!-- church: about 20 x 40 m, a nave with two aisles -->
+    <path d="M56 392 H26 V108 H166 V392 H136" fill="none" stroke="#4a4058" stroke-width="3"/>   <!-- the south wall is down between 56 and 136 -->
+    <g fill="#4a4058"><circle cx="62" cy="140" r="4"/><circle cx="62" cy="180" r="4"/><circle cx="62" cy="320" r="4"/><circle cx="62" cy="360" r="4"/><circle cx="130" cy="140" r="4"/><circle cx="130" cy="180" r="4"/><circle cx="130" cy="320" r="4"/><circle cx="130" cy="360" r="4"/></g>
+    <path d="M26 108 h140" stroke="#4a4058" stroke-width="3"/>
+    <rect x="30" y="216" width="16" height="66" fill="#3e3550" stroke="#6a5e7c"/><text x="38" y="252" text-anchor="middle" fill="#8e83a0" font-size="9" transform="rotate(-90 38 252)">altar</text>
+    <path d="M166 232 v36" stroke="#2e2838" stroke-width="5"/><text x="172" y="250" fill="#8e83a0" font-size="9" transform="rotate(90 172 250)">doors</text>
+    <text x="96" y="372" text-anchor="middle" fill="#8e83a0" font-size="9">pillars: cover in the spawn</text>
+    <text x="96" y="236" text-anchor="middle" fill="#a98cff" font-size="13" font-weight="700" letter-spacing="2">CHURCH</text>
+    <text x="96" y="252" text-anchor="middle" fill="#8e83a0" font-size="10">Thistle spawn</text>
+    <!-- gravestones -->
+    <g fill="#3d3648">
+      <rect x="40" y="40" width="8" height="12"/><rect x="70" y="60" width="8" height="12"/><rect x="110" y="40" width="8" height="12"/>
+      <rect x="40" y="440" width="8" height="12"/><rect x="60" y="462" width="8" height="12"/>
+    </g>
+    <!-- churchyard wall with gate and a broken gap -->
+    <path d="M208 18V200 M208 236V392 M208 446V482" stroke="#5a5068" stroke-width="5"/>
+    <text x="214" y="222" fill="#8e83a0" font-size="10">gate</text>
+    
+    <!-- crypt stair in churchyard -->
+    <rect x="80" y="292" width="34" height="22" fill="#0d0b12" stroke="#d8b45a" stroke-dasharray="3 2"/>
+    <text x="97" y="328" text-anchor="middle" fill="#d8b45a" font-size="10">crypt stair ↓</text>
+
+    <!-- CENTRE: market square with the chalice dais and well -->
+    <rect x="236" y="168" width="230" height="170" fill="url(#cob)" stroke="#3d3546" stroke-width="1"/>
+    <circle cx="372" cy="252" r="26" fill="#3b2f1e" stroke="#d8b45a" stroke-width="2"/>
+    <text x="372" y="249" text-anchor="middle" fill="#ffe6a0" font-size="11" font-weight="700">CHALICE</text>
+    <text x="372" y="262" text-anchor="middle" fill="#cdb880" font-size="9">under the bell</text>
+    <circle cx="300" cy="300" r="12" fill="#0d0b12" stroke="#d8b45a" stroke-dasharray="3 2"/>
+    <text x="300" y="322" text-anchor="middle" fill="#d8b45a" font-size="10">well ↕ catacomb</text>
+    <!-- the bell tower base (standing stump) and its fallen shaft -->
+    <rect x="160" y="34" width="54" height="54" fill="#3a3346" stroke="#6a5e7c" stroke-width="2"/>
+    <text x="187" y="64" text-anchor="middle" fill="#cfc4e6" font-size="10">TOWER</text>
+    <text x="187" y="76" text-anchor="middle" fill="#8e83a0" font-size="9">stump 8 m</text>
+    <!-- fallen shaft: a long walkway falling from the stump down into the square -->
+    <polygon points="206,70 222,56 372,206 356,222" fill="#4b4160" stroke="#8a7aa8" stroke-width="2"/>
+    <g stroke="#2e2838" stroke-width="1.2"><path d="M236 86l-14 14M266 116l-14 14M296 146l-14 14M326 176l-14 14"/></g>
+    <text x="300" y="132" fill="#cfc4e6" font-size="11" transform="rotate(45 300 132)">fallen tower · ramp 8 m → 4 m</text>
+    <!-- the bell hangs from the tip over the dais -->
+    <circle cx="372" cy="220" r="14" fill="none" stroke="#d8b45a" stroke-width="2"/>
+
+    <!-- low cover in the square: carts and crates -->
+    <g fill="#5a4630"><rect x="262" y="196" width="22" height="12"/><rect x="420" y="290" width="12" height="24"/><rect x="420" y="200" width="22" height="12"/><rect x="340" y="306" width="22" height="10"/></g>
+
+    <!-- scaffold climb at the tower tip (Marigold's way onto the high ground) -->
+    <rect x="378" y="188" width="26" height="16" fill="none" stroke="#ff7048" stroke-width="2"/>
+    <text x="410" y="200" fill="#ff9a7a" font-size="10">scaffold ↑</text>
+
+    <!-- EAST: market quarter (Marigold) -->
+    <rect x="486" y="18" width="196" height="464" fill="#191420"/>
+    <!-- covered market hall -->
+    <rect x="590" y="170" width="86" height="170" fill="#33241c" stroke="#6e4c34" stroke-width="2"/>
+    <text x="646" y="250" text-anchor="middle" fill="#ff7048" font-size="13" font-weight="700" letter-spacing="2">MARKET</text>
+    <text x="646" y="264" text-anchor="middle" fill="#ff7048" font-size="13" font-weight="700" letter-spacing="2">HALL</text>
+    <text x="646" y="281" text-anchor="middle" fill="#a08a7c" font-size="10">Marigold spawn</text>
+    <!-- stall rows and alleys -->
+    <g fill="url(#awn)" stroke="#6e4c34">
+      <rect x="500" y="40" width="70" height="34"/><rect x="500" y="100" width="70" height="34"/>
+      <rect x="500" y="360" width="70" height="34"/><rect x="500" y="420" width="70" height="34"/>
+      <rect x="600" y="40" width="70" height="40"/><rect x="600" y="420" width="70" height="40"/>
+    </g>
+    <g fill="#ffcf7a"><circle cx="585" cy="88" r="3"/><circle cx="585" cy="408" r="3"/><circle cx="535" cy="148" r="3"/><circle cx="535" cy="348" r="3"/></g>
+    <text x="535" y="160" fill="#a08a7c" font-size="10">lantern alleys</text>
+    <!-- ossuary stair in the market -->
+    <rect x="536" y="292" width="32" height="22" fill="#0d0b12" stroke="#d8b45a" stroke-dasharray="3 2"/>
+    <text x="552" y="328" text-anchor="middle" fill="#d8b45a" font-size="10">ossuary stair ↓</text>
+
+    <!-- SOUTH: tanners' lane, the market's flank -->
+    <rect x="236" y="380" width="250" height="60" fill="#1f1a24" stroke="#3d3546"/>
+    <g fill="url(#awn)" stroke="#6e4c34"><rect x="260" y="392" width="40" height="22"/><rect x="330" y="410" width="40" height="22"/><rect x="400" y="392" width="40" height="22"/></g>
+    <text x="361" y="452" text-anchor="middle" fill="#a08a7c" font-size="11">tanners' lane · covered stalls, short sightlines</text>
+
+    <!-- NORTH: tower lane (under the fallen shaft) -->
+    <text x="262" y="32" fill="#8e83a0" font-size="11">tower lane · rubble under the shaft</text>
+
+    <!-- ===== v2: more cover ===== -->
+    <!-- the collapsed south wall: a rubble slope down and out toward tanners' lane and the market -->
+    <polygon points="56,386 136,386 214,398 214,446 150,452 78,440" fill="#4d4458" stroke="#8a7aa8" stroke-width="2" stroke-dasharray="6 3"/>
+    <g fill="#5e536c" stroke="#7a6c8c"><polygon points="76,398 92,394 96,408 80,412"/><polygon points="112,404 128,400 132,414 116,418"/><polygon points="150,410 166,406 170,420 154,424"/><polygon points="186,416 200,412 204,428 190,430"/><polygon points="100,426 114,424 116,436 102,438"/></g>
+    <text x="134" y="470" text-anchor="middle" fill="#cfc4e6" font-size="10">rubble slope ↓ 2 m · south wall came down</text>
+    <!-- churchyard: yew, tall tombs, a lychgate over the gate -->
+    <circle cx="94" cy="84" r="16" fill="#24402c" stroke="#3a6a46" stroke-width="2"/><text x="94" y="88" text-anchor="middle" fill="#8fc49c" font-size="9">yew</text>
+    <g fill="#4a4258" stroke="#6a5e7c"><rect x="178" y="150" width="14" height="28"/><rect x="178" y="300" width="14" height="28"/><rect x="178" y="350" width="14" height="28"/></g>
+    <text x="185" y="146" fill="#8e83a0" font-size="9" text-anchor="middle">tombs</text>
+    <rect x="196" y="196" width="26" height="44" fill="#3a3346" stroke="#a98cff" stroke-width="1.5"/>
+    <text x="209" y="192" text-anchor="middle" fill="#cfc4e6" font-size="9">lychgate</text>
+    <!-- tower lane: rubble from the fall, and a broken belfry section you can walk through -->
+    <g fill="#4a4152" stroke="#6a5e7c" stroke-width="1.5">
+      <polygon points="232,108 252,100 262,116 240,126"/>
+      <polygon points="272,144 296,138 302,156 278,162"/>
+      <polygon points="298,58 322,52 330,70 304,76"/>
+      <polygon points="352,92 378,86 384,106 358,110"/>
+      <polygon points="404,132 428,128 432,148 408,152"/>
+    </g>
+    <path d="M430 40 h48 v40 h-48 z" fill="none" stroke="#8a7aa8" stroke-width="3" stroke-dasharray="14 10"/>
+    <text x="454" y="96" text-anchor="middle" fill="#cfc4e6" font-size="9">belfry section (walk through)</text>
+    <!-- broken gap in the ramp with a low wall: no single spot on the tower sees the whole square -->
+    <polygon points="280,124 292,112 304,124 292,136" fill="#0d0b12" stroke="#ff7048" stroke-width="1.5"/>
+    <path d="M318 150 l18 18" stroke="#cfc4e6" stroke-width="4"/>
+    <text x="250" y="182" fill="#ffb69a" font-size="9">ramp gap · jump it</text>
+    <text x="344" y="150" fill="#cfc4e6" font-size="9">low wall</text>
+    <!-- open grate in tanners' lane: drop down into the cult chamber's south passage -->
+    <circle cx="373" cy="392" r="10" fill="#2a1410" stroke="#ff7048" stroke-width="2"/>
+    <path d="M366 392 h14 M373 385 v14" stroke="#ff7048" stroke-width="1"/>
+    <text x="388" y="378" fill="#ff9a7a" font-size="9">open grate ↓</text>
+    <!-- cellar hatch: the market side's way up from the catacomb, the same distance from its stair as the well is from the crypt -->
+    <circle cx="404" cy="328" r="10" fill="#0d0b12" stroke="#d8b45a" stroke-dasharray="3 2"/>
+    <text x="404" y="352" text-anchor="middle" fill="#d8b45a" font-size="10">hatch ↕</text>
+    <!-- market hall upper gallery: Marigold's own height, lower than the tower -->
+    <rect x="590" y="176" width="24" height="158" fill="#4a3324" stroke="#ff7048" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <rect x="576" y="228" width="16" height="50" fill="#4a3324" stroke="#ff7048" stroke-width="2"/>
+    <g stroke="#ff7048" stroke-width="1" stroke-dasharray="2 5" opacity=".55" fill="none"><path d="M576 236 L420 200"/><path d="M576 270 L420 330"/><path d="M590 334 L470 410"/></g>
+    <text x="560" y="222" text-anchor="end" fill="#ffb69a" font-size="10">gallery balcony · 4 m</text>
+    <rect x="624" y="300" width="20" height="30" fill="none" stroke="#ff9a7a" stroke-width="1.5"/><text x="634" y="342" text-anchor="middle" fill="#ff9a7a" font-size="9">stair ↑</text>
+    <!-- square: market cross, bell frame, toppled stall, a clear ring around the dais -->
+    <circle cx="372" cy="252" r="46" fill="none" stroke="#d8b45a" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>
+    <g stroke="#cdb880" stroke-width="4"><path d="M282 232 v26 M272 242 h20"/></g>
+    <text x="282" y="272" text-anchor="middle" fill="#cdb880" font-size="9">market cross</text>
+    <path d="M444 330 l14 -18 l14 18" fill="none" stroke="#a88f5c" stroke-width="4"/>
+    <text x="458" y="342" text-anchor="middle" fill="#a88f5c" font-size="9">bell frame</text>
+    <rect x="432" y="244" width="30" height="16" fill="url(#awn)" stroke="#6e4c34" transform="rotate(-28 447 252)"/>
+    <text x="447" y="276" text-anchor="middle" fill="#a08a7c" font-size="9">toppled stall</text>
+
+    <!-- route arrows -->
+    <g stroke="#d8b45a" stroke-width="1.5" fill="none" stroke-dasharray="6 4" marker-end="url(#ar)" opacity=".7">
+      <path d="M122 220C170 220 210 218 250 232"/>
+      <path d="M590 200C540 210 470 236 405 248"/>
+      <path d="M560 420C500 420 440 400 380 345"/>
+      <path d="M110 360C140 410 200 420 252 412"/>
+    </g>
+
+    <!-- scale -->
+    <g transform="translate(560 470)"><path d="M0 0H70" stroke="#a2947b" stroke-width="2"/><text x="35" y="-4" text-anchor="middle" fill="#a2947b" font-size="10">10 m</text></g>
+    <text x="22" y="476" fill="#5f5670" font-size="10">N ↑</text>
+  </g>
+
+  <!-- ===== CATACOMB (below the square) ===== -->
+  <g class="layer" id="under" opacity="0">
+    <rect x="14" y="14" width="672" height="472" fill="#07060a" opacity=".86"/>
+    <!-- crypt under the churchyard -->
+    <rect x="70" y="270" width="120" height="60" fill="url(#bone)" stroke="#5c5240" stroke-width="2"/>
+    <text x="130" y="344" text-anchor="middle" fill="#c9b98e" font-size="11">church crypt</text>
+    <!-- main bone hall west to east -->
+    <path d="M190 300 H300 Q330 300 340 286 L360 262 Q372 252 384 262 L404 286 Q414 300 444 300 H560" stroke="#3b3428" stroke-width="34" fill="none"/>
+    <path d="M190 300 H300 Q330 300 340 286 L360 262 Q372 252 384 262 L404 286 Q414 300 444 300 H560" stroke="url(#bone)" stroke-width="30" fill="none"/>
+    <text x="250" y="292" fill="#e6d6a8" font-size="11">bone hall</text>
+    <!-- chamber under the dais -->
+    <!-- the south passage to the drop under the market grate -->
+    <rect x="361" y="290" width="24" height="100" fill="url(#bone)" stroke="#3b3428" stroke-width="2"/>
+    <circle cx="373" cy="390" r="15" fill="#2a1410" stroke="#ff7048" stroke-width="2"/>
+    <text x="394" y="394" fill="#ff9a7a" font-size="10">drop from the open grate (one way down)</text>
+    <!-- cult chamber under the dais -->
+    <ellipse cx="372" cy="258" rx="58" ry="46" fill="url(#bone)" stroke="#d8b45a" stroke-width="1.5"/>
+    <circle cx="372" cy="258" r="22" fill="none" stroke="#8a2a2a" stroke-width="2"/>
+    <polygon points="372,238 391,268 353,268" fill="none" stroke="#8a2a2a" stroke-width="1.5"/>
+    <g fill="#4a4236" stroke="#6c6250"><circle cx="330" cy="232" r="5"/><circle cx="414" cy="232" r="5"/><circle cx="330" cy="284" r="5"/><circle cx="414" cy="284" r="5"/></g>
+    <g fill="#ffcf7a"><circle cx="350" cy="240" r="2"/><circle cx="394" cy="240" r="2"/><circle cx="350" cy="276" r="2"/><circle cx="394" cy="276" r="2"/><circle cx="372" cy="232" r="2"/></g>
+    <rect x="362" y="290" width="20" height="8" fill="#3e2a2a" stroke="#8a2a2a"/>
+    <text x="372" y="262" text-anchor="middle" fill="#ffe6a0" font-size="10">cult chamber</text>
+    <text x="372" y="204" text-anchor="middle" fill="#cdb880" font-size="9">ceiling grate under the dais: you see the chalice, can't climb</text>
+    <!-- well shaft up -->
+    <circle cx="300" cy="300" r="12" fill="#0d0b12" stroke="#d8b45a" stroke-width="2"/>
+    <text x="300" y="334" text-anchor="middle" fill="#d8b45a" font-size="10">ladder up the well</text>
+    <!-- ladder up to the cellar hatch -->
+    <circle cx="404" cy="318" r="12" fill="#0d0b12" stroke="#d8b45a" stroke-width="2"/>
+    <text x="436" y="334" text-anchor="middle" fill="#d8b45a" font-size="10">ladder up the hatch</text>
+    <text x="350" y="188" text-anchor="middle" fill="#e6d6a8" font-size="11">contested: crypt → well and ossuary → hatch are both about 16 m</text>
+    <!-- market ossuary -->
+    <rect x="530" y="230" width="60" height="90" fill="url(#bone)" stroke="#5c5240" stroke-width="2"/>
+    <text x="560" y="336" text-anchor="middle" fill="#c9b98e" font-size="11">ossuary</text>
+    <text x="350" y="430" text-anchor="middle" fill="#8a7d60" font-size="12">Dark and narrow, with a candle-lit cult chamber in the middle. Footsteps echo up through the grates.</text>
+  </g>
+</svg>
+
+<div class="notes">
+  <h3>The idea</h3>
+  <p>A village square where the bell tower has fallen across into the market. The chalice sits on a dais in the square, right under the bell hanging from the fallen tip.</p>
+
+  <h3><span class="t0">Thistle</span> · the churchyard</h3>
+  <ul>
+    <li>Spawns inside the church, west: about 20 × 40 m, a nave with two aisles of pillars, so the spawn itself has cover. Big doors open east toward the lychgate. The south wall has collapsed into a rubble slope that runs down about 2 m and out to tanners' lane, the back way to the market.</li>
+    <li>Owns the height: the fallen tower is a ramp from 8 m down to 4 m, looking straight down onto the dais.</li>
+    <li>Weak at close range: the churchyard has some cover (yew, tall tombs, lychgate), but nothing like the market's alleys.</li>
+  </ul>
+
+  <h3><span class="t1">Marigold</span> · the market</h3>
+  <ul>
+    <li>Spawns in the covered market hall, east.</li>
+    <li>Owns the cover: stall rows, lantern alleys and tanners' lane, all short sightlines.</li>
+    <li>Owns its own height: an upper gallery inside the market hall, with a balcony about 4 m up that looks over the square and the top of tanners' lane. Lower than the tower, so Thistle still has the best view.</li>
+    <li>Shares the catacomb: the ossuary stair leads down, and a ladder climbs to a cellar hatch on the market side of the square.</li>
+  </ul>
+
+  <h3>The counters</h3>
+  <ul>
+    <li>Marigold can climb a scaffold onto the tower tip and fight for the high ground.</li>
+    <li>The catacomb is evenly contested. Thistle's crypt reaches the well, and Marigold's ossuary reaches the hatch, each about 16 m. Both teams meet in the cult chamber under the dais: a big candle-lit room with a ritual circle and four pillars for cover.</li>
+    <li>An open grate in tanners' lane drops straight down into the chamber's south passage. It's one way, a fast route in from the market side but no way back up.</li>
+    <li>Thistle's tower and Marigold's gallery can see each other across the square, so each team's height can be challenged.</li>
+    <li>The south slope works both ways: Thistle's flank out to tanners' lane and the market, and Marigold's way into the church from the south.</li>
+  </ul>
+
+  <h3>Cover (v2)</h3>
+  <ul>
+    <li>Something to duck behind every 8 to 10 m on every route. The only truly open spot is the ring around the dais, so grabbing the chalice stays a risk.</li>
+    <li>Tower lane: rubble from the fall and a broken belfry section you can walk through.</li>
+    <li>Square: market cross, bell frame, toppled stall, carts and crates.</li>
+    <li>The ramp has a gap to jump and a low wall, so no single spot on the tower sees the whole square.</li>
+  </ul>
+
+  <h3>Lanes</h3>
+  <ul>
+    <li><b class="g">North:</b> the fallen tower (high) and the open lane beneath it.</li>
+    <li><b class="g">Middle:</b> the square, carts and crates for cover.</li>
+    <li><b class="g">South:</b> tanners' lane, covered stalls.</li>
+    <li><b class="g">Under:</b> the catacomb, crypt to ossuary. Two ways up: the well (Thistle's side) and the hatch (Marigold's side).</li>
+  </ul>
+
+  <h3>Fair start</h3>
+  <p>Both spawns are about 30 m from the dais. Thistle's quickest path is the gate, Marigold's is the hall door.</p>
+
+  <h3>Optional</h3>
+  <p>Hit the bell and it tolls across the map, which gives the shooter's position away. A Bellringer could use it on purpose.</p>
+
+  <div class="legend">
+    <span><i style="background:#a98cff"></i>Thistle side</span>
+    <span><i style="background:#ff7048"></i>Marigold side</span>
+    <span><i style="background:#d8b45a"></i>chalice, stairs, shafts</span>
+  </div>
+</div>
+</div>
+
+<script>
+const L = { street:document.getElementById('street'), under:document.getElementById('under') };
+document.querySelectorAll('button[data-l]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('button[data-l]').forEach(x => x.classList.toggle('on', x === b));
+  const v = b.dataset.l;
+  L.street.style.opacity = v === 'under' ? .18 : 1;
+  L.under.style.opacity = v === 'street' ? 0 : v === 'both' ? .75 : 1;
+}));
+</script>
+</body>
+</html>
