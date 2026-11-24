@@ -165,16 +165,27 @@ body.split #feed{right:auto;left:50%;top:6px;transform:translateX(-50%);align-it
 #splitSel[hidden]{display:none}
 #splitSel h2{margin:0;font-size:28px;letter-spacing:.22em}
 #splitSel .ssCards{display:flex;gap:1.6vw}
-#splitSel .ssCard{position:relative;width:15vw;max-width:190px;height:26vh;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.05);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+#splitSel .ssCard{position:relative;box-sizing:border-box;width:min(220px,17.5vw);min-height:26vh;padding:14px 8px 12px;justify-content:flex-start !important;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.05);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
 #splitSel .ssCard.hov{border-color:#fff;background:rgba(255,255,255,.12)}
 #splitSel .ssCard.dim{opacity:.35}
-#splitSel .ssSym{width:56px;height:56px;color:var(--gold)}
+#splitSel .ssSym{width:78px;height:78px}
+#splitSel .ssSym img{width:100%;height:100%;display:block}   /* the class crests, as on the other menus */
 #splitSel .ssSym svg{width:100%;height:100%}
 #splitSel .ssNm{font-size:18px;letter-spacing:.14em;text-transform:uppercase}
 #splitSel .ssRole{font-size:11px;letter-spacing:.16em;opacity:.6}
 #splitSel .ssToks{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:26px}
 #splitSel .ssTag{display:flex;align-items:center;gap:4px;color:#fff;font-size:14px;letter-spacing:.08em}
 #splitSel .ssTag.pop .ssTok{animation:ssPop .3s ease-out}
+#splitSel .ssWps{display:flex;gap:6px;justify-content:center;margin-top:6px}
+#splitSel .ssW{display:flex;flex-direction:column;align-items:center;width:31%}
+#splitSel .ssW img{width:100%;height:34px;object-fit:contain;filter:drop-shadow(0 1px 2px #000)}
+#splitSel .ssW em{font-style:normal;font-size:9px;letter-spacing:.06em;opacity:.7;text-align:center;line-height:1.1;margin-top:2px}
+#splitSel .ssAbs{display:flex;flex-direction:column;gap:4px;width:100%;margin-top:6px}
+#splitSel .ssA{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.06em}
+#splitSel .ssAi{width:24px;height:24px;flex:none;border:1px solid rgba(255,236,190,.4);background:rgba(0,0,0,.35);color:#f3e6c8;padding:3px;box-sizing:border-box}
+#splitSel .ssAi svg{width:100%;height:100%;display:block}
+#splitSel .ssAn{flex:1;text-align:left}
+#splitSel .ssAk{font-size:9px;opacity:.55}
 #splitSel .ssBars{position:absolute;top:0;left:0;right:0;height:6px;display:flex}
 #splitSel .ssBars i{flex:1}
 #splitSel .ssSlots{display:none !important}   /* no player boxes under the cards: the bar and symbol on the card say who picked what */
@@ -1728,7 +1739,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.415</div>
+<div id="ver">Chalice 0.418</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -15100,9 +15111,16 @@ const splitSel = (() => {
   const mark = (i, cls, label) => `<svg class="${cls}" viewBox="0 0 24 24" style="--pc:${COL[i]}"><g fill="${COL[i]}" stroke="#fff" stroke-width="1.6" stroke-linejoin="round">${SHAPE[i]}</g>${label ? `<text x="12" y="${TXY[i]}" text-anchor="middle" dominant-baseline="middle" font-size="7.5" font-weight="800" fill="#111">${label}</text>` : ''}</svg>`;
   let el = null, open = false, go = false, seats = [], prev = {}, last = 0;
   const isOpen = () => open;
+  // under each class: its three weapons (pictures from the HUD) and its three abilities (icon box, name, button)
+  function ssKit(c){
+    const lo = TRIAL_LOADOUT[c.key] || [], wn = [lo[0], 'Runic Repeater', lo[1]].filter(Boolean);
+    const wp = wn.map(n => `<span class="ssW"><img src="${WICON[WI_KEY[n]] || ''}" alt=""><em>${n}</em></span>`).join('');
+    const ab = (c.abil || []).slice(0, 3).map(([, name, key], i) => `<span class="ssA"><span class="ssAi">${(NH_IC.ab[c.key] || [])[i] || ''}</span><span class="ssAn">${name}</span><span class="ssAk">${PAD_GLYPH[key] || key}</span></span>`).join('');
+    return `<div class="ssWps">${wp}</div><div class="ssAbs">${ab}</div>`;
+  }
   function build(){
     el = document.createElement('div'); el.id = 'splitSel'; el.hidden = true; document.body.appendChild(el);
-    el.innerHTML = `<h2>CHOOSE YOUR CLASS</h2><div class="ssCount"></div><div class="ssCards">${CLASS_PICK.map(c => `<div class="ssCard" data-k="${c.key}"><div class="ssBars"></div><div class="ssToks"></div><div class="ssSym">${NH_IC.sym[c.key] || ''}</div><div class="ssNm">${c.name}</div><div class="ssRole">${c.role}</div></div>`).join('')}</div>
+    el.innerHTML = `<h2>CHOOSE YOUR CLASS</h2><div class="ssCount"></div><div class="ssCards">${CLASS_PICK.map(c => `<div class="ssCard" data-k="${c.key}"><div class="ssBars"></div><div class="ssToks"></div><div class="ssSym">${classCrest(c.key)}</div><div class="ssNm">${c.name}</div><div class="ssRole">${c.role}</div>${ssKit(c)}</div>`).join('')}</div>
       <div class="ssSlots">${[0, 1, 2, 3].map(i => `<div class="ssSlot" style="--pc:${COL[i]}"></div>`).join('')}</div><div class="ssHint"></div><div class="ssCurs"></div>`;
   }
   function openSel(){
@@ -15165,12 +15183,12 @@ const splitSel = (() => {
         : `${mark(i, 'ssBadge dim', '')}<span class="off">${spare ? 'PRESS A TO JOIN' : 'NO CONTROLLER'}</span>`;
       if(d.innerHTML !== html) d.innerHTML = html; d.classList.toggle('in', !!s);
       d.classList.toggle('pop', !!s && now - (s.popAt || 0) < 450); d.classList.toggle('pick', !!s && now - (s.pickAt || 0) < 300); });
-    const cnt = el.querySelector('.ssCount'), ct = connected === 0 ? 'NO CONTROLLERS FOUND · PRESS ANY BUTTON TO WAKE ONE' : `${connected} CONTROLLER${connected === 1 ? '' : 'S'} CONNECTED · ${seats.length} JOINED` + (connected < 4 ? ' · PRESS ANY BUTTON TO WAKE ANOTHER' : '');
+    const cnt = el.querySelector('.ssCount'), ct = connected === 0 ? 'NO CONTROLLERS FOUND · PRESS ANY BUTTON TO WAKE ONE' : `${connected} CONTROLLER${connected === 1 ? '' : 'S'} CONNECTED · ${seats.length} JOINED` + '';
     if(cnt.textContent !== ct) cnt.textContent = ct;
     const hint = ready() ? 'PRESS START TO PLAY' : seats.length ? 'A PICK · X CHANGE TEAM · B BACK' : 'PRESS A ON EACH CONTROLLER TO JOIN · B TO GO BACK';
     const h = el.querySelector('.ssHint'); if(h.textContent !== hint) h.textContent = hint; h.classList.toggle('go', ready());
     const curs = el.querySelector('.ssCurs'), key = seats.map(s => s.slot).sort().join(',');
-    if(curs.dataset.k !== key){ curs.dataset.k = key; curs.innerHTML = seats.map(s => `<div class="ssCur" data-slot="${s.slot}">${mark(s.slot, '', 'P' + (s.slot + 1))}</div>`).join(''); }   // rebuilt only when someone joins or leaves, so the pop plays once
+    if(curs.dataset.k !== key){ curs.dataset.k = key; curs.innerHTML = seats.map(s => `<div class="ssCur" data-slot="${s.slot}">${mark(s.slot, '', '')}</div>`).join(''); }   // rebuilt only when someone joins or leaves, so the pop plays once
     for(const s of seats){ const c = curs.querySelector(`[data-slot="${s.slot}"]`); if(c){ c.style.left = s.x + 'px'; c.style.top = s.y + 'px'; c.classList.toggle('pop', now - (s.popAt || 0) < 450); } }
   }
   addEventListener('keydown', e => { if(open && e.code === 'Escape') close(); });
@@ -15933,7 +15951,7 @@ const localMenu = (() => {
       case 'localSetup': SPLIT = v === 'split' ? 4 : 1; if(SPLIT <= 1) SEATS = null; go('setup'); return;   // split screen is picked on the main menu; players join on the class select
       case 'options': go('options'); return;
       case 'mapPage': go('map'); return;
-      case 'startGame': lobbyRoster = makeLobbyRoster(); go('lobby'); return;
+      case 'startGame': lobbyRoster = makeLobbyRoster(); if(SPLIT > 1){ launch(); return; } go('lobby'); return;   // split screen skips the lobby: everyone picks on CHOOSE YOUR CLASS
       case 'backSetup': go('setup'); return;
       case 'backHome': go('home'); return;
       case 'backLocal': go('local'); return;
