@@ -172,8 +172,12 @@ body.split #feed{right:auto;left:50%;top:6px;transform:translateX(-50%);align-it
 #splitSel .ssSym svg{width:100%;height:100%}
 #splitSel .ssNm{font-size:18px;letter-spacing:.14em;text-transform:uppercase}
 #splitSel .ssRole{font-size:11px;letter-spacing:.16em;opacity:.6}
-#splitSel .ssToks{position:absolute;top:6px;left:6px;right:6px;display:flex;gap:4px;flex-wrap:wrap}
-#splitSel .ssSlots{display:flex;gap:1.6vw}
+#splitSel .ssToks{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:26px}
+#splitSel .ssTag{display:flex;align-items:center;gap:4px;color:#fff;font-size:14px;letter-spacing:.08em}
+#splitSel .ssTag.pop .ssTok{animation:ssPop .3s ease-out}
+#splitSel .ssBars{position:absolute;top:0;left:0;right:0;height:6px;display:flex}
+#splitSel .ssBars i{flex:1}
+#splitSel .ssSlots{display:none !important}   /* no player boxes under the cards: the bar and symbol on the card say who picked what */
 #splitSel .ssSlot{width:18vw;max-width:220px;height:13vh;border:2px solid rgba(255,255,255,.15);border-top:6px solid var(--pc);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;opacity:.55}
 #splitSel .ssSlot.in{opacity:1;background:rgba(255,255,255,.06)}
 #splitSel .ssSlot span{font-size:14px;letter-spacing:.14em}
@@ -187,7 +191,7 @@ body.split #feed{right:auto;left:50%;top:6px;transform:translateX(-50%);align-it
 #splitSel .ssCount{font-size:12px;letter-spacing:.2em;opacity:.7;margin-top:-2.5vh}
 #splitSel .ssBadge{width:42px;height:42px}
 #splitSel .ssBadge.dim{opacity:.35}
-#splitSel .ssTok{width:24px;height:24px}
+#splitSel .ssTok{width:22px;height:22px}
 #splitSel .ssSlot.pop{animation:ssPop .45s ease-out}
 #splitSel .ssSlot.pick .ssBadge{animation:ssPop .3s ease-out}
 @keyframes ssPop{0%{transform:scale(.4)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
@@ -1724,7 +1728,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.414</div>
+<div id="ver">Chalice 0.415</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -15098,7 +15102,7 @@ const splitSel = (() => {
   const isOpen = () => open;
   function build(){
     el = document.createElement('div'); el.id = 'splitSel'; el.hidden = true; document.body.appendChild(el);
-    el.innerHTML = `<h2>CHOOSE YOUR FIGHTERS</h2><div class="ssCount"></div><div class="ssCards">${CLASS_PICK.map(c => `<div class="ssCard" data-k="${c.key}"><div class="ssSym">${NH_IC.sym[c.key] || ''}</div><div class="ssNm">${c.name}</div><div class="ssRole">${c.role}</div><div class="ssToks"></div></div>`).join('')}</div>
+    el.innerHTML = `<h2>CHOOSE YOUR CLASS</h2><div class="ssCount"></div><div class="ssCards">${CLASS_PICK.map(c => `<div class="ssCard" data-k="${c.key}"><div class="ssBars"></div><div class="ssToks"></div><div class="ssSym">${NH_IC.sym[c.key] || ''}</div><div class="ssNm">${c.name}</div><div class="ssRole">${c.role}</div></div>`).join('')}</div>
       <div class="ssSlots">${[0, 1, 2, 3].map(i => `<div class="ssSlot" style="--pc:${COL[i]}"></div>`).join('')}</div><div class="ssHint"></div><div class="ssCurs"></div>`;
   }
   function openSel(){
@@ -15150,8 +15154,10 @@ const splitSel = (() => {
     const now = performance.now(), connected = Array.from(rawPads()).filter(p => p && p.connected).length;
     const nm = k => { const c = CLASS_PICK.find(c => c.key === k); return c ? c.name : ''; };
     el.querySelectorAll('.ssCard').forEach(c => { c.classList.toggle('dim', isClassic() || oneClass());
-      const html = seats.filter(s => s.cls === c.dataset.k).sort((a, b) => a.slot - b.slot).map(s => mark(s.slot, 'ssTok', 'P' + (s.slot + 1))).join('');
-      const t = c.querySelector('.ssToks'); if(t.innerHTML !== html) t.innerHTML = html;
+      const here = seats.filter(s => s.cls === c.dataset.k).sort((a, b) => a.slot - b.slot);   // who picked this class: a bar in their colour along the top, and their symbol with P1 etc. above the class icon
+      const html = here.map(s => `<span class="ssTag${now - (s.pickAt || 0) < 300 ? ' pop' : ''}">${mark(s.slot, 'ssTok', '')}<b>P${s.slot + 1}</b></span>`).join('');
+      const t = c.querySelector('.ssToks'); if(t.dataset.k !== here.map(s => s.slot).join()){ t.dataset.k = here.map(s => s.slot).join(); t.innerHTML = html; }
+      const bars = here.map(s => `<i style="background:${COL[s.slot]}"></i>`).join(''), bb = c.querySelector('.ssBars'); if(bb.innerHTML !== bars) bb.innerHTML = bars;
       c.classList.toggle('hov', seats.some(s => !s.cls && cardAt(s.x, s.y) === c)); });
     el.querySelectorAll('.ssSlot').forEach((d, i) => { const s = seats.find(x => x.slot === i);
       const emptyRank = [0, 1, 2, 3].filter(k => !seats.some(x => x.slot === k)).indexOf(i), spare = emptyRank >= 0 && emptyRank < connected - seats.length;   // only as many empty slots say PRESS A as there are spare pads
