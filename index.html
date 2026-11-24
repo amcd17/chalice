@@ -153,8 +153,8 @@ body.nhud #chalMeter{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 .nhs.low{animation:nhsP .45s ease-in-out infinite alternate}
 @keyframes nhsP{to{opacity:.4}}
 body.split #hud:not(.hudQ) > :not(#topbar):not(#feed):not(#splitHud){display:none !important}
-#splitHud .hudQ{position:absolute !important;inset:auto !important;left:0;top:0}
-#splitHud .hudQ > #topbar,#splitHud .hudQ > #feed,#splitHud .hudQ > #radar,#splitHud .hudQ > #death,#splitHud .hudQ > #stx{display:none !important}
+#splitHud .hudQ{position:absolute !important;inset:auto !important;left:0;top:0;transform:translateZ(0)}
+#splitHud .hudQ > #topbar,#splitHud .hudQ > #feed,#splitHud .hudQ > #radar,#splitHud .hudQ > #death{display:none !important}
 #splitHud .spRet,#splitHud .spBot,#splitHud .spHit,#splitHud .spToast,#splitHud .spDir{display:none !important}
 body.split #topbar{top:4px;transform:translateX(-50%) scale(.55);transform-origin:50% 0;z-index:3}
 body.split #feed{right:auto;left:50%;top:34px;transform:translateX(-50%);align-items:center;font-size:10px;z-index:3}
@@ -1715,7 +1715,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.408</div>
+<div id="ver">Chalice 0.409</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -3197,7 +3197,7 @@ function parryCatches(att, tgt){
   T4.subVectors(att.pos, tgt.pos).setY(0); if(T4.lengthSq() < 1e-4) return true; T4.normalize();
   return T4.dot(tgt.fwd(T5)) > 0.25;   // only a blade coming from in front
 }
-function parryFlash(){ const el = $('parryFlash'); if(!el) return; el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 60); }
+function parryFlash(f){ if(f && splitOn() && LOCAL.includes(f) && !HUD_ROOT){ hudIn(f, () => parryFlash()); return; } const el = $('parryFlash'); if(!el) return; el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 60); }
 function parrySuccess(att, tgt, heavy){
   tgt.sparry = null; tgt.meleeCd = PARRY.recover; tgt.parryDoneAt = clock; tgt.parryWon = true;
   const tk = trialWeapon(tgt), ak = trialWeapon(att);
@@ -3213,7 +3213,7 @@ function parrySuccess(att, tgt, heavy){
   const glint = fxSprite(FX_GLOW, 0xffffff, 1); glint.position.copy(at); glint.scale.setScalar(0.5); scene.add(glint);
   FX.push({ t:0, life:0.28, up(){ const k = this.t/this.life; glint.scale.setScalar(0.5 + 1.6*k); glint.material.opacity = 1 - k; }, kill(){ scene.remove(glint); glint.material.dispose(); } });
   sfx('parry', tgt.isPlayer || isLocal(att) ? null : at);
-  if(fb(tgt)){ toast('PARRIED', '#bfe6ff'); parryFlash(); } else if(fb(att)){ toast('PARRIED, YOU ARE OPEN', '#ff9a8a'); parryFlash(); }
+  if(fb(tgt)){ toast('PARRIED', '#bfe6ff'); parryFlash(tgt); } if(fb(att)){ toast('PARRIED, YOU ARE OPEN', '#ff9a8a'); parryFlash(att); }
 }
 function botParry(b, target, d){
   if(!SHARED_SWORD || !canParry(b)) return false;
@@ -4179,16 +4179,16 @@ const rt = (renderer.capabilities.isWebGL2 && THREE.WebGLMultisampleRenderTarget
 if(rt.samples !== undefined) rt.samples = 4;
 const postScene = new THREE.Scene(), postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 const postMat = new THREE.ShaderMaterial({
-  uniforms:{ tDiffuse:{ value:rt.texture }, uHurt:{ value:0 }, uPulse:{ value:0 }, uDeath:{ value:0 }, uSpawnFade:{value:0} }, depthTest:false, depthWrite:false,
-  vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
-  fragmentShader:`uniform sampler2D tDiffuse; uniform float uHurt; uniform float uPulse; uniform float uDeath; uniform float uSpawnFade; varying vec2 vUv;
+  uniforms:{ tDiffuse:{ value:rt.texture }, uRect:{ value:new THREE.Vector4(0, 0, 1, 1) }, uHurt:{ value:0 }, uPulse:{ value:0 }, uDeath:{ value:0 }, uSpawnFade:{value:0} }, depthTest:false, depthWrite:false,
+  vertexShader:'uniform vec4 uRect; varying vec2 vUv; varying vec2 vL; void main(){ vL = uv; vUv = uRect.xy + uv*uRect.zw; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+  fragmentShader:`uniform sampler2D tDiffuse; uniform float uHurt; uniform float uPulse; uniform float uDeath; uniform float uSpawnFade; varying vec2 vUv; varying vec2 vL;
     void main(){
       vec3 c = texture2D(tDiffuse, vUv).rgb;
       float l = dot(c, vec3(0.299,0.587,0.114));
       c = mix(c*vec3(0.9,0.84,1.08), c, smoothstep(0.05, 0.6, l));   // violet shadows
       c = mix(vec3(l), c, 1.12);
       c = (c - 0.5)*1.07 + 0.5;
-      vec2 q = vUv - 0.5; c *= 1.0 - dot(q,q)*0.55;
+      vec2 q = vL - 0.5; c *= 1.0 - dot(q,q)*0.55;   // vL: this view's own 0..1, so a split-screen quarter gets its own vignette and red edges
       // damage: drain colour, then bleed red in from the edges as health drops
       float hurt = clamp(uHurt, 0.0, 1.0);
       float lum = dot(c, vec3(0.299,0.587,0.114));
@@ -10177,10 +10177,16 @@ function kill(t, a, w, hit){ t.killedBy = a && a !== t ? a.name : null;
     if(isDM()) addScore(a.team, 1, a, 'kill');   // deathmatch: a point a kill
     if(w === 'ball'){ a.st.ballKills++; if(BALLKILL_PTS > 0){ addScore(a.team, BALLKILL_PTS, a, 'kill'); teamToast(a.team, `BALL KILL +${BALLKILL_PTS}`); } }
     if(wasCarrier){ a.st.carrierKills++; if(CARRIER_PTS > 0){ addScore(a.team, CARRIER_PTS, a, 'kill'); teamToast(a.team, `CARRIER DOWN +${CARRIER_PTS}`); } }
-    if(a.isPlayer) sfx('kill');
+    if(isLocal(a)) sfx('kill');
   }
   if(w !== 'fuse') pushFeed(a, t, w);   // the explosion has its own feed line
   if(t.isPlayer) beginTrialDeath(t, a, w, hit, wasHolder && w !== 'drink');
+  else if(splitOn() && LOCAL.includes(t)){   // the same death beat from this player's own eyes
+    const cp = camera.position.clone(), cq = camera.quaternion.clone();
+    camera.position.set(t.pos.x, t.pos.y + t.C.eye, t.pos.z); camera.rotation.set(t.aimPitch(), t.yaw, 0);
+    hudIn(t, () => beginTrialDeath(t, a, w, hit, wasHolder && w !== 'drink'));
+    camera.position.copy(cp); camera.quaternion.copy(cq);
+  }
 }
 let TEAMST = [{ bank:0, kill:0, lost:0 }, { bank:0, kill:0, lost:0 }];
 function addScore(team, n, who, kind){ SCORE[team] += n; if(who) who.score += n; if(kind) TEAMST[team][kind] += n; }
@@ -12969,6 +12975,7 @@ function padControl(f, dt){
   if(down(3) && !S.yDone && performance.now() - S.yAt >= 280){ yReq = 'melee'; S.yDone = true; }
   if(was[3] && !down(3) && !S.yDone) yReq = 'toggle';
   if(edge.has(9) && state === 'play'){ setPaused(true); return; }
+  if(edge.has(0) && !f.alive && f.deathBeat && trialInDeathView(f) && trialDeathSeconds(f) >= 0.5) f.deathBeat.skipped = true;
   if(f.alive){
     const m = Math.hypot(lx, ly), c = m > 0 ? Math.pow(m, 1.8)/m : 0;
     const keep = { id:AA.id, yaw:AA.yaw, pitch:AA.pitch }; Object.assign(AA, S.AA);   // the aim assist's lock is per player
@@ -13637,10 +13644,10 @@ const ST_DEF = [   // [id, active?, icon, colour, viewer]: marks show to the who
   ['mark', f => f.team !== PLAYER.team && marked4(f, PLAYER.team), () => MARK_OVERHEAD_ICON, ST_BAD, () => PLAYER] ];
 const STX = new Map();
 function updateStatusIcons(dt){
-  const box = $('stx'); if(!box) return; const W = innerWidth, H = innerHeight;
+  const box = $('stx'); if(!box) return; const W = PROJ_VP ? PROJ_VP.w : innerWidth, H = PROJ_VP ? PROJ_VP.h : innerHeight;
   for(const f of FIGHTERS){
     let el = STX.get(f);
-    const visibleFighter = CLASS_KIT && f.alive && !f.isPlayer && PLAYER && !cloakHides(f, PLAYER, camera.position);
+    const visibleFighter = CLASS_KIT && f.alive && f !== PLAYER && PLAYER && !cloakHides(f, PLAYER, camera.position);
     const mate = PLAYER && f.team === PLAYER.team;
     const on = visibleFighter ? ST_DEF.filter(d => d[1](f) && d[4](f) === PLAYER) : [];
     const hp = clamp(f.hp/maxHp(f), 0, 1), lowHealth = hp < LOW_HEALTH_RATIO;
@@ -14119,7 +14126,7 @@ function respawn(f, initial){
     for(const m of FIGHTERS) if(m.alive && m !== f && m.pos.distanceTo(sp) < 1.5) s -= 50;
     if(s > bs){ bs = s; best = sp; }
   }
-  const fromDeath = f.isPlayer && !!f.deathBeat;
+  const fromDeath = isLocal(f) && !!f.deathBeat;
   f.resetState(); f.pos.copy(best); f.alive = true;
   if(fromDeath) f.spawnFeelAt = performance.now();
   f.yaw = MAP_ID === 'church' ? (f.team === 0 ? Math.PI : 0) : (f.team === 0 ? -Math.PI/2 : Math.PI/2); f.pitch = 0;
@@ -16501,9 +16508,8 @@ function updateBodies(){
 let deathCam = new V(), landDip = 0, wasGround = true; const DEATH_LOOK = 2;   // seconds of the old death view before the overhead orbit
 // menu orbit per map: [radius x, radius z, height, look-at height]
 const MENU_CAM = { basilica:[46, 34, 44, 0], scrollwork:[46, 30, 26, 1], mausoleum:[12.9, 12.9, 12.2, 0], church:[30, 26, 32, 0], cathedral:[46, 34, 44, 0] };
-function updateCamera(dt){
-  const p = PLAYER;
-  if(p && trialInDeathView(p)){
+function deathViewCam(p){
+  {
     const beat = p.deathBeat, age = trialDeathSeconds(p);
     const rise = smooth(clamp((age - 0.12)/0.8, 0, 1));
     camera.position.copy(beat.position);
@@ -16522,8 +16528,11 @@ function updateCamera(dt){
       const wanted = camera.quaternion.clone();
       camera.quaternion.copy(beat.rotation).slerp(wanted, smooth(clamp((age - 0.12)/0.5, 0, 1)));
     }
-    return;
   }
+}
+function updateCamera(dt){
+  const p = PLAYER;
+  if(p && trialInDeathView(p)){ deathViewCam(p); return; }
   if(state === 'menu' || !p || !p.alive){
     // the menu's slow orbit: high and steep, kept inside each map's walls and under its ceiling. It's also the view before kick-off and while you wait to respawn: the whole fight from above
     const t = performance.now()/1000*0.06, mc = MENU_CAM[MAP_ID] || MENU_CAM.basilica;
@@ -16888,25 +16897,36 @@ function edFrame(dt){
 const SPLIT_SAVE = { p:new V(), q:new THREE.Quaternion(), fov:80, aspect:1 };
 function splitRects(n){ return n === 2 ? [[0, .5, 1, .5], [0, 0, 1, .5]] : [[0, .5, .5, .5], [.5, .5, .5, .5], [0, 0, .5, .5], [.5, 0, .5, .5]]; }   // x, y from the bottom, w, h
 function splitCam(f){
+  if(trialInDeathView(f)){ deathViewCam(f); camera.fov = 80; return; }
   if(f.alive){ camera.position.set(f.pos.x, f.pos.y + f.C.eye, f.pos.z); camera.rotation.set(f.aimPitch(), f.yaw, 0); camera.fov = 80;
     if(f.shake > 0){ camera.position.x += rand(-1, 1)*f.shake*0.15; camera.position.y += rand(-1, 1)*f.shake*0.15; } }
   else { camera.position.set(f.pos.x, f.pos.y + 6, f.pos.z + 3); camera.lookAt(f.pos.x, f.pos.y, f.pos.z); camera.fov = 70; }   // waiting to respawn: above where you fell
 }
 function vmSwap(c){
-  const out = { VM, kids:[...vmRoot.children], p:PLAYER, g:[bobT, lookDX, lookDY, swayK, swaySide] };
+  const mist = SHROUD_SCREEN.material.uniforms.strength;
+  const out = { VM, kids:[...vmRoot.children], p:PLAYER, g:[bobT, lookDX, lookDY, swayK, swaySide, mist.value, SHROUD_SCREEN.visible] };
   while(vmRoot.children.length) vmRoot.remove(vmRoot.children[0]);
   for(const k of c.kids) vmRoot.add(k);
-  VM = c.VM; PLAYER = c.p; [bobT, lookDX, lookDY, swayK, swaySide] = c.g;
+  VM = c.VM; PLAYER = c.p; [bobT, lookDX, lookDY, swayK, swaySide] = c.g; mist.value = c.g[5] || 0; SHROUD_SCREEN.visible = !!c.g[6];
   return out;
 }
 function vmFor(f){
   if(!f.vmc || f.vmc.k !== f.clsKey){
-    const back = vmSwap({ VM:{ recoil:0 }, kids:[], p:f, g:[0, 0, 0, 0, 0] });
+    const back = vmSwap({ VM:{ recoil:0 }, kids:[], p:f, g:[0, 0, 0, 0, 0, 0, false] });
     buildVM(f.clsKey);
-    f.vmc = { k:f.clsKey, VM, kids:[...vmRoot.children], p:f, g:[0, 0, 0, 0, 0] };
+    f.vmc = { k:f.clsKey, VM, kids:[...vmRoot.children], p:f, g:[0, 0, 0, 0, 0, 0, false] };
     vmSwap(back);
   }
   return f.vmc;
+}
+const POST_U = ['uHurt', 'uPulse', 'uDeath', 'uSpawnFade'];
+function postSplit(){
+  const U = postMat.uniforms, keep = POST_U.map(k => U[k].value), rects = splitRects(LOCAL.length), W = innerWidth, H = innerHeight;
+  const one = (r, vals) => { const [x, y, w, h] = r; U.uRect.value.set(x, y, w, h); POST_U.forEach((k, j) => U[k].value = vals[j]);
+    renderer.setViewport(x*W, y*H, w*W, h*H); renderer.setScissor(x*W, y*H, w*W, h*H); renderer.setScissorTest(true); renderer.render(postScene, postCam); };
+  LOCAL.forEach((f, i) => one(rects[i], f.hudc && f.hudc.post || [0, 0, 0, 0]));
+  if(LOCAL.length === 3) one(rects[3], [0, 0, 0, 0]);
+  renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); U.uRect.value.set(0, 0, 1, 1); POST_U.forEach((k, j) => U[k].value = keep[j]);
 }
 function renderSplit(){
   const W = rt.width, H = rt.height, rects = splitRects(LOCAL.length);
@@ -16925,7 +16945,7 @@ function renderSplit(){
     if(f.alive){ vmCam.aspect = pw/ph; vmCam.updateProjectionMatrix(); renderer.clearDepth();
       if(i === 0) renderer.render(vmScene, vmCam);
       else { const c = vmFor(f), back = vmSwap(c); camera.updateMatrixWorld(); try{ updateVM(splitDt); trialView(f, splitDt); }catch(err){ reportError(err); } renderer.render(vmScene, vmCam); c.kids = [...vmRoot.children];
-        c.g = [bobT, lookDX, lookDY, swayK, swaySide]; vmSwap(back); } }
+        c.g = [bobT, lookDX, lookDY, swayK, swaySide, SHROUD_SCREEN.material.uniforms.strength.value, SHROUD_SCREEN.visible]; vmSwap(back); } }
   });
   if(LOCAL.length === 3){   // three players: the spare quarter shows the whole fight from above
     const px = Math.round(W/2), pw = W - px, ph = Math.round(H/2);
@@ -16945,7 +16965,7 @@ function makeHudCopy(){
   const src = document.getElementById('hud'), copy = src.cloneNode(true), map = {};
   for(const k in hud){ const p = hudPath(hud[k], src); if(!p){ map[k] = hud[k]; continue; } let e = copy; for(const i of p) e = e.children[i]; map[k] = e; }
   for(const sel of ['#nh', '#splitHud']) copy.querySelectorAll(sel).forEach(e => e.remove());
-  copy.querySelector('#toasts').innerHTML = ''; copy.querySelector('#feed').innerHTML = '';
+  copy.querySelector('#toasts').innerHTML = ''; copy.querySelector('#stx').innerHTML = ''; copy.querySelector('#feed').innerHTML = '';
   copy.hidden = false; copy.classList.add('hudQ'); copy.classList.remove('chal-full-beat');
   return { root:copy, hud:map, g:[0, 0, ''], NH:NH_FRESH(), CHB:{ n:0, team:-1, score:[0, 0] } };
 }
@@ -16953,11 +16973,13 @@ function swapObj(o, inn){ const out = {}; for(const k in o){ out[k] = o[k]; dele
 const HUD_CAM = { p:new V(), q:new THREE.Quaternion(), fov:80, aspect:1 };
 function hudIn(f, fn){
   const c = f.hudc; if(!c || HUD_ROOT){ fn(); return; }
-  const keep = { hud:{ ...hud }, p:PLAYER, g:[hitT, hurtT, ammoKey] };
+  const keep = { hud:{ ...hud }, p:PLAYER, g:[hitT, hurtT, ammoKey], post:POST_U.map(k => postMat.uniforms[k].value), stx:new Map(STX) };
+  POST_U.forEach((k, j) => postMat.uniforms[k].value = c.post ? c.post[j] : 0); STX.clear(); if(c.stx) for(const [k, v] of c.stx) STX.set(k, v);
   Object.assign(hud, c.hud); HUD_ROOT = c.root; PROJ_VP = c.vp; PLAYER = f; [hitT, hurtT, ammoKey] = c.g;
   const nh = swapObj(NH, c.NH), chb = swapObj(CHB, c.CHB);
   try{ fn(); }catch(err){ reportError(err); }
-  c.NH = swapObj(NH, nh); c.CHB = swapObj(CHB, chb); c.g = [hitT, hurtT, ammoKey];
+  c.NH = swapObj(NH, nh); c.CHB = swapObj(CHB, chb); c.g = [hitT, hurtT, ammoKey]; c.post = POST_U.map(k => postMat.uniforms[k].value); c.stx = new Map(STX);
+  POST_U.forEach((k, j) => postMat.uniforms[k].value = keep.post[j]); STX.clear(); for(const [k, v] of keep.stx) STX.set(k, v);
   Object.assign(hud, keep.hud); HUD_ROOT = null; PROJ_VP = null; PLAYER = keep.p; [hitT, hurtT, ammoKey] = keep.g;
 }
 function splitHudFrame(dt, now){
@@ -17005,6 +17027,7 @@ function updateSplitHud(){
       dir.style.opacity = 1 - age/1.2; dir.style.transform = `translate(-50%, -50%) rotate(${-ang}rad)`; } else dir.style.opacity = 0;
     q('.spRet').style.display = alive ? '' : 'none'; q('.spBot').style.display = alive ? '' : 'none';
     const dead = q('.spDead');
+    if(!alive && trialInDeathView(f)){ dead.style.display = 'none'; return; }
     if(!alive){
       const k = f.nextCls || f.clsKey, nm = (CLASSES[k] && CLASSES[k].name || k).toUpperCase();
       const t = f.kickoff ? 'GET READY' : (f.killedBy ? 'KILLED BY ' + String(f.killedBy).toUpperCase() + '<br>' : '') + 'RESPAWN ' + Math.max(0, Math.ceil(f.respawnT));
@@ -17042,13 +17065,14 @@ function frame(now){
   }catch(err){ reportError(err); }
   renderer.setRenderTarget(rt);
   renderer.clear();
-  if(state === 'play' && splitOn()){ renderSplit(); postMat.uniforms.uHurt.value = postMat.uniforms.uPulse.value = postMat.uniforms.uDeath.value = postMat.uniforms.uSpawnFade.value = 0; }
+  if(state === 'play' && splitOn()) renderSplit();
   else {
   renderer.render(scene, camera);
   if(state === 'play' && PLAYER && PLAYER.alive){ renderer.clearDepth(); renderer.render(vmScene, vmCam); }
   }
   renderer.setRenderTarget(null);
-  renderer.render(postScene, postCam);
+  if(state === 'play' && splitOn()) postSplit();
+  else renderer.render(postScene, postCam);
 }
 requestAnimationFrame(frame);
 if(/[?&]edit=1/.test(location.search)) setTimeout(() => edEnter(), 0);
