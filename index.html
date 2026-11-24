@@ -1717,7 +1717,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.411</div>
+<div id="ver">Chalice 0.412</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -1755,7 +1755,7 @@ body.paused #hud{visibility:hidden}
         <label class="sens" for="sens">Mouse sensitivity <input id="sens" type="range" min="0.4" max="2.5" step="0.05" value="1"> <span id="sensV">1.00</span></label>
         <label class="sens" for="padSens">Controller look speed <input id="padSens" type="range" min="0.4" max="2.5" step="0.05" value="1"> <span id="padSensV">1.00</span></label>
         <label class="sens"><input type="checkbox" id="padInvert"> Controller: invert look up and down</label>
-        <label class="sens" for="splitN">Split screen (up to four controllers, players join on the class select) <select id="splitN"><option value="1">Off</option><option value="4">On</option></select></label>
+
         <label class="sens"><input type="checkbox" id="padAssist"> Controller: aim assist</label>
         <div class="sens">Team <span class="seg teamSeg"><button data-t="0">Thistle</button><button data-t="1">Marigold</button></span></div>
         <div class="sens">Divination: pass to score <span class="seg" id="rulesSeg"><button data-r="hotpotato">Off</button><button data-r="fuse">On</button></span></div>
@@ -7906,7 +7906,7 @@ function buildBody(k, team, showcase){   // showcase: the menu portrait pose (gr
 
 
 // ---------------- Fighters ----------------
-let SPLIT = 1; try{ const n = parseInt(localStorage.getItem('chalice-split')); if(n >= 1 && n <= 4) SPLIT = n; }catch(e){}
+let SPLIT = 1;   // 4 when SPLIT SCREEN was picked on the main menu (players join on the class select), 1 for LOCAL
 let SEATS = null, splitDt = 0.016;   // split screen seats from the class select: { pad, cls, team } in player order
 const LOCAL = [];   // split screen: the local fighters in screen order, PLAYER first (empty or one: no split)
 const splitOn = () => LOCAL.length > 1;
@@ -13052,8 +13052,6 @@ function setPadFocus(el){
 }
 let locked = false, fallback = false, sens = 1;
 try{ const s = parseFloat(localStorage.getItem('oddball-sens')); if(s > 0) sens = s; }catch(e){}
-$('splitN').value = SPLIT > 1 ? '4' : '1';
-$('splitN').addEventListener('change', e => { SPLIT = parseInt(e.target.value) || 1; try{ localStorage.setItem('chalice-split', String(SPLIT)); }catch(err){} });
 $('sens').value = sens; $('sensV').textContent = sens.toFixed(2);
 $('sens').addEventListener('input', e => { sens = parseFloat(e.target.value); $('sensV').textContent = sens.toFixed(2); try{ localStorage.setItem('oddball-sens', String(sens)); }catch(err){} });
 addEventListener('keydown', e => {
@@ -15464,7 +15462,8 @@ const localMenu = (() => {
   }
   function renderHome(){
     root.innerHTML = `<div class="homeWrap"><nav class="homeMenu" aria-label="Main menu">
-      ${hmRow('setup','','LOCAL','local',{chev:true})}
+      ${hmRow('localSetup','solo','LOCAL','local',{chev:true})}
+      ${hmRow('localSetup','split','SPLIT SCREEN','swords',{chev:true,line:'Two to four players, one controller each'})}
       ${hmRow('nav','online','ONLINE','globe',{off:true,meta:'SOON'})}
       ${hmRow('nav','extras','EXTRAS','book',{chev:true})}
       ${hmRow('nav','settings','SETTINGS','sliders',{chev:true})}
@@ -15906,6 +15905,7 @@ const localMenu = (() => {
         go(v); return;
       case 'mode': setGameType(v); break;
       case 'setup': go('setup'); return;
+      case 'localSetup': SPLIT = v === 'split' ? 4 : 1; if(SPLIT <= 1) SEATS = null; go('setup'); return;   // split screen is picked on the main menu; players join on the class select
       case 'options': go('options'); return;
       case 'mapPage': go('map'); return;
       case 'startGame': lobbyRoster = makeLobbyRoster(); go('lobby'); return;
