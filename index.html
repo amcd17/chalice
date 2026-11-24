@@ -154,11 +154,12 @@ body.nhud #chalMeter{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 @keyframes nhsP{to{opacity:.4}}
 body.split #hud:not(.hudQ) > :not(#topbar):not(#feed):not(#splitHud){display:none !important}
 #splitHud .hudQ{position:absolute !important;inset:auto !important;left:0;top:0;transform:translateZ(0)}
-#splitHud .hudQ > #topbar,#splitHud .hudQ > #feed,#splitHud .hudQ > #radar,#splitHud .hudQ > #death{display:none !important}
+body.split #hud:not(.hudQ) > #topbar{display:none !important}   /* each quarter shows its own score bar */
+#splitHud .hudQ > #feed,#splitHud .hudQ > #radar,#splitHud .hudQ > #death{display:none !important}
 body.split4 #splitHud .hudQ #nhWp{zoom:.72}   /* four (or three) players: a smaller weapon panel */
 #splitHud .spRet,#splitHud .spBot,#splitHud .spHit,#splitHud .spToast,#splitHud .spDir{display:none !important}
 body.split #topbar{top:4px;transform:translateX(-50%) scale(.55);transform-origin:50% 0;z-index:3}
-body.split #feed{right:auto;left:50%;top:34px;transform:translateX(-50%);align-items:center;font-size:10px;z-index:3}
+body.split #feed{right:auto;left:50%;top:6px;transform:translateX(-50%);align-items:center;font-size:10px;z-index:3}
 #splitHud{position:absolute;inset:0;pointer-events:none}
 #splitSel{position:fixed;inset:0;z-index:60;background:radial-gradient(ellipse at 50% 30%,rgba(40,30,60,.92),rgba(6,5,10,.97));color:#fff;font-family:var(--display);display:flex;flex-direction:column;align-items:center;padding-top:6vh;gap:4vh;user-select:none}
 #splitSel[hidden]{display:none}
@@ -1716,7 +1717,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.410</div>
+<div id="ver">Chalice 0.411</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -16967,7 +16968,8 @@ function makeHudCopy(){
   for(const k in hud){ const p = hudPath(hud[k], src); if(!p){ map[k] = hud[k]; continue; } let e = copy; for(const i of p) e = e.children[i]; map[k] = e; }
   for(const sel of ['#nh', '#splitHud']) copy.querySelectorAll(sel).forEach(e => e.remove());
   copy.querySelector('#toasts').innerHTML = ''; copy.querySelector('#stx').innerHTML = ''; copy.querySelector('#feed').innerHTML = '';
-  copy.hidden = false; copy.classList.add('hudQ'); copy.classList.remove('chal-full-beat');
+  copy.hidden = false; copy.classList.add('hudQ');
+  copy.querySelectorAll('.penalty').forEach(e => e.remove()); copy.classList.remove('chal-full-beat');
   return { root:copy, hud:map, g:[0, 0, ''], NH:NH_FRESH(), CHB:{ n:0, team:-1, score:[0, 0] } };
 }
 function swapObj(o, inn){ const out = {}; for(const k in o){ out[k] = o[k]; delete o[k]; } Object.assign(o, inn); return out; }
@@ -17006,7 +17008,8 @@ function buildSplitHud(){
   box.innerHTML = LOCAL.map((f, i) => { const [x, y, w, h] = rects[i];
     return `<div class="sp" style="left:${x*100}%;top:${(1 - y - h)*100}%;width:${w*100}%;height:${h*100}%"><div class="spHurt"></div><div class="spDir"><i></i></div>${SPLIT_RET}<div class="spHit"></div><div class="spDead"></div><div class="spToast"></div>
       <div class="spBot"><div class="spName"></div><div class="spHp"><i></i></div><div class="spRow"><span class="spAb">ABILITY<b><i></i></b></span><span class="spQ">Q<b><i></i></b></span><span class="spHeat">HEAT<b><i></i></b></span></div></div></div>`; }).join('');
-  [...box.children].forEach((el, i) => { const f = LOCAL[i]; f.hudc = makeHudCopy(); el.prepend(f.hudc.root); });
+  [...box.children].forEach((el, i) => { const f = LOCAL[i]; f.hudc = makeHudCopy(); el.prepend(f.hudc.root);
+    f.hudc.root.querySelector('#tsBlue').classList.toggle('mine', f.team === 0); f.hudc.root.querySelector('#tsRed').classList.toggle('mine', f.team === 1); });   // your own team's score is the highlighted one
 }
 function splitAbil(p){
   if(brigKit(p)) return p.sprintCharge/ZEALOT_SPRINT_TIME;
