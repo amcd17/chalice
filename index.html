@@ -173,17 +173,24 @@ body.split #feed{right:auto;left:50%;top:6px;transform:translateX(-50%);align-it
 #splitSel .ssNm{font-size:18px;letter-spacing:.14em;text-transform:uppercase}
 #splitSel .ssRole{font-size:11px;letter-spacing:.16em;opacity:.6}
 #splitSel .ssToks{position:absolute;top:6px;left:6px;right:6px;display:flex;gap:4px;flex-wrap:wrap}
-#splitSel .ssToks i{font-style:normal;font-size:11px;padding:2px 6px;color:#000;font-weight:700}
 #splitSel .ssSlots{display:flex;gap:1.6vw}
 #splitSel .ssSlot{width:18vw;max-width:220px;height:13vh;border:2px solid rgba(255,255,255,.15);border-top:6px solid var(--pc);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;opacity:.55}
 #splitSel .ssSlot.in{opacity:1;background:rgba(255,255,255,.06)}
-#splitSel .ssSlot b{color:var(--pc);font-size:20px}
 #splitSel .ssSlot span{font-size:14px;letter-spacing:.14em}
 #splitSel .ssSlot span.off{font-size:11px;opacity:.7}
 #splitSel .ssSlot em{font-style:normal;font-size:11px;letter-spacing:.16em}
 #splitSel .ssHint{font-size:14px;letter-spacing:.2em;opacity:.75}
 #splitSel .ssHint.go{color:var(--gold);opacity:1}
-#splitSel .ssCur{position:absolute;width:30px;height:30px;transform:translate(-50%,-50%);background:var(--pc);border:2px solid #fff;color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.6);pointer-events:none}
+#splitSel .ssCur{position:absolute;width:40px;height:40px;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
+#splitSel .ssCur svg{width:100%;height:100%}
+#splitSel .ssCur.pop svg{animation:ssPop .45s ease-out}
+#splitSel .ssCount{font-size:12px;letter-spacing:.2em;opacity:.7;margin-top:-2.5vh}
+#splitSel .ssBadge{width:42px;height:42px}
+#splitSel .ssBadge.dim{opacity:.35}
+#splitSel .ssTok{width:24px;height:24px}
+#splitSel .ssSlot.pop{animation:ssPop .45s ease-out}
+#splitSel .ssSlot.pick .ssBadge{animation:ssPop .3s ease-out}
+@keyframes ssPop{0%{transform:scale(.4)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
 #splitHud .sp{position:absolute;box-shadow:inset 0 0 0 1px rgba(0,0,0,.75);overflow:hidden}
 #splitHud .spRet{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);color:rgba(255,255,255,.85)}
 #splitHud .spBot{position:absolute;left:12px;bottom:10px;display:flex;flex-direction:column;gap:4px;font-family:var(--display);font-size:11px;letter-spacing:.12em;color:#fff;text-shadow:0 1px 2px #000}
@@ -1717,7 +1724,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.413</div>
+<div id="ver">Chalice 0.414</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -15083,11 +15090,15 @@ const CLASS_PICK = [...MENU_CLASSES].sort((a, b) => a.name.localeCompare(b.name)
 // split screen class select: press A to join, move your square onto a class, A to pick, X to change team, Start to play
 const splitSel = (() => {
   const COL = ['#e0443c', '#3c7ce0', '#e8c23a', '#3cbf5a'];
+  // each player's symbol: P1 circle, P2 triangle, P3 square, P4 pentagon
+  const SHAPE = ['<circle cx="12" cy="12" r="10"/>', '<polygon points="12,2 22.5,21 1.5,21"/>', '<rect x="2.5" y="2.5" width="19" height="19"/>', '<polygon points="12,2 22,9.3 18.2,21 5.8,21 2,9.3"/>'];
+  const TXY = ['13', '17', '13', '14.5'];   // where the number sits inside each shape
+  const mark = (i, cls, label) => `<svg class="${cls}" viewBox="0 0 24 24" style="--pc:${COL[i]}"><g fill="${COL[i]}" stroke="#fff" stroke-width="1.6" stroke-linejoin="round">${SHAPE[i]}</g>${label ? `<text x="12" y="${TXY[i]}" text-anchor="middle" dominant-baseline="middle" font-size="7.5" font-weight="800" fill="#111">${label}</text>` : ''}</svg>`;
   let el = null, open = false, go = false, seats = [], prev = {}, last = 0;
   const isOpen = () => open;
   function build(){
     el = document.createElement('div'); el.id = 'splitSel'; el.hidden = true; document.body.appendChild(el);
-    el.innerHTML = `<h2>CHOOSE YOUR FIGHTERS</h2><div class="ssCards">${CLASS_PICK.map(c => `<div class="ssCard" data-k="${c.key}"><div class="ssSym">${NH_IC.sym[c.key] || ''}</div><div class="ssNm">${c.name}</div><div class="ssRole">${c.role}</div><div class="ssToks"></div></div>`).join('')}</div>
+    el.innerHTML = `<h2>CHOOSE YOUR FIGHTERS</h2><div class="ssCount"></div><div class="ssCards">${CLASS_PICK.map(c => `<div class="ssCard" data-k="${c.key}"><div class="ssSym">${NH_IC.sym[c.key] || ''}</div><div class="ssNm">${c.name}</div><div class="ssRole">${c.role}</div><div class="ssToks"></div></div>`).join('')}</div>
       <div class="ssSlots">${[0, 1, 2, 3].map(i => `<div class="ssSlot" style="--pc:${COL[i]}"></div>`).join('')}</div><div class="ssHint"></div><div class="ssCurs"></div>`;
   }
   function openSel(){
@@ -15118,13 +15129,14 @@ const splitSel = (() => {
       let s = seats.find(x => x.pad === p.index);
       if(!s){
         if(edge(0) && seats.length < 4){ const slot = [0, 1, 2, 3].find(i => !seats.some(x => x.slot === i));
-          s = { pad:p.index, slot, cls:null, team:slot % 2 ? 1 - MY_TEAM : MY_TEAM, x:W*(0.2 + slot*0.2), y:H*0.62 }; seats.push(s); }
+          s = { pad:p.index, slot, cls:null, team:slot % 2 ? 1 - MY_TEAM : MY_TEAM, x:W*(0.2 + slot*0.2), y:H*0.36, popAt:now }; seats.push(s);
+          padRumble(p, 220, 0.6, 0.8); if(typeof sfx === 'function') sfx('pickup'); }   // a pop on screen and a buzz in the hand that joined
         else if(edge(1) && !seats.length){ close(); }
       } else {
         let ax = p.axes[0] || 0, ay = p.axes[1] || 0; if(Math.hypot(ax, ay) < 0.2) ax = ay = 0;
         ax += (down(15) ? 1 : 0) - (down(14) ? 1 : 0); ay += (down(13) ? 1 : 0) - (down(12) ? 1 : 0);
         s.x = clamp(s.x + ax*dt*W*0.7, 0, W); s.y = clamp(s.y + ay*dt*H*0.9, 0, H);
-        if(edge(0)){ const c = cardAt(s.x, s.y); if(c) s.cls = c.dataset.k; }
+        if(edge(0)){ const c = cardAt(s.x, s.y); if(c && s.cls !== c.dataset.k){ s.cls = c.dataset.k; s.pickAt = now; padRumble(p, 90, 0.2, 0.5); if(typeof sfx === 'function') sfx('swap'); } }
         if(edge(2)) s.team = 1 - s.team;
         if(edge(1)){ if(s.cls) s.cls = null; else seats.splice(seats.indexOf(s), 1); }
         if(edge(9) && ready()){ prev[p.index] = Array.from(b, x => x.pressed || x.value > 0.55); start(); return; }
@@ -15135,18 +15147,25 @@ const splitSel = (() => {
   }
   function draw(){
     if(!el) return;
+    const now = performance.now(), connected = Array.from(rawPads()).filter(p => p && p.connected).length;
     const nm = k => { const c = CLASS_PICK.find(c => c.key === k); return c ? c.name : ''; };
     el.querySelectorAll('.ssCard').forEach(c => { c.classList.toggle('dim', isClassic() || oneClass());
-      const html = seats.filter(s => s.cls === c.dataset.k).sort((a, b) => a.slot - b.slot).map(s => `<i style="background:${COL[s.slot]}">P${s.slot + 1}</i>`).join('');
+      const html = seats.filter(s => s.cls === c.dataset.k).sort((a, b) => a.slot - b.slot).map(s => mark(s.slot, 'ssTok', 'P' + (s.slot + 1))).join('');
       const t = c.querySelector('.ssToks'); if(t.innerHTML !== html) t.innerHTML = html;
       c.classList.toggle('hov', seats.some(s => !s.cls && cardAt(s.x, s.y) === c)); });
     el.querySelectorAll('.ssSlot').forEach((d, i) => { const s = seats.find(x => x.slot === i);
-      const html = s ? `<b>P${i + 1}</b><span>${s.cls ? nm(s.cls).toUpperCase() : isClassic() || oneClass() ? 'READY' : 'PICK A CLASS'}</span><em style="color:${TEAMCSS[s.team]}">${TEAMNAME[s.team]}</em>` : `<b>P${i + 1}</b><span class="off">PRESS A TO JOIN</span>`;
-      if(d.innerHTML !== html) d.innerHTML = html; d.classList.toggle('in', !!s); });
+      const emptyRank = [0, 1, 2, 3].filter(k => !seats.some(x => x.slot === k)).indexOf(i), spare = emptyRank >= 0 && emptyRank < connected - seats.length;   // only as many empty slots say PRESS A as there are spare pads
+      const html = s ? `${mark(i, 'ssBadge', 'P' + (i + 1))}<span>${s.cls ? nm(s.cls).toUpperCase() : isClassic() || oneClass() ? 'READY' : 'PICK A CLASS'}</span><em style="color:${TEAMCSS[s.team]}">${TEAMNAME[s.team]}</em>`
+        : `${mark(i, 'ssBadge dim', '')}<span class="off">${spare ? 'PRESS A TO JOIN' : 'NO CONTROLLER'}</span>`;
+      if(d.innerHTML !== html) d.innerHTML = html; d.classList.toggle('in', !!s);
+      d.classList.toggle('pop', !!s && now - (s.popAt || 0) < 450); d.classList.toggle('pick', !!s && now - (s.pickAt || 0) < 300); });
+    const cnt = el.querySelector('.ssCount'), ct = connected === 0 ? 'NO CONTROLLERS FOUND · PRESS ANY BUTTON TO WAKE ONE' : `${connected} CONTROLLER${connected === 1 ? '' : 'S'} CONNECTED · ${seats.length} JOINED` + (connected < 4 ? ' · PRESS ANY BUTTON TO WAKE ANOTHER' : '');
+    if(cnt.textContent !== ct) cnt.textContent = ct;
     const hint = ready() ? 'PRESS START TO PLAY' : seats.length ? 'A PICK · X CHANGE TEAM · B BACK' : 'PRESS A ON EACH CONTROLLER TO JOIN · B TO GO BACK';
     const h = el.querySelector('.ssHint'); if(h.textContent !== hint) h.textContent = hint; h.classList.toggle('go', ready());
-    const curs = el.querySelector('.ssCurs'), html = seats.map(s => `<div class="ssCur" style="--pc:${COL[s.slot]};left:${s.x}px;top:${s.y}px">P${s.slot + 1}</div>`).join('');
-    curs.innerHTML = html;
+    const curs = el.querySelector('.ssCurs'), key = seats.map(s => s.slot).sort().join(',');
+    if(curs.dataset.k !== key){ curs.dataset.k = key; curs.innerHTML = seats.map(s => `<div class="ssCur" data-slot="${s.slot}">${mark(s.slot, '', 'P' + (s.slot + 1))}</div>`).join(''); }   // rebuilt only when someone joins or leaves, so the pop plays once
+    for(const s of seats){ const c = curs.querySelector(`[data-slot="${s.slot}"]`); if(c){ c.style.left = s.x + 'px'; c.style.top = s.y + 'px'; c.classList.toggle('pop', now - (s.popAt || 0) < 450); } }
   }
   addEventListener('keydown', e => { if(open && e.code === 'Escape') close(); });
   return { open:openSel, close, isOpen, tick, take:() => { const g = go; go = false; return g; }, get seats(){ return seats; } };
