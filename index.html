@@ -1717,7 +1717,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.412</div>
+<div id="ver">Chalice 0.413</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -15462,8 +15462,8 @@ const localMenu = (() => {
   }
   function renderHome(){
     root.innerHTML = `<div class="homeWrap"><nav class="homeMenu" aria-label="Main menu">
-      ${hmRow('localSetup','solo','LOCAL','local',{chev:true})}
-      ${hmRow('localSetup','split','SPLIT SCREEN','swords',{chev:true,line:'Two to four players, one controller each'})}
+      ${hmRow('localSetup','solo','PLAY','local',{chev:true})}
+      ${hmRow('localSetup','split','SPLIT SCREEN','swords',{chev:true})}
       ${hmRow('nav','online','ONLINE','globe',{off:true,meta:'SOON'})}
       ${hmRow('nav','extras','EXTRAS','book',{chev:true})}
       ${hmRow('nav','settings','SETTINGS','sliders',{chev:true})}
