@@ -1758,7 +1758,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.431</div>
+<div id="ver">Chalice 0.421</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -14642,7 +14642,7 @@ function buildTune(){
       lines.push('', tab.split('/').at(-1));
       for(const key of keys){
         if(key.startsWith('#')){ lines.push(`  ${key.slice(1)}`); continue; }
-        const t = TUNES.find(row => row.k === key);
+        const t = TUNES.find(row => row.k === key); if(!t) continue;   // 26 Nov: a tab key with no slider (shrr) made COPY SETTINGS throw
         const value = t.get(), initial = TUNE_DEFAULTS[key];
         const changed = value === initial ? '' : ` (default ${fmtTune(t, initial)})`;
         lines.push(`    ${t.label} = ${fmtTune(t, value)}${changed}`);
