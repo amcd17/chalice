@@ -913,3 +913,128 @@ v0.376 (23 Nov): Match Setup rosters show the generated bot names again, not cla
 v0.377 (23 Nov, Alex): Cathedral removed from the menu map selection. PLAYABLE_MAPS is now mausoleum only, the Cathedral entry is gone from MENU_MAPS, and the legacy map button is gone. The map code and its editor data remain in the file; it cannot be chosen from the menu. The menu falls back to Mausoleum if a saved or linked map is no longer available.
 
 v0.378 (23 Nov, from 0.377 / 5e53f04): (1) The sword cup bonus now pays any sword kill by the team holding the cup (SWORD_CUP_BONUS, team gate in chScoreKill), not only the carrier. Toast "+N  ·  BY THE SWORD" shows to the carrier and to the player who made the kill. Probe: carrier sword 2 (rolled 1), rifle 1, teammate sword 2, carrier sword at kill 4 banks 3. (2) chalSwordRise(team, amt): a sword glyph and "+1" pop in under that team cup box (#cpotB / #cpotR), hold a beat, rise into it (950 ms); the box shows the pre-bonus total (CHB.hold) until it lands, then bumps and shows the new total. Shown for both teams. (3) #toasts top 71% (was 60%). (4) #chalBot raised to 64 px (was 24). (5) The carry line leads with the cup outline (CUP_MINI) instead of the holder class icon. (6) Tutorial: Sword slide and Points note rewritten for the team rule. Lint clean, bot match ERRORS 0. Not committed.
+
+## v0.437 (26 Nov): class select action navigation
+- D-pad Down from a class goes to Ready/Deploy, and Right from the final class also reaches it. Up or Left from the action returns to the selected class. Ready has an explicit controller focus highlight.
+- Removed the class name from the Ready button.
+- Verification: script syntax, diff checks and a temporary Node navigation check passed. Live controller verification remains outstanding because local-file browser access is blocked.
+
+## v0.436 (26 Nov): class picker navigation and portraits
+- D-pad left/right follows class buttons in order and stops at the ends. Controller focus stays on the picked class after the menu rebuilds and starts on the selected class in the in-match picker.
+- Removed the YOURS label from the selected crest.
+- Class portrait camera moved back and aimed lower to include the full body and feet, with its aspect ratio set from each canvas.
+- Verification: script syntax and diff checks passed. A temporary Node check confirmed class-row navigation reaches both ends without leaving the row. Portrait framing still needs live visual verification; local-file browser access remains blocked and ESLint is unavailable locally.
+
+## v0.435 (26 Nov): class-change error and controller glitter
+- Restored the local `oneHandedSword` declaration in `trialWorldView`, fixing the ReferenceError during class changes. Zealot melee now reaches the grip-aligned sword pose after his class-specific handling; its extra arms hide when switching to another weapon.
+- Controller focus on START GAME now adds twinkling gold specks and a travelling shimmer, with a static reduced-motion fallback.
+- Verification: extracted script passes `node --check`; `git diff --check` passes. A temporary Node harness exercised `trialWorldView` for all five classes through primary, melee and repeater slots using rendering stubs. ESLint is unavailable locally; live browser and visual checks remain blocked by local-file browser policy.
+
+## v0.434 (26 Nov): gamepad Start Game focus
+- The Match Setup START GAME button now gets a bright glow when selected by controller focus, matching its hover and keyboard-focus feedback. It was receiving the gamepad focus class, but its style did not include that class.
+
+## v0.433 (26 Nov): persistent Lampist fire
+- Active Furnace Lantern ground patches now keep seven bright flame tongues flickering in height, width, rotation and opacity until the patch expires. Their ground glow pulses gently so the hazard remains visible between fireball impact and expiry. Patch lifetime, radius and damage are unchanged.
+- Verification: `node --check` passed on the extracted largest script. ESLint was unavailable and the browser blocked local-file testing, as noted in v0.432 below.
+
+## v0.432 (26 Nov): impact, menus, weapon poses and controller aim
+- Lampist Furnace Lantern impacts now make a wider, longer flame burst with a bright ground ring and central flare. The damaging surface patch, damage and splash numbers are unchanged.
+- Gamepad focus now starts on PLAY at Home, then the primary action on the current menu page.
+- The solo pre-match class select is the only class selection at kickoff. The kickoff countdown no longer reopens the class-card screen.
+- Zealot's Bone Sword hand ball now sits around the leather grip; the active third-person sword and arms use one aligned pose.
+- Skulker's three-blade fan sits higher above the hand and each blade drifts gently to strengthen the levitating read.
+- Aim-assist target follow moved from 0.35 to 0.40. Friction, range and cone did not change.
+- Verification: `node --check` passed. ESLint is not installed locally and `npx eslint` stalled; browser match testing was blocked when the browser policy refused the local `file://` URL.
+
+### v0.438 · 26 November 2026
+
+Cup progression: 1, 2, 3, 4, 5, 7, 10 points. Sword kills multiply the current value by ×2; per-gem points and ×1–×5 sword multiplier are exposed in Chalice tuning. Gold cup with two seven-gem rosettes, centre gem 7, attached stem, no middle band, and onyx skull inlays. Full cup turns gems and skulls sapphire with matching halos. Score target unchanged.
+
+Validation: extracted game script passes node syntax and ESLint no-undef checks. Isolated scoring checks pass for ordinary kills, sword ×1/×2/×3/×5, full-cup cap, drain/refill and team gating. Live Chalice match and visual review remain pending because browser policy blocked the local file URL.
+
+### v0.439 · 26 November 2026
+
+Sword kill feedback shows the active multiplier: the points toast reads, for example, "+10 · SWORD ×2", and the rising sword icon displays "×2". Both follow the multiplier set in Options. The cup counter still adds the actual bonus points when the animation lands.
+
+## Requested polish: Zealot splinter readability (26 Nov)
+- Make the Bone Splinter effect more obvious in play. Alex requested this as a follow-up note while authorizing the Bellringer and class ability changes; do not silently change splinter damage.
+
+## v0.440 (26 Nov): Bellringer and support/control kits, local first build
+- Added Bellringer to class selection and bot pools at 150 HP, using the accepted archer/bell-helmet prototype. Shared sword and Repeater retained. Full bow charge takes 1.5 s and fires a travelling, piercing soundwave: 100 body / 150 head, no damage falloff. Tap release makes a short peal. Added positional bell windup and release sounds.
+- Alarm Bell takes over the 10 m / 5 s team reveal. One thrown tuning fork arms 1 s after landing and triggers within 2 m with line of sight: 3 s silence and 20% slow on the triggering enemy, then breaks. Reused the old terrain grapple.
+- Lampist fireballs now deliver 60 direct / up to 30 splash without lasting ground fire. Shield Lantern grants 50 temporary overshield for 8 s on an ally hit; a ground or enemy impact becomes a 0.65 m hovering pickup for allies, including Lampist, lasting 10 s. One waiting lantern per Lampist. Lightbath retained.
+- Arcanist Ward is a stationary full sphere at the cast point, with friendly shots passing through and enemies free to enter. The staff orb now does 60 direct damage and leaves a 2.5 m field for 3 s at 20 damage/s, retaining its existing splash, charge, travel and forced overheat. Ward/Bulwark hits break the protection and consume the orb without a field. Crystal Grenade retained after Alex's follow-up question.
+- Crusader Bulwark is 20% narrower and slightly shorter. Tap right click and release to protect self; hold at least 0.25 s to aim at an ally and release to protect them. It follows its target's position and facing. Friendly shots and enemy movement pass through; swords remain useful after crossing the wall.
+- Recorded all provisional values in the playtest balance log in `codex-weapon-niches.md`. Updated `bellringer.md`; added the requested Zealot splinter-readability follow-up note without changing splinter balance.
+- Verification: extracted largest script passes `node --check`; ESLint `no-undef` passes with browser globals declared; `git diff --check` passes. Temporary Node checks using the game's pinned Three.js r128 pass for both team character geometries, wave damage/headshots/piercing/wall stop, fork throw/landing/arming/single-use debuffs, ally/enemy lantern impacts, overshield values, and wall tracking. Local-file browser policy still blocks live Chalice match and rendered visual verification. Uncommitted and unpublished; existing changes from the other chats preserved.
+
+## v0.441 (26 Nov): staff taps, grenade size and splinter visibility
+- Arcanist tap damage 10 → 20, headshot 15 → 30, with the same 0.36 s interval. Saved old default damage migrates. Crystal Grenade visual model enlarged 20% without changing its combat properties.
+- Added visible pale bone splinters to affected bodies; increased the Zealot-facing indicators' size, glow and spacing. No change to shatter damage or healing. Offensive replacement for shatter healing remains a design question.
+- Syntax, ESLint no-undef, diff checks and targeted runtime checks pass. Live visual/play verification remains blocked by local-file browser policy. Unpublished.
+- Follow-up: Arcanist tap/partial bolt speed 44 → 51 m/s; full orb remains 20 m/s.
+
+## v0.442 (26 Nov): Belfry Market greybox
+- Built the approved asymmetric church / fallen tower / market / catacomb plan in `buildBelfry`, with explicit spawns, custom bounds, a menu orbit camera and navigation. Plain stone, wood and team-tinted blocks; no art pass.
+- All vertical routes use walkable ramps/stairs or ordinary jumps. Church crypt, well, cellar hatch and ossuary stairs connect the catacomb. Tower stump, scaffold and market gallery each have walking access. The shaft has a 2 m jump gap and a 0.8 m jumpable obstacle. The market grate is a one-way drop with a directed navigation link; no ladder or mantle-only route.
+- Raised floor slabs are cut around every stair/drop opening. The underground cult chamber, bone hall, crypt, ossuary and south passage remain open under a separate street slab. Added a tiny overlap between slab strips after structural checks found strict collision seams at integer coordinates.
+- The dais at x=0,z=0 is the highest surface under the cup spawn ray, at y=4.4. Tower tip and hanging bell are offset, and the bell has no collision.
+- Not added to `PLAYABLE_MAPS` or `MENU_MAPS`. Explicit development preview: `index.html?map=belfry&preview=1`; editor: `index.html?map=belfry&edit=1`.
+- Structural checks using actual game geometry, spatial queries and foot-navigation rules: 473 solid pieces, 12 ramps, 606 waypoints; all key landmarks reachable from both teams; ramp traversal checked excluding the intentional low jump obstruction; spawn floors/headroom and cup height checked; one-way drop cannot be walked up. Average graph path to dais across all eight spawns: Thistle 41.47 m, Marigold 40.59 m (about 2.2% difference). These distances do not establish combat balance.
+- Live walk-through, screenshots, ten side-swapped Chalice bot matches and split-screen play remain unverified because the browser's local-file security restriction is still in force. Greybox stays hidden pending Alex's walk-through. No publishing or Git push.
+
+## v0.443 (26 Nov): Bellringer hand and arm transitions
+- Added a separate left ball hand in first person, tracking the striker during draw and returning after release. Right hand keeps the bow grip. Added a small bell jolt on firing.
+- Fork and Alarm Bell now have a shared 0.82 s retrieve/throw/return animation, with the actual projectile released at 0.34 s. The held model disappears at release; it is not duplicated in the hand. These actions cancel a bow draw and temporarily occupy the left hand. Cooldowns begin on the actual release; Alarm Bell preserves the fork cooldown.
+- Left hand reaches forward to aim/launch the old grapple, stays out while grappling, then returns. Grapple rope originates at that hand.
+- Third-person Bellringer now uses moving sleeve/forearm segments and spherical hands, preserving the fixed round shoulderpads. Both hand poses follow the bow/other held weapon, with the left hand performing the same ability transitions. Removed duplicate static arm visuals.
+- State and view rigs reset on death/class changes; silence or cup possession cancels an unthrown action. All hands remain balls without fingers.
+- Verification: syntax and ESLint no-undef checks plus temporary Three.js r128 runtime checks for both rigs, draw tracking, held prop visibility, one projectile per timed release, independent cooldowns, interruption, grapple reach/hold/recovery and weapon slots. Rendered animation review and a live Chalice match remain blocked by browser local-file policy. Unpublished.
+
+## v0.444: Bellstriker and Chalice HUD
+- Renamed the Bellringer to Bellstriker. Raised the Bell-Bow in first person. The left hand supports it beneath the bell while the right draws the striker, throws and grapples. With the Repeater or sword out, the left hand handles abilities while the right keeps its weapon.
+- The owner can retrieve a landed tuning fork with the field ability and throw it again immediately. One active fork at a time.
+- The Chalice marker, score panel and carrier's scoreboard row show liquid in the carrier's team colour. Opponents see an ENEMY DRINKING toast when a drink starts and a live countdown. The dropped cup shows time until the next drain tick.
+- Arcanist Ward radius increased from 2.0 to 2.6 m so allies have more room inside the sphere.
+- Zealot Bone Sword shatter now grants 10% bonus damage per consumed splinter, up to 30%, in place of the flat damage bonus and heal.
+- Bellstriker uses the original approved bell crest and dedicated Alarm Bell, Tuning Fork and Grapple icons from the reviewed mockup.
+- First person weapon swaps now keep one left-hand pose visible. An active throw or ability takes over from the weapon support hand until its animation clears.
+
+## v0.445: Gem HUD and progressive banking
+- Mirrored score panels place both cup boxes beside the timer. Seven gem sockets sit under each team. The holder's outlines take their team colour. The next gem glows before the next-kill value.
+- Drinking is committed, with a draining bar between the scoreboard and sockets. Each tick banks points, updates the cup pot, clears a gem and animates the deposit.
+- Added the morning rules pass: first to 50, 10 minutes by default, sword kills fill two slots, 28-point full cup, close-range snatch, dropped-cup grace and rounded-up shared payout formula. Overtime accounts for ties and a live cup that can still affect the result.
+
+## v0.446: Melee Chalice snatch
+- An enemy melee kill on the carrier transfers the Chalice immediately. Primary, secondary and other non-melee kills drop it. A cup dropped on death can be picked up after landing.
+- Added a V / R3 quick strike with the equipped weapon and a 10-damage hit. Hold Y or use the weapon slots to equip the full sword. Quick melee earns no By the Sword bonus.
+- Raised quick melee to 15 damage for the first playtest.
+- Made the regular hit marker larger and red, with a gold headshot marker and a larger, brighter red kill marker.
+
+### 27 November 2026 · Sound preview integration
+
+Integrated the approved sound study into the shared local build: low shotgun blast and sacred blunderbuss charge; sharp staff tap, charge and larger orb release; Furnace Lantern fire; individual Infernal Dagger throws and Skeleton Rifle shards; sword swing/impact, gem fill, drinking and bank release. PCM audio is embedded in index.html. Three one-shot variants avoid immediate repeats. Charges follow current tuning and stop on cancellation, death, pause or switching weapons. Existing Bellstriker sounds remain. No balance changes. Version/release edits left to the other person working in index.html.
+
+Validation: extracted script passes node syntax and ESLint no-undef checks. Isolated audio checks verify all 13 embedded cue groups, charge timing/cancellation, drink loop and variation selection. Live Chalice match/audio review remains pending because browser policy blocks the local file URL; no alternate browser route was used.
+
+## v0.447 (27 Nov): Belfry Market greybox rebuilt to plan v9
+- Replaced the v0.442 greybox, which played as one flat open plaza. Layout now follows `mockups/belfry-market-plan-v9.html`: solid two-storey houses wall off tower lane, the square and tanners' lane, two more frame the market side of the square, and a collapsed house fills the west end of tower lane. Cover mixes waist height and 2.2 to 3 m pieces. Market and tanners' lane booths are solid with roofs, making 3 to 4 m alleys.
+- No ladders. Every level change is a ramp or a switchback stairwell (two 2 m flights about 30 degrees with a 1.5 m landing): church crypt (6 m, railed hole in the nave), well pit and cellar pit (4 m, open to the sky, 1 m kerb as cover, open at the stair head), ossuary (4 m). The tanners' lane grate stays a one-way drop.
+- New updraft lift (`BELFRY_LIFT`, `belfryLift()` called from `physics()` before gravity): a vent at about (-10.8, -9.7) lifts anyone about 6.5 m, then glides them onto the fallen tower ramp at (-8, -12.5), past the gap. Bots get a one-way nav link.
+- Neutral materials only (stone, plaster, darker stone, wood). No team colours on the map, because more teams are planned.
+- Church spawns moved clear of the crypt hole and the new pews.
+- Checks: syntax, a lift ride test (lands on the ramp at y 9.3), nav graph of 773 nodes with every key spot reachable from both spawns (chamber, crypt, ossuary, both pit tops, grate bottom, tower tip, stump, lift landing, gallery), and 4- and 1.5-minute bot matches with no page errors. Bots used the lift, the tower tip, the gallery and the catacomb. Side balance not yet measured: the test player stood idle on team 0.
+- Still hidden from the menu: `index.html?map=belfry&preview=1`.
+
+## v0.448 (27 Nov): Bell-Bow weapon icon
+- Added the Bell-Bow art to the primary weapon box (`WICON.bellbow`, `WI_KEY['Bell-Bow']`). Same method as the other icons: a side-on render of the in-game bow model in the cream icon palette, 200 px wide, bow longways with the bell where the model has it and the striker on the string, drawn back slightly so it clears the bell. Source PNG: `mockups/mock-assets/bellbow-icon.png`. Approved option A from `mockups/bellbow-icon-mockup-v2.html`.
+
+## v0.449 Bell Rope throws straight, left-handed (27 Nov)
+- The Bell Rope no longer flies on an arc (the arc could clip through walls). It uses the old grapple ray: it lands on whatever visible surface is under the reticle, within grapple range, then pulls you in.
+- The bell travels out along the rope over 0.1 to 0.4 s (scaled by distance) before the pull starts.
+- Aiming shows the old straight grapple marker with the "N m / OUT OF RANGE" readout. The arc guide is off.
+- Always thrown with the left hand. With the Bell-Bow out, the bow flicks up over the right shoulder (0.12 s, `f.bellStow`) while the left hand holds the device up, then comes back 0.2 s after the throw. The bow can't fire while stowed. Third person slings it across the back.
+- First person: the rope runs from the left side of the waist.
+- traceBellRope and the arc branches in the grapple update are now unused; safe to delete later.
+- HUD: the "V MELEE" reminder under the weapon box is hidden (`#nhQuick` display:none).
+- Chalice model: added a thin inner lining to the bowl. The gem backs and the stem tip sat just through the outer wall and showed inside the cup. Ichor now starts at y 0.17, above the lining's floor.
