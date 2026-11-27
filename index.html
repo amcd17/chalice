@@ -1839,7 +1839,7 @@ body.paused #hud{visibility:hidden}
 </div>
 
 <div id="menu" class="screen titling">
-<div id="ver">Chalice 0.449</div>
+<div id="ver">Chalice 0.450</div>
   <div id="menuHint"><span class="kbOnly"><kbd>TAB</kbd> / CLICK TO MOVE <kbd>ENTER</kbd> SELECT</span><span class="padOnly">D-PAD NAVIGATE <kbd>A</kbd> SELECT <kbd>B</kbd> BACK</span></div>
   <div id="titleScr" aria-label="Chalice title">
     <canvas id="titleCv" width="520" height="520"></canvas>
@@ -8022,10 +8022,10 @@ function makeFork(){
    const points = [[0,.2],[-.26,.3],[-.36,.62],[-.3,.92],[0,1],[.3,.92],[.36,.62],[.26,.3]];
    const arch = new THREE.CatmullRomCurve3(points.map(([x,y]) => new V(x,y,0)),true);
    yoke.add(mesh(new THREE.TubeGeometry(arch,48,.04,8,true),IRON));
-   const bell = makeBell(.62);
-   bell.position.y = .36;
+   const bell = makeBell(.5);   // 27 Nov: smaller so the rim clears the bracket
+   bell.position.y = .42;
    yoke.add(bell);
-   const axle = mesh(new THREE.CylinderGeometry(.045,.045,.78,10),IRON,0,.66,0);
+   const axle = mesh(new THREE.CylinderGeometry(.045,.045,.78,10),IRON,0,.82,0);   // resting on the crown on top of the bell
    axle.rotation.z = Math.PI/2;
    yoke.add(axle);
    yoke.add(mesh(new THREE.CylinderGeometry(.05,.05,.1,8),IRON,0,1.04,0));
@@ -8788,6 +8788,23 @@ function physics(f, dt){
     let tp = null;
     if(gr.target){ if(gr.target.alive) tp = gr.target.center(T1); } else tp = T1.copy(gr.point);
     if(!tp || gr.t <= 0 || f.stun > 0){ endGrapple(f); }
+    else if(gr.pole && gr.pole.phase !== 'pull'){
+      const P = gr.pole; P.t += dt;
+      if(P.phase === 'fly'){
+        const n = 3;
+        for(let k=0;k<n;k++) if(bellPoleStep(P.pos, P.vel, dt/n)){ P.phase = 'rise'; P.t = 0; P.ground = P.pos.y; sfx('bellThunk', P.pos, .5); break; }
+        P.mesh.position.copy(P.pos);
+        if(P.phase === 'fly'){ P.mesh.rotation.x += dt*9; if(P.t > 5 || P.pos.y < -15){ endGrapple(f); f.abilityCd = Math.min(f.abilityCd, 2); } }   // lost off the map: most of the cooldown back
+        else P.mesh.rotation.set(0, f.yaw, 0);
+      } else {
+        setBellPoleHeight(P.mesh, BELL_POLE_H*smooth(clamp(P.t/BELL_POLE_RISE,0,1)));
+        if(P.t >= BELL_POLE_RISE){
+          P.phase = 'pull'; gr.t = 1.6; gr.lastD = Infinity; gr.stall = 0;
+          bellPoleEye(P, gr.point); sfx('alarmDing', gr.point);
+          if(f.onGround){ f.vel.y = Math.max(f.vel.y, 4); f.onGround = false; }
+        }
+      }
+    }
     else if(gr.flight > 0){
       gr.flight = Math.max(0,gr.flight-dt);
       if(gr.flight === 0){
@@ -8796,7 +8813,8 @@ function physics(f, dt){
       }
     } else {
       const c = f.center(T2); T3.subVectors(tp, c); const d = T3.length();
-      if(d < (gr.arc ? .35 : gr.target ? 1.9 : 1.5)){ endGrapple(f); f.vel.multiplyScalar(0.5); }
+      if(d < (gr.arc ? .35 : gr.pole ? 1.1 : gr.target ? 1.9 : 1.5)){ const pole = !!gr.pole; endGrapple(f); f.vel.multiplyScalar(0.5); if(pole){ f.vel.x *= .3; f.vel.z *= .3; f.vel.y = Math.max(f.vel.y*.4, 3); } }   // off the pole with a small hop, landing beside it
+      else if(gr.pole && (gr.stall = gr.lastD - d < GRAPPLE_SPEED*dt*.3 ? gr.stall + dt : 0, gr.lastD = d, gr.stall > .15)){ endGrapple(f); f.vel.y = Math.max(f.vel.y, 3); }   // caught on something: let go instead of hanging
       else {
         if(gr.arc && f.pos.y < gr.arc.feet.y+.15 && Math.hypot(T3.x,T3.z) < 1.9){
           T3.set(0,1,0);
@@ -11606,6 +11624,7 @@ function updateProjectiles(dt){
       if(advanceMarkingLantern(p, dt)) PROJ.splice(i, 1);
       continue;
     }
+    if(p.k === 'bellPole'){ if(advanceBellPole(p, dt)) PROJ.splice(i, 1); continue; }
     if(p.k === 'infernal'){
       if(trialDaggerStep(p, dt)){ PROJ.splice(i, 1); continue; }
       if(p.returning || p.parked) continue;
@@ -11810,15 +11829,18 @@ function useAbility(f){
     const eye = f.eye(new V()), look = f.look(new V());
     const bellRope = f.clsKey === 'bellringer';
     if(!bellRope && chGrapple(f,eye,look,(rayBoxes(eye,look,GRAPPLE_RANGE) || {t:GRAPPLE_RANGE}).t)){ f.abilityCd = ABILITY_CD; return true; }
-    const arc = null;   // 27 Nov: the Bell Rope throws straight at the reticle, like the old grapple (the arc could clip through walls)
-    const hit = grappleHit(eye,look);
-    if(!hit) return false;
+    const arc = null, flight = 0;
+    let hit = 0, pole = null;
+    if(bellRope){   // lobbed along the throw preview; the pull waits until the pole is up
+      const pos = new V(), vel = new V(); tossFrom(f, vel, pos);
+      pole = {k:'bellPole', owner:f, phase:'fly', pos, vel, t:0, mesh:makeBellPole(f.team)};
+      pole.mesh.position.copy(pos); setBellPoleHeight(pole.mesh, 0); scene.add(pole.mesh); PROJ.push(pole);
+    } else { hit = grappleHit(eye,look); if(!hit) return false; }
     f.lev = null; f.ram = null;
     if(bellRope){ f.bellGrappleAt=clock; f.bellDraw=0; }
-    const flight = bellRope ? clamp(hit/45,.1,.4) : 0;   // the bell flies out along the rope before the pull starts
-    const point = eye.clone().addScaledVector(look,hit-.3);
-    f.grapple = {t:(bellRope ? 1.8 : 1.3)+flight,target:null,point,flight,flightTime:flight,arc};
-    if(!flight && f.onGround){ f.vel.y = Math.max(f.vel.y, 3); f.onGround = false; }
+    const point = bellRope ? pole.pos.clone() : eye.clone().addScaledVector(look,hit-.3);
+    f.grapple = {t:bellRope ? 7 : 1.3,target:null,point,flight,flightTime:0,arc,pole};
+    if(!bellRope && f.onGround){ f.vel.y = Math.max(f.vel.y, 3); f.onGround = false; }
     if(f.line && f.line.userData.bellRope !== bellRope){
       scene.remove(f.line);
       f.line = null;
@@ -11830,7 +11852,7 @@ function useAbility(f){
       f.line = new THREE.Group(); f.line.add(rope,hook); f.line.userData = {rope,hook,bellRope}; rope.frustumCulled = false; scene.add(f.line);
     }
     f.line.visible = true;
-    sfx(flight ? 'swing' : 'grapple', isLocal(f) ? null : f.pos);
+    sfx(bellRope ? 'swing' : 'grapple', isLocal(f) ? null : f.pos);
   } else if(f.clsKey === 'knight'){
     f.grapple = null; f.javWind = 0;
     if(CLASS_KIT){ f.scWind = SC_WIND; f.shieldUp = false; }   // Pious Charge: he holds the cross out, it blazes, then he goes (with either weapon in his right hand)
@@ -11840,6 +11862,40 @@ function useAbility(f){
   return true;
 }
 const UP_Y = new V(0, 1, 0);
+// 27 Nov: the Bell Rope is lobbed like the Alarm Bell. Where it lands, a pole telescopes up BELL_POLE_H with the bell on top, and the rope reels him to it.
+const BELL_POLE_H = 4, BELL_POLE_RISE = .25, BELL_POLE_RETRACT = .3;
+function bellPoleStep(pos, vel, h){   // one step of the lob, shared by the preview and the throw. A wall stops it dead and it drops to the floor below; a ceiling knocks it back down. True once it rests on a floor
+  vel.y -= wG()*h;
+  if(vel.y > 0 && solidAt(pos.x, pos.y + vel.y*h + .15, pos.z)) vel.y = 0;
+  const nx = pos.x + vel.x*h, nz = pos.z + vel.z*h;
+  if(solidAt(nx, pos.y + .15, nz)){ vel.x = 0; vel.z = 0; } else { pos.x = nx; pos.z = nz; }
+  pos.y += vel.y*h;
+  const g = surfaceBelow(pos.x, pos.z, pos.y + .4);
+  if(g !== null && pos.y <= g){ pos.y = g; return true; }
+  return false;
+}
+function makeBellPole(team){
+  const g = new THREE.Group(), iron = new THREE.MeshStandardMaterial({color:0x4a4640,metalness:.6,roughness:.45}), segs = [];
+  for(const r of [.05,.04,.03]){ const m = new THREE.Mesh(new THREE.CylinderGeometry(r,r,1,8).translate(0,.5,0),iron); m.visible = false; g.add(m); segs.push(m); }
+  const bell = makeBellringerVisual(team,'ropeAnchor'); g.add(bell);
+  g.userData = {segs,bell,h:0};
+  return g;
+}
+function setBellPoleHeight(mesh, h){   // three nested sections, each a third of the height with a little overlap
+  const {segs,bell} = mesh.userData; mesh.userData.h = h;
+  segs.forEach((m,i) => { m.visible = h > .03; m.position.y = i*h/3*.94; m.scale.y = Math.max(.001,h/3+.06); });
+  bell.position.y = h > .03 ? segs[2].position.y + segs[2].scale.y - .03 : 0;   // the bracket's base plate sits on the tip of the top section
+}
+function bellPoleEye(p, out){ p.mesh.updateMatrixWorld(true); return p.mesh.userData.bell.localToWorld(out.copy(p.mesh.userData.bell.userData.ropeEye)); }
+function advanceBellPole(p, dt){   // the pole itself: once its rope is let go it folds back into the ground and is gone
+  if(p.owner.grapple && p.owner.grapple.pole === p) return false;
+  if(p.phase === 'fly'){ scene.remove(p.mesh); return true; }
+  if(p.retractAt === undefined){ p.retractAt = clock; p.retractFrom = p.mesh.userData.h; }
+  const k = 1 - (clock - p.retractAt)/BELL_POLE_RETRACT;
+  if(k <= 0){ scene.remove(p.mesh); return true; }
+  setBellPoleHeight(p.mesh, p.retractFrom*smooth(k));
+  return false;
+}
 function endGrapple(f){ if(f.clsKey==='bellringer'&&f.grapple)f.bellGrapRecoverAt=clock; f.grapple = null; if(f.line) f.line.visible = false; }
 function ramHits(f){
   const dir = f.ram.dir;
@@ -12054,7 +12110,7 @@ function bellThrowProp(f,parent,firstPerson){
     fork.scale.setScalar(firstPerson?.36:.65);fork.position.y=firstPerson?-.025:-.06;
     bell.scale.setScalar(firstPerson?.65:1);bell.position.y=firstPerson?-.10:-.17;
     anchor.scale.multiplyScalar(firstPerson?.55:.75);
-    anchor.position.y=firstPerson?-.23:-.34;
+    anchor.position.y=firstPerson?-.295:-.40;   // held by the knob at the top of the bracket, the bell hanging below the hand
     parent.add(fork,bell,anchor);parent.userData.bellProps={fork,bell,anchor};
   }
   const props=parent.userData.bellProps,action=f.bellAction;
@@ -40772,6 +40828,12 @@ function updateChArc(show){
   if(!show) return;
   if(lantern){ updateLanternPreview(p); return; }
   const v = new V(), pos = new V(), a = chArcGeo.attributes.position, dt = 0.03; let hit = false;
+  if(!p.hasChalice && p.clsKey === 'bellringer' && p.grapAim > 0 && !p.toss){   // the Bell Rope: the same lob the throw will fly
+    tossFrom(p, v, pos);
+    for(let i=0;i<CHARC_N;i++){ a.setXYZ(i, pos.x, pos.y, pos.z); for(let k=0;k<3 && !hit;k++) hit = bellPoleStep(pos, v, dt/3) || pos.y < -15; }
+    a.needsUpdate = true; chArcRing.position.set(pos.x, pos.y + .05, pos.z); chArcRing.scale.setScalar(1 + .12*Math.sin(clock*10)); chArcCol.position.set(pos.x, pos.y + .05 + 1.1, pos.z);
+    return;
+  }
   if(p.hasChalice){ chThrowVel(p, v); chThrowFrom(p, pos); } else tossFrom(p, v, pos);   // the cup, or whichever throwable is up
   for(let i=0;i<CHARC_N;i++){
     a.setXYZ(i, pos.x, pos.y, pos.z);
@@ -40879,10 +40941,11 @@ const GRAP_RING = canvasTex(64, 64, (x, w, h) => { x.strokeStyle = '#fff'; x.lin
 function updateGrapAim(p){
   const on = p.alive && grapKit(p) && p.grapAim > 0;
   if(!GRAP_MARK){ GRAP_MARK = new THREE.Group(); GRAP_MARK.add(fxSprite(FX_GLOW, 0xffffff, 0.8), fxSprite(GRAP_RING, 0xffffff, 1)); GRAP_MARK.children.forEach(c => { c.material.depthTest = false; c.renderOrder = 20; }); scene.add(GRAP_MARK); }
-  hud.reticle.classList.toggle('grap', on); hud.grapInfo.style.display = on ? 'block' : 'none';
-  p.bellRopePreview = null;   // the Bell Rope uses the straight grapple marker
-  if(!splitOn()) showBellRopeGuide(p.bellRopePreview);
-  if(!on){ GRAP_MARK.visible = false; return; }
+  p.bellRopePreview = null;
+  if(!splitOn()) showBellRopeGuide(null);
+  const bellAim = p.clsKey === 'bellringer';   // the Bell Rope aims with the throw preview instead
+  hud.reticle.classList.toggle('grap', on && !bellAim); hud.grapInfo.style.display = on && !bellAim ? 'block' : 'none';
+  if(!on || bellAim){ GRAP_MARK.visible = false; return; }
   const css = TEAMCSS[p.team], col = TEAMGLOW[p.team];
   hud.reticle.style.setProperty('--grap', css); hud.grapInfo.style.setProperty('--grap', css);
   if(p.bellRopePreview){
@@ -41502,7 +41565,7 @@ function updateHUD(dt){
   if(charging){ const ch = $('charge'), k = hamCh ? Math.min(1, p.hamEff/HAM_CHARGE) : p.charge; ch.style.setProperty('--tc', TEAMCSS[p.team]); $('chargeBar').style.width = (k*100) + '%';
     ch.classList.toggle('full', k >= 1); $('chargeTxt').textContent = hamCh ? (k >= 1 ? 'FULL CHARGE' : 'CHARGING') : p.charge >= 1 ? 'FULL POWER' : p.charge < 0.34 ? 'LOB' : p.charge < 0.67 ? 'PASS' : 'LONG'; }
   updateArc(charging && !hamCh && SHOW_ARC);
-  updateChArc(!!(p.alive && state === 'play' && ((p.hasChalice && p.chAim) || (!p.hasChalice && p.toss && p.toss.aim))));
+  updateChArc(!!(p.alive && state === 'play' && ((p.hasChalice && p.chAim) || (!p.hasChalice && p.toss && p.toss.aim) || (!p.hasChalice && p.clsKey === 'bellringer' && p.grapAim > 0))));
   // death
   if(!p.alive && !managedMatch && !trialInDeathView(p)){
     const ko = !!p.kickoff, hEl = $('deathH');   // kick-off looks like the respawn wait, without the bad news
@@ -44401,11 +44464,13 @@ function updateBodies(){
       }
       b = hook.localToWorld(hook.userData.ropeEye.clone());
     }
-    if(!gr.arc && gr.flight > 0 && gr.flightTime > 0) b = a.clone().lerp(anchor,smooth(1-gr.flight/gr.flightTime));
+    hook.visible = !gr.pole;   // the pole carries its own bell
+    if(gr.pole){ gr.pole.mesh.updateMatrixWorld(true); b = bellPoleEye(gr.pole, new V()); }
+    else if(!gr.arc && gr.flight > 0 && gr.flightTime > 0) b = a.clone().lerp(anchor,smooth(1-gr.flight/gr.flightTime));
     const dir = T2.subVectors(b,a), L = dir.length();
     dir.divideScalar(L || 1);
     rope.position.copy(a); rope.quaternion.setFromUnitVectors(UP_Y, dir); rope.scale.set(f.isPlayer ? 0.6 : 1, L, f.isPlayer ? 0.6 : 1);
-    if(!gr.arc){
+    if(!gr.arc && !gr.pole){
       hook.position.copy(b).addScaledVector(dir,-.3);
       hook.quaternion.copy(rope.quaternion);
     }

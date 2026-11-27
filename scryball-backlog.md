@@ -1038,3 +1038,14 @@ Validation: extracted script passes node syntax and ESLint no-undef checks. Isol
 - traceBellRope and the arc branches in the grapple update are now unused; safe to delete later.
 - HUD: the "V MELEE" reminder under the weapon box is hidden (`#nhQuick` display:none).
 - Chalice model: added a thin inner lining to the bowl. The gem backs and the stem tip sat just through the outer wall and showed inside the cup. Ichor now starts at y 0.17, above the lining's floor.
+
+## v0.450 Bell Rope: lob, pole, pull (27 Nov)
+- Replaces the straight throw from v0.449. Hold Shift: the throw preview arc and line of light show where the bell will land. Release: the bell is lobbed along that exact path (`bellPoleStep`, shared by preview and throw). A wall stops it and it drops to the floor below; a ceiling knocks it back down, so it can't pass through geometry.
+- Where it lands, a three-section iron pole telescopes up 4 m in 0.25 s (`BELL_POLE_H`, `BELL_POLE_RISE`) with the bell on top. It dings and the rope pulls him to the top.
+- Released 1.1 m from the top with a small hop (horizontal speed cut to 15%), so he lands beside the pole. If the pull stalls on something for 0.15 s, he lets go with a hop instead of hanging.
+- The pole folds back down over 0.3 s once let go. Lost throws (off the map, or no landing within 5 s) give most of the cooldown back. Throw range: about 22 m aimed level, 40 m at most (30 degrees up); steep lobs fly up to 3.5 s.
+- The bracket's base plate sits on the tip of the top pole section (it floated 11 cm above it at first).
+- Bell Rope device (`ropeAnchor` visual): bell shrunk from 0.62 to 0.5 and moved to y 0.42 so its rim clears the bracket; the axle rod raised to rest on the bell's crown (y 0.82) so it no longer cuts through it.
+- First-person hand holds the device by the knob at the top of the bracket, the bell hanging below.
+- Sim test: 24 throws in all directions on the default map all landed, raised the pole and pulled to within 1.1 to 1.6 m of the top; no poles left behind. Bots still aim with grapple points, so their throws may land short; not tuned.
+
